@@ -1,0 +1,186 @@
+"use client";
+
+import React from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { LayoutDashboard, Rocket, Star, ChevronDown } from "lucide-react";
+import { motion } from "motion/react";
+import { BlurReveal } from "@/components/ui/blur-reveal";
+import { AvatarCircles } from "@/components/ui/avatar-circles";
+
+const avatarUrls = [
+    "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=256&h=256&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=256&h=256&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=256&h=256&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=256&h=256&auto=format&fit=crop"
+];
+
+const AmritHero = () => {
+    const visionStatement = "LockIn is the definitive workspace for leaders who demand clarity and precision. We bring together the intelligence of AI with the timeless art of high-performance management.";
+
+    return (
+        <section className="relative h-screen w-full overflow-hidden bg-black font-sans text-[#FDF8F1]">
+            {/* Background Image with Overlay */}
+            <div className="absolute inset-0 z-0">
+                <Image
+                    src="/images/hero-bg.png"
+                    alt="Luxury Boardroom"
+                    fill
+                    className="object-cover object-center"
+                    priority
+                />
+                <div className="absolute inset-0 bg-black/60 backdrop-blur-[1px]" />
+            </div>
+
+            {/* Top Navbar */}
+            <motion.nav
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 2, ease: "easeInOut" }}
+                className="absolute top-0 left-0 right-0 z-50 flex h-24 items-center justify-between px-8 md:px-12"
+            >
+                {/* Logo */}
+                <Link href="/" className="flex items-center gap-2">
+                    <div className="h-10 w-10 text-[#D18E4E]">
+                        <svg viewBox="0 0 100 100" className="h-full w-full fill-current">
+                            <path d="M50 10L90 90H10L50 10Z" fill="none" stroke="currentColor" strokeWidth="4" />
+                            <path d="M30 40L70 40M40 60L60 60" stroke="currentColor" strokeWidth="4" />
+                        </svg>
+                    </div>
+                    <span className="text-xl font-bold tracking-widest text-[#D18E4E]">LOCKIN</span>
+                </Link>
+
+                {/* Navigation Links */}
+                <div className="hidden items-center gap-8 text-sm font-medium tracking-wide md:flex">
+                    {["DASHBOARD", "PROJECTS", "TEAMS", "INSIGHTS", "CALENDAR", "CONTACT"].map((item) => (
+                        <Link key={item} href={`/${item.toLowerCase()}`} className="hover:text-[#D18E4E] transition-colors">
+                            {item === "CALENDAR" ? (
+                                <span className="flex items-center gap-1">
+                                    CALENDAR <ChevronDown className="h-4 w-4" />
+                                </span>
+                            ) : (
+                                item
+                            )}
+                        </Link>
+                    ))}
+                </div>
+
+                {/* CTA Buttons */}
+                <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2 group cursor-pointer">
+                        <span className="text-sm font-bold tracking-widest">WORKSPACE</span>
+                        <div className="relative h-12 w-12 flex items-center justify-center bg-[#E28C44] text-black">
+                            <LayoutDashboard className="h-5 w-5" />
+                        </div>
+                    </div>
+                    <div className="h-12 w-[1px] bg-[#FDF8F1]/20 mx-2" />
+                    <div className="flex items-center gap-2 group cursor-pointer">
+                        <span className="flex items-center gap-1 text-sm font-bold tracking-widest">
+                            DEPLOY <ChevronDown className="h-4 w-4" />
+                        </span>
+                        <div className="relative h-12 w-12 flex items-center justify-center bg-[#D18E4E] text-black">
+                            <Rocket className="h-5 w-5" />
+                        </div>
+                    </div>
+                </div>
+            </motion.nav>
+
+            {/* Center Hero Content */}
+            <div className="relative z-10 flex h-full flex-col items-center justify-center px-4">
+                <div className="relative">
+                    {/* Decorative Labels */}
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 1, delay: 0.5 }}
+                        className="absolute top-1/2 left-0 -translate-y-1/2 -translate-x-full pr-4 md:pr-8"
+                    >
+                        <span className="text-[10px] md:text-[11px] font-bold tracking-[0.4em] text-[#FDF8F1]/80 whitespace-nowrap">
+                            EMPOWERING TEAMS
+                        </span>
+                    </motion.div>
+
+                    <BlurReveal
+                        as="h1"
+                        className="font-serif text-6xl font-normal leading-[1.05] tracking-tight md:text-9xl uppercase text-center"
+                        delay={0.2}
+                        speedReveal={1.2}
+                    >
+                        ORCHESTRATE EXCELLENCE
+                    </BlurReveal>
+
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 1, delay: 0.5 }}
+                        className="absolute top-1/2 right-0 -translate-y-1/2 translate-x-full pl-4 md:pl-8"
+                    >
+                        <span className="text-[10px] md:text-[11px] font-bold tracking-[0.4em] text-[#FDF8F1]/80 whitespace-nowrap">
+                            REFINED BY AI
+                        </span>
+                    </motion.div>
+                </div>
+            </div>
+
+            {/* Bottom Accessories */}
+            <div className="absolute bottom-12 left-0 right-0 z-10 flex items-end justify-between px-8 md:px-12">
+                {/* Vision Statement (Animated per letter staggered by word) */}
+                <div className="max-w-md text-xs font-medium leading-relaxed tracking-wide text-[#FDF8F1]/80 md:text-sm">
+                    <motion.div
+                        initial="hidden"
+                        animate="visible"
+                        variants={{
+                            visible: {
+                                transition: {
+                                    staggerChildren: 0.015,
+                                    delayChildren: 1.5,
+                                }
+                            }
+                        }}
+                    >
+                        {visionStatement.split(" ").map((word, wordIndex) => (
+                            <span key={wordIndex} className="inline-block mr-[0.25em] whitespace-nowrap">
+                                {word.split("").map((char, charIndex) => (
+                                    <motion.span
+                                        key={charIndex}
+                                        variants={{
+                                            hidden: { opacity: 0, y: 5 },
+                                            visible: { opacity: 1, y: 0 }
+                                        }}
+                                        transition={{ duration: 0.3 }}
+                                        className="inline-block"
+                                    >
+                                        {char}
+                                    </motion.span>
+                                ))}
+                            </span>
+                        ))}
+                    </motion.div>
+                </div>
+
+                {/* Review Widget (New AvatarCircles Design) */}
+                <motion.div
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 1, delay: 2 }}
+                    className="hidden flex-col items-end gap-3 md:flex"
+                >
+                    <AvatarCircles numPeople={3572} avatarUrls={avatarUrls} />
+                    <div className="flex flex-col items-end text-right">
+                        <div className="flex items-center gap-1 text-[#D18E4E] mb-1">
+                            {[...Array(5)].map((_, i) => (
+                                <Star key={i} className="h-4 w-4 fill-current" />
+                            ))}
+                            <span className="ml-2 text-lg font-bold text-[#FDF8F1]">4.7</span>
+                        </div>
+                        <p className="text-[10px] font-bold tracking-widest text-[#FDF8F1]/60 uppercase">
+                            TRUSTED BY 3,576+ GLOBAL LEADERS
+                        </p>
+                    </div>
+                </motion.div>
+            </div>
+        </section>
+    );
+};
+
+export default AmritHero;
