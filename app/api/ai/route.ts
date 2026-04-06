@@ -5,7 +5,7 @@ import { openrouter } from '@/lib/openrouter'
 
 export async function POST(request: Request) {
   try {
-    const { type, content, model = 'google/gemini-2.0-flash-lite-001' } = await request.json()
+    const { type, content, model = 'minimax/minimax-m2.5:free' } = await request.json()
 
     if (!type || !content) {
       return NextResponse.json(

@@ -14,17 +14,20 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Plus, Loader2 } from "lucide-react"
-import { createNote } from "@/lib/actions/note.actions"
+import axios from "axios"
+import { useToast } from "@/components/ui/use-toast"
 
 interface NewNoteDialogProps {
   projectId?: string
   children?: React.ReactNode
+  onSuccess?: () => void
 }
 
-export function NewNoteDialog({ projectId, children }: NewNoteDialogProps) {
+export function NewNoteDialog({ projectId, children, onSuccess }: NewNoteDialogProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
+  const { toast } = useToast()
 
   const [formData, setFormData] = useState({
     title: "",
@@ -38,23 +41,50 @@ export function NewNoteDialog({ projectId, children }: NewNoteDialogProps) {
 
     setIsLoading(true)
     try {
-      const result = await createNote({
+      const response = await axios.post('/api/notes', {
         title: formData.title,
         content: formData.content,
         projectId: projectId,
-        meetingDate: formData.meetingDate ? new Date(formData.meetingDate) : undefined,
+        meetingDate: formData.meetingDate ? new Date(formData.meetingDate).toISOString() : undefined,
+      }, {
+        withCredentials: true
       })
 
-      if (result.success && result.data) {
+      if (response.data.success && response.data.data) {
         setIsOpen(false)
         setFormData({ title: "", content: "", meetingDate: "" })
-        router.push(`/dashboard/notes/${result.data.id}`)
+        
+        toast({
+          title: "Success",
+          description: "Note created successfully",
+        })
+        
+        // Notify parent to refresh list, or redirect
+        if (onSuccess) {
+          onSuccess()
+        } else {
+          router.push(`/dashboard/notes/${response.data.data.id}`)
+        }
       } else {
-        alert(result.error || "Failed to create note")
+        toast({
+          title: "Error",
+          description: response.data.error || "Failed to create note",
+          variant: "destructive",
+        })
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error(error)
-      alert("An unexpected error occurred")
+      let errorMessage = "An unexpected error occurred"
+      if (axios.isAxiosError(error) && error.response?.data?.error) {
+        errorMessage = error.response.data.error
+      } else if (error instanceof Error) {
+        errorMessage = error.message
+      }
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      })
     } finally {
       setIsLoading(false)
     }

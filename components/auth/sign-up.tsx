@@ -7,10 +7,12 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useAuth } from "@/hooks/use-auth"
 import { Loader2, Mail, Lock, User, Eye, EyeOff } from "lucide-react"
+import { useToast } from "@/components/ui/use-toast"
 
 export function SignUp() {
   const router = useRouter()
   const { signUp, loading } = useAuth()
+  const { toast } = useToast()
 
   const [formData, setFormData] = useState({
     name: '',
@@ -50,9 +52,14 @@ export function SignUp() {
     const result = await signUp(formData.email, formData.password, formData.name)
 
     if (result.success) {
-      router.push('/auth/verify-email')
+      // Hard redirect to bypass Next.js soft-navigation router race conditions on Vercel
+      window.location.assign('/auth/verify-email')
     } else {
-      setFormError(result.error || 'Sign up failed')
+      toast({
+        title: "Registration Error",
+        description: result.error || "User already exists or sign up failed.",
+        variant: "destructive"
+      })
     }
   }
 

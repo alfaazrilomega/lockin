@@ -1,5 +1,3 @@
-"use server"
-
 import { OpenAI } from 'openai'
 
 export const openrouter = new OpenAI({
@@ -14,7 +12,7 @@ export const openrouter = new OpenAI({
 export async function generateMeetingSummary(transcript: string): Promise<string> {
   try {
     const response = await openrouter.chat.completions.create({
-      model: 'google/gemini-2.0-flash-lite-001',
+      model: 'minimax/minimax-m2.5:free',
       messages: [
         {
           role: 'system',
@@ -39,7 +37,7 @@ export async function generateMeetingSummary(transcript: string): Promise<string
 export async function generateFlashcards(text: string): Promise<Array<{ front: string; back: string }>> {
   try {
     const response = await openrouter.chat.completions.create({
-      model: 'google/gemini-2.0-flash-lite-001',
+      model: 'minimax/minimax-m2.5:free',
       messages: [
         {
           role: 'system',

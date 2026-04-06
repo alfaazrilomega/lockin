@@ -22,7 +22,7 @@
   --popover-foreground: #37352F;
   --ring: #E9E9E7;
   --input: #E9E9E7;
-  
+
   /* Sidebar Colors */
   --sidebar: #FFFFFF;
   --sidebar-foreground: #37352F;
@@ -31,10 +31,11 @@
   --sidebar-accent-foreground: #37352F;
   --sidebar-primary: #2383E2;
   --sidebar-primary-foreground: #FFFFFF;
-  
+
   /* Typography */
-  --font-satoshi: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif;
-  --font-outfit: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif;
+  /* Font variables are set by next/font in layout.tsx via variable option */
+  --font-satoshi: var(--font-sans);
+  --font-outfit: var(--font-outfit);
   
   /* Spacing Scale */
   --spacing-xs: 8px;
@@ -162,7 +163,6 @@
   * {
     border-color: var(--border);
     outline-color: var(--ring);
-    outline-opacity: 0.5;
   }
   body {
     background-color: var(--background);
@@ -180,4 +180,401 @@
   .font-outfit {
     font-family: var(--font-outfit);
   }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Hero Section Entrance Choreography
+   ─────────────────────────────────────────────────────────────────────────
+   Preloader analysis (Preloader.tsx):
+     PHASE1_START_DELAY  =   80ms
+     PHASE1_HOLD         = 1600ms
+     SWAP_HALF × 2       =  600ms
+     PHASE2_HOLD         = 1200ms
+     EXIT_DELAY          =  200ms
+     EXIT_DURATION       =  950ms
+   → Overlay begins fading at  80 + 3400 + 200 = 3680ms
+   → Overlay fully gone at                       4630ms
+   → Hero animations base delay: 4000ms (fires while overlay fades out)
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* ── @keyframes ─────────────────────────────────────────────────────────── */
+
+@keyframes buildingRise {
+  0% { transform: translateY(150px); opacity: 0; filter: blur(5px); }
+  100% { transform: translateY(0); opacity: 1; filter: blur(0); }
+}
+
+@keyframes textBrush {
+  0%   { clip-path: inset(0 100% 0 0); }
+  70%  { clip-path: inset(0 8%   0 0); }
+  100% { clip-path: inset(0 0%   0 0); }
+}
+
+@keyframes blurReveal {
+  from { filter: blur(10px); opacity: 0; transform: translateY(10px); }
+  to   { filter: blur(0px);  opacity: 1; transform: translateY(0px);  }
+}
+
+@keyframes uiFadeIn {
+  0% { opacity: 0; transform: translateY(10px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scrollTrack {
+  0%   { transform: translateY(-100%); opacity: 0; }
+  20%  { opacity: 1; }
+  80%  { opacity: 1; }
+  100% { transform: translateY(300%);  opacity: 0; }
+}
+
+/* ── Named animation classes (applied via className, NOT inline style props) ─
+   animation-fill-mode: both means:
+     - "backwards" → element holds the `from` state BEFORE the delay fires
+     - "forwards"  → element holds the `to` state after animation ends
+   This is why opacity:0 is NOT needed separately on the element. */
+
+/* Buildings — staggered 3D rise */
+.hero-building-mid {
+  animation: buildingRise 0.85s cubic-bezier(0.22, 1, 0.36, 1) 4000ms both;
+}
+.hero-building-left {
+  animation: buildingRise 0.85s cubic-bezier(0.22, 1, 0.36, 1) 4150ms both;
+}
+.hero-building-right {
+  animation: buildingRise 0.85s cubic-bezier(0.22, 1, 0.36, 1) 4300ms both;
+}
+
+/* Typography — brush stroke left-to-right clip-path wipe */
+.hero-text-brush {
+  clip-path: inset(0 100% 0 0); /* initial state before animation */
+  animation: textBrush 1.4s cubic-bezier(0.16, 1, 0.3, 1) 4300ms both;
+}
+
+/* Paragraph — Apple blur snap-in */
+.hero-blur-reveal {
+  animation: blurReveal 0.9s cubic-bezier(0.16, 1, 0.3, 1) 5000ms both;
+}
+
+/* UI chrome — Navbar arrives at 4600ms, bottom HUD at 4800ms */
+.hero-ui-fade-nav {
+  animation: uiFade 0.8s ease-out 4600ms both;
+}
+.hero-ui-fade-bottom {
+  animation: uiFade 0.8s ease-out 4800ms both;
+}
+
+/* Scroll track infinite loop */
+.hero-scroll-track {
+  animation: scrollTrack 2s ease-in-out infinite;
+}
+
+/* ─── HIDE DEFAULT SCROLLBAR GLOBALLY ─── */
+@layer base {
+  html, body {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+  
+  html::-webkit-scrollbar, body::-webkit-scrollbar {
+    display: none; /* Chrome, Safari and Opera */
+  }
+}
+
+/* Bruteforce Next.js Dev Indicator Hider */
+#next-route-announcer,
+.next-route-announcer,
+[data-nextjs-toast],
+[data-nextjs-dialog],
+nextjs-portal {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  z-index: -9999 !important;
+}
+
+/* ─── AmritTeams: Liquid Glass Utility ───────────────────────────────────── */
+.liquid-glass {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow:
+    0 4px 30px rgba(0, 0, 0, 0.1),
+    inset 0 1px 1px rgba(255, 255, 255, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+/* ─── AmritTeams: Fade-Rise Entrance Animations ──────────────────────────── */
+@keyframes fade-rise {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+.animate-fade-rise {
+  animation: fade-rise 1s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.animate-fade-rise-delay {
+  animation: fade-rise 1s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both;
+}
+.animate-fade-rise-delay-2 {
+  animation: fade-rise 1s cubic-bezier(0.16, 1, 0.3, 1) 0.3s both;
+}
+.animate-fade-rise-delay-3 {
+  animation: fade-rise 1s cubic-bezier(0.16, 1, 0.3, 1) 0.45s both;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   AmritTeams — SVG Scroll Drawing Engine (CSS Variable Driven)
+
+   All animation is driven by --scroll-progress (0 → 1), set directly on
+   the .amrit-teams-sticky element by a rAF loop in AmritTeams.tsx.
+   No React re-renders. No GSAP or Framer Motion. Pure CSS paint.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ─── Subtle dot-grid background ─────────────────────────────────────────── */
+.amrit-teams-grid-bg {
+  background-image:
+    radial-gradient(circle, #CBD5E1 1px, transparent 1px);
+  background-size: 40px 40px;
+  opacity: 0.5;
+}
+
+/* ─── SVG canvas — full height, narrow centered column ───────────────────── */
+.amrit-teams-svg-thread {
+  /* Sits in the center, full height, narrow  */
+  width: 200px;
+  height: 100%;
+  left: 50%;
+  top: 0;
+  transform: translateX(-50%);
+}
+
+/* ─── Ghost path (always visible, slate-300 base) ────────────────────────── */
+.amrit-teams-path {
+  stroke-dasharray: 900;
+  stroke-dashoffset: 900;
+  /* The ghost path fades in slightly as we begin scrolling */
+  opacity: calc(0.3 + var(--scroll-progress, 0) * 0.7);
+}
+
+/* ─── Drawn path (indigo, animates stroke-dashoffset with scroll) ─────────── */
+.amrit-teams-path-drawn {
+  stroke-dasharray: 900;
+  /* KEY FORMULA: offset shrinks from 900→0 as progress goes 0→1 */
+  stroke-dashoffset: calc(900 - (900 * var(--scroll-progress, 0)));
+  /* GPU hint — only transform and opacity cause compositing, but
+     stroke-dashoffset animates on the compositor too in modern browsers */
+  will-change: stroke-dashoffset;
+}
+
+/* ─── Typography fade-in thresholds (stepped via CSS clamp) ──────────────── */
+
+/*
+  CSS cannot do conditional logic, but we can use clamp() to create
+  stepped opacity values at precise scroll progress thresholds.
+
+  Eyebrow threshold: 0.25
+  opacity = clamp(0, (progress - 0.25) * 12, 1)
+*/
+.amrit-teams-eyebrow {
+  opacity: clamp(
+    0,
+    calc((var(--scroll-progress, 0) - 0.25) * 12),
+    1
+  );
+  transform: translateY(
+    calc((1 - clamp(0, (var(--scroll-progress, 0) - 0.25) * 12, 1)) * 16px)
+  );
+  transition: none; /* Driven by scroll, not transition */
+}
+
+/* Headline threshold: 0.35 */
+.amrit-teams-headline {
+  opacity: clamp(
+    0,
+    calc((var(--scroll-progress, 0) - 0.35) * 10),
+    1
+  );
+  transform: translateY(
+    calc((1 - clamp(0, (var(--scroll-progress, 0) - 0.35) * 10, 1)) * 24px)
+  );
+}
+
+/* Subtext threshold: 0.55 */
+.amrit-teams-subtext {
+  opacity: clamp(
+    0,
+    calc((var(--scroll-progress, 0) - 0.55) * 10),
+    1
+  );
+  transform: translateY(
+    calc((1 - clamp(0, (var(--scroll-progress, 0) - 0.55) * 10, 1)) * 16px)
+  );
+}
+
+/* CTA threshold: 0.72 */
+.amrit-teams-cta {
+  opacity: clamp(
+    0,
+    calc((var(--scroll-progress, 0) - 0.72) * 12),
+    1
+  );
+  transform: translateY(
+    calc((1 - clamp(0, (var(--scroll-progress, 0) - 0.72) * 12, 1)) * 12px)
+  );
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   AmritTeams — Amaterasu-Style Wave Transition
+   Driven by --wave-progress (0 → 1) set directly on .amrit-wave-sticky
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ─── Layer 10: The Rising Blur (Distortion) ────────────────────────────── */
+/*
+  As the wave spreads, the Hero UI underneath progressively blurs in
+  direct correlation to the expansion of the wave.
+*/
+.amrit-wave-hero {
+  z-index: 10;
+  will-change: backdrop-filter;
+  /* Progressive, rising blur tied directly to scroll */
+  backdrop-filter: blur(calc(var(--wave-progress, 0) * 80px));
+  -webkit-backdrop-filter: blur(calc(var(--wave-progress, 0) * 80px));
+}
+
+/* ─── Layer 20: The Spreading Fluid Glow ────────────────────────────────── */
+/*
+  An organic, extremely soft feathered glow.
+  91% White core, 9% Sky Blue outer edge.
+*/
+.amrit-wave-element {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 10vw;
+  height: 10vw;
+  border-radius: 50%;
+  
+  /* The extreme blur softens the radial edge entirely into an organic bloom */
+  filter: blur(4vw); 
+  
+  /* Proper 91 / 9 split over a radial plane */
+  background: radial-gradient(closest-side, #ffffff 0%, #ffffff 91%, rgba(186, 230, 253, 0.8) 95%, rgba(186, 230, 253, 0) 100%);
+  
+  z-index: 20;
+  will-change: transform, opacity;
+
+  /* Transforms from center. Scales up massively to comfortably consume all corners */
+  transform: translate(-50%, -50%) scale(calc(var(--wave-progress, 0) * 150));
+  
+  /* Instantly activates on scroll to prevent lingering dot */
+  opacity: clamp(0, calc(var(--wave-progress, 0) * 1000), 1);
+}
+
+/* ─── Layer 30: Incoming Teams UI ───────────────────────────────────────── */
+/*
+  Fades in after the wave consumes the screen (progress 0.5 -> 0.8)
+*/
+.amrit-wave-teams {
+  z-index: 30;
+  will-change: transform, opacity;
+
+  /* Opacity clamps: 0 until 0.5, 1 at 0.8 */
+  opacity: clamp(
+    0,
+    calc((var(--wave-progress, 0) - 0.5) * 3.33),
+    1
+  );
+
+  /* 
+     TELEPORT HACK: Physically translates the unclickable UI 200vh off-screen 
+     when progress < 0.5. This guarantees that its pointer-events-auto CTA 
+     can NEVER intercept clicks meant for the Hero underneath.
+     Also adds a 40px ascend effect naturally as it fades in.
+  */
+  transform: translateY(
+    calc(
+      /* Natural 40px rise effect */
+      (1 - clamp(0, calc((var(--wave-progress, 0) - 0.5) * 3.33), 1)) * 40px
+      /* Mega-translate off-screen logic (+200vh if progress < 0.5) */
+      + (clamp(0, calc((0.5 - var(--wave-progress, 0)) * 5000), 1) * 200vh)
+    )
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   AmritHero — Entrance Choreography Keyframes
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@keyframes fade-in-down {
+  0% {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in-up {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+.animate-fade-in-down {
+  animation: fade-in-down 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-fade-in {
+  animation: fade-in 1s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+
+
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Flashcard 3D Flip Utilities
+   ───────────────────────────────────────────────────────────────────────── */
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+.preserve-3d {
+  transform-style: preserve-3d;
+}
+
+.backface-hidden {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.rotate-y-180 {
+  transform: rotateY(180deg);
 }

@@ -1,5 +1,4 @@
-import { Sidebar } from "@/components/layout/sidebar"
-import { TopNav } from "@/components/layout/top-nav"
+import { DashboardClientShell } from "@/components/layout/dashboard-client-shell"
 import { createClient } from "@/lib/supabase/server"
 import { type User as AppUser } from "@/lib/types"
 
@@ -8,7 +7,7 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   const currentUser: AppUser | undefined = user ? {
@@ -21,19 +20,8 @@ export default async function DashboardLayout({
   } : undefined
 
   return (
-    <div className="grid h-screen w-full md:grid-cols-[250px_1fr] overflow-hidden bg-background text-foreground font-satoshi">
-      <aside className="hidden md:flex flex-col border-r border-border bg-muted">
-        <Sidebar currentUser={currentUser} />
-      </aside>
-
-      <main className="flex flex-col h-full overflow-y-auto relative">
-        <header className="sticky top-0 z-10 subtle-glass">
-          <TopNav />
-        </header>
-        <div className="flex-1 p-8 mx-auto w-full max-w-[900px]">
-          {children}
-        </div>
-      </main>
-    </div>
+    <DashboardClientShell currentUser={currentUser}>
+      {children}
+    </DashboardClientShell>
   )
 }

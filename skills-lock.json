@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "skills": {
+    "insforge": {
+      "source": "insforge/agent-skills",
+      "sourceType": "github",
+      "computedHash": "24d91931ae80626e814b793af1eb1dfac95024ff9bc0ece0eeaaba8c943a526b"
+    },
+    "insforge-cli": {
+      "source": "insforge/agent-skills",
+      "sourceType": "github",
+      "computedHash": "2e84a35018eb7bbb0b08b81fd789fc70cf9b1110dbd928bfd262a35e25403238"
+    },
+    "qodo-get-relevant-rules": {
+      "source": "qodo-ai/qodo-skills",
+      "sourceType": "github",
+      "computedHash": "22aac9455b04251f94d865ac8ddf1cd2f77893f8a4f7d27f397cc796e901c3a2"
+    },
+    "qodo-get-rules": {
+      "source": "qodo-ai/qodo-skills",
+      "sourceType": "github",
+      "computedHash": "fdc8ac3ee20a8ac9b04ba66eb9312ebbdb9529ff6ee1dfb9b4878076bd47dbdc"
+    },
+    "qodo-pr-resolver": {
+      "source": "qodo-ai/qodo-skills",
+      "sourceType": "github",
+      "computedHash": "3b95c87d22e99fe42bd926b9d1846dbec3e39b0af31d81ba250952f92666aebb"
+    }
+  }
+}

@@ -41,7 +41,8 @@ export function SignIn() {
     const result = await signIn(formData.email, formData.password)
 
     if (result.success) {
-      router.push(redirectUrl)
+      // Hard redirect to bypass Next.js soft-navigation router race conditions on Vercel
+      window.location.assign(redirectUrl)
     } else {
       setFormError(result.error || 'Sign in failed')
     }

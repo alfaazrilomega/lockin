@@ -4,6 +4,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { cn } from "@/lib/utils";
 import Preloader from "@/components/layout/Preloader";
+import { ToastProvider } from "@/components/ui/use-toast";
 
 const inter = Inter({
   subsets: ['latin'],
@@ -42,14 +43,16 @@ export default function RootLayout({
         playfair.variable
       )}>
         <Preloader>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="light"
-            enableSystem
-            disableTransitionOnChange
-          >
-            {children}
-          </ThemeProvider>
+          <ToastProvider>
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="light"
+              enableSystem
+              disableTransitionOnChange
+            >
+              {children}
+            </ThemeProvider>
+          </ToastProvider>
         </Preloader>
       </body>
     </html>

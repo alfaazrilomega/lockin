@@ -6,16 +6,17 @@ import { NoteDetailsClient } from "@/components/notes/note-details-client"
 export default async function NoteDetailPage({
   params,
 }: {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }) {
-  const supabase = createClient()
+  const { id } = await params
+  const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
     redirect('/')
   }
 
-  const { data: note, error } = await getNoteById(params.id)
+  const { data: note, error } = await getNoteById(id)
 
   if (error || !note) {
     redirect('/dashboard/notes')

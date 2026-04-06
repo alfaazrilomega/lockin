@@ -14,12 +14,14 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Plus, Loader2 } from "lucide-react"
-import { createProject } from "@/lib/actions/project.actions"
+import axios from "axios"
+import { useToast } from "@/components/ui/use-toast"
 
 export function NewProjectDialog({ children }: { children?: React.ReactNode }) {
   const [isOpen, setIsOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
+  const { toast } = useToast()
 
   const [formData, setFormData] = useState({
     name: "",
@@ -33,21 +35,44 @@ export function NewProjectDialog({ children }: { children?: React.ReactNode }) {
 
     setIsLoading(true)
     try {
-      const result = await createProject({
+      const response = await axios.post("/api/projects", {
         name: formData.name,
         description: formData.description,
-        deadline: formData.deadline ? new Date(formData.deadline) : undefined,
+        deadline: formData.deadline ? new Date(formData.deadline).toISOString() : undefined,
+      }, {
+        withCredentials: true
       })
+      const result = response.data
 
       if (result.success && result.data) {
         setIsOpen(false)
         router.push(`/dashboard/projects/${result.data.id}`)
+        toast({
+          title: "Success",
+          description: "Project created successfully",
+        })
       } else {
-        alert(result.error || "Failed to create project")
+        toast({
+          title: "Error",
+          description: result.error || "Failed to create project",
+          variant: "destructive",
+        })
       }
     } catch (error) {
       console.error(error)
-      alert("An unexpected error occurred")
+      if (axios.isAxiosError(error)) {
+        toast({
+          title: "Error",
+          description: error.response?.data?.error || "An unexpected error occurred",
+          variant: "destructive",
+        })
+      } else {
+        toast({
+          title: "Error",
+          description: "An unexpected error occurred",
+          variant: "destructive",
+        })
+      }
     } finally {
       setIsLoading(false)
     }

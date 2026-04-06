@@ -1,3 +1,17 @@
+export enum TaskStatus {
+  TODO = 'TODO',
+  IN_PROGRESS = 'IN_PROGRESS',
+  REVIEW = 'REVIEW',
+  REVISION = 'REVISION',
+  DONE = 'DONE',
+}
+
+export enum PermissionLevel {
+  VIEWER = 'VIEWER',
+  EDITOR = 'EDITOR',
+  LEADER = 'LEADER',
+}
+
 export interface User {
   id: string
   email: string
@@ -28,7 +42,7 @@ export interface Project {
 export interface ProjectMember {
   id: string
   roleName: string
-  permission: 'LEADER' | 'EDITOR' | 'VIEWER'
+  permission: PermissionLevel
   joinedAt: Date
   projectId: string
   userId: string
@@ -46,19 +60,14 @@ export interface Task {
   proofNotes: string | null
   feedback: string | null
   projectId: string
+  order: number
+  workspaceId?: string
   assigneeId: string | null
   project?: Project
+  workspace?: Record<string, unknown> | null
   assignee?: User | null
   createdAt: Date
   updatedAt: Date
-}
-
-export enum TaskStatus {
-  TODO = 'TODO',
-  IN_PROGRESS = 'IN_PROGRESS',
-  REVIEW = 'REVIEW',
-  REVISION = 'REVISION',
-  DONE = 'DONE'
 }
 
 export interface Note {
@@ -165,4 +174,94 @@ export interface AISummaryRequest {
 export interface FlashcardGenerationResult {
   front: string
   back: string
+}
+
+// Prisma Query Result Types (for DTO transformations)
+export interface PrismaProjectResult {
+  id: string
+  name: string
+  description: string | null
+  progress: number
+  deadline: Date | null
+  createdAt: Date
+  updatedAt: Date
+  ownerId: string
+  _count?: { tasks: number }
+  owner?: User
+  members?: ProjectMember[]
+  tasks?: Task[]
+  notes?: Note[]
+}
+
+export interface PrismaTaskResult {
+  id: string
+  title: string
+  description: string | null
+  status: TaskStatus
+  deadline: Date | null
+  proofUrl: string | null
+  proofNotes: string | null
+  feedback: string | null
+  projectId: string
+  order: number
+  workspaceId?: string
+  assigneeId: string | null
+  project?: Project
+  workspace?: Record<string, unknown> | null
+  assignee?: User | null
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface PrismaNoteResult {
+  id: string
+  title: string
+  content: string | null
+  audioUrl: string | null
+  transcript: string | null
+  summary: string | null
+  meetingDate: Date | null
+  authorId: string
+  projectId: string | null
+  author?: User
+  project?: Project | null
+  flashcardDecks?: FlashcardDeck[]
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface PrismaFlashcardDeckResult {
+  id: string
+  title: string
+  description: string | null
+  authorId: string
+  noteId: string | null
+  author?: User
+  note?: Note | null
+  cards?: PrismaFlashcardResult[]
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface PrismaFlashcardResult {
+  id: string
+  front: string
+  back: string
+  nextReview: Date
+  interval: number
+  easeFactor: number
+  repetitions: number
+  deckId: string
+  deck?: FlashcardDeck
+}
+
+export interface PrismaProjectMemberResult {
+  id: string
+  roleName: string
+  permission: PermissionLevel
+  joinedAt: Date
+  projectId: string
+  userId: string
+  project?: Project
+  user: User
 }

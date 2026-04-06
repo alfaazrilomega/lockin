@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
 import { 
   Dialog, 
   DialogContent, 
@@ -14,24 +13,30 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Plus, Loader2 } from "lucide-react"
-import { createTask } from "@/lib/actions/task.actions"
-import { TaskStatus } from "@/lib/types"
+import axios from "axios"
+import { useToast } from "@/components/ui/use-toast"
 
 interface NewTaskDialogProps {
   projectId: string
   children?: React.ReactNode
+  onSuccess?: () => void
 }
 
-export function NewTaskDialog({ projectId, children }: NewTaskDialogProps) {
+export function NewTaskDialog({ projectId, children, onSuccess }: NewTaskDialogProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const router = useRouter()
+  const { toast } = useToast()
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    title: string
+    description: string
+    deadline: string
+    status: string
+  }>({
     title: "",
     description: "",
     deadline: "",
-    status: TaskStatus.TODO,
+    status: "TODO",
   })
 
   async function handleSubmit(e: React.FormEvent) {
@@ -40,24 +45,52 @@ export function NewTaskDialog({ projectId, children }: NewTaskDialogProps) {
 
     setIsLoading(true)
     try {
-      const result = await createTask({
+      const response = await axios.post('/api/tasks', {
         title: formData.title,
         description: formData.description,
         status: formData.status,
-        deadline: formData.deadline ? new Date(formData.deadline) : undefined,
+        deadline: formData.deadline ? new Date(formData.deadline).toISOString() : undefined,
         projectId,
+      }, {
+        withCredentials: true
       })
 
-      if (result.success) {
+      if (response.data.success) {
         setIsOpen(false)
-        setFormData({ title: "", description: "", deadline: "", status: TaskStatus.TODO })
-        router.refresh()
+        setFormData({ title: "", description: "", deadline: "", status: "TODO" })
+        
+        toast({
+          title: "Success",
+          description: "Task created successfully",
+        })
+
+        if (onSuccess) {
+          onSuccess()
+        } else {
+          window.location.reload()
+        }
       } else {
-        alert(result.error || "Failed to create task")
+        toast({
+          title: "Error",
+          description: response.data.error || "Failed to create task",
+          variant: "destructive",
+        })
       }
     } catch (error) {
       console.error(error)
-      alert("An unexpected error occurred")
+      if (axios.isAxiosError(error)) {
+        toast({
+          title: "Error",
+          description: error.response?.data?.error || "An unexpected error occurred",
+          variant: "destructive",
+        })
+      } else {
+        toast({
+          title: "Error",
+          description: "An unexpected error occurred",
+          variant: "destructive",
+        })
+      }
     } finally {
       setIsLoading(false)
     }
@@ -105,9 +138,9 @@ export function NewTaskDialog({ projectId, children }: NewTaskDialogProps) {
                   id="status"
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                   value={formData.status}
-                  onChange={(e) => setFormData({ ...formData, status: e.target.value as TaskStatus })}
+                  onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                 >
-                  {Object.values(TaskStatus).map((status) => (
+                  {["TODO", "IN_PROGRESS", "REVIEW", "DONE"].map((status) => (
                     <option key={status} value={status}>
                       {status}
                     </option>
