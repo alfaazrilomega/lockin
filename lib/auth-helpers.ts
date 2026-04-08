@@ -214,3 +214,74 @@ export async function authorizeDeckModify(deckId: string, userId: string): Promi
     throw new Error('Unauthorized: Only the author can modify this deck');
   }
 }
+
+// ─────────────────────────────────────────────────────────
+// Workspace-level auth helpers
+// ─────────────────────────────────────────────────────────
+
+/**
+ * Checks if a user is the owner of a workspace.
+ */
+export async function isWorkspaceOwner(workspaceId: string, userId: string): Promise<boolean> {
+  const workspace = await prisma.workspace.findUnique({
+    where: { id: workspaceId },
+    select: { ownerId: true },
+  });
+  return workspace?.ownerId === userId;
+}
+
+/**
+ * Checks if a user is a member OR owner of a workspace.
+ */
+export async function isWorkspaceMember(workspaceId: string, userId: string): Promise<boolean> {
+  const workspace = await prisma.workspace.findUnique({
+    where: { id: workspaceId },
+    select: {
+      ownerId: true,
+      members: { where: { userId } },
+    },
+  });
+  if (!workspace) return false;
+  return workspace.ownerId === userId || workspace.members.length > 0;
+}
+
+/**
+ * Throws an error if the user is NOT the owner of the workspace.
+ * Use this to protect owner-only actions (invite, kick, etc).
+ */
+export async function authorizeWorkspaceOwner(workspaceId: string, userId: string): Promise<void> {
+  const owner = await isWorkspaceOwner(workspaceId, userId);
+  if (!owner) {
+    throw new Error('Unauthorized: Only the workspace owner can perform this action');
+  }
+}
+
+/**
+ * Throws an error if the user is NOT a member or owner of the workspace.
+ */
+export async function authorizeWorkspaceAccess(workspaceId: string, userId: string): Promise<void> {
+  const member = await isWorkspaceMember(workspaceId, userId);
+  if (!member) {
+    throw new Error('Unauthorized: You are not a member of this workspace');
+  }
+}
+
+/**
+ * Returns the role of a user in a workspace: \'OWNER\', \'MEMBER\', or null (no access).
+ */
+export async function getWorkspaceRole(
+  workspaceId: string,
+  userId: string
+): Promise<'OWNER' | 'MEMBER' | null> {
+  const workspace = await prisma.workspace.findUnique({
+    where: { id: workspaceId },
+    select: {
+      ownerId: true,
+      members: { where: { userId } },
+    },
+  });
+  if (!workspace) return null;
+  if (workspace.ownerId === userId) return 'OWNER';
+  if (workspace.members.length > 0) return 'MEMBER';
+  return null;
+}

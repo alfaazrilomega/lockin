@@ -321,10 +321,18 @@ export async function deleteProject(projectId: string): Promise<{ success: boole
   try {
     const authUser = await requireUser()
 
-    // Verify project exists and user has modify permission
-    const hasPermission = await isProjectMember(projectId, authUser.id)
-    if (!hasPermission) {
-      return { success: false, error: 'Unauthorized: You cannot delete this project' }
+    // Only the project owner can delete
+    const project = await prisma.project.findUnique({
+      where: { id: projectId },
+      select: { ownerId: true },
+    })
+
+    if (!project) {
+      return { success: false, error: 'Project not found' }
+    }
+
+    if (project.ownerId !== authUser.id) {
+      return { success: false, error: 'Unauthorized: Only the project owner can delete this project' }
     }
 
     await prisma.project.delete({
@@ -343,3 +351,4 @@ export async function deleteProject(projectId: string): Promise<{ success: boole
     return { success: false, error: 'Failed to delete project' }
   }
 }
+

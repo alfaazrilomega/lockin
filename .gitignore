@@ -62,4 +62,7 @@ everything-claude-code/
 .trae
 .windsurf
 
-.vercel
+# local dev scripts & logs
+scripts/
+tsc-output.txt
+tsc.log

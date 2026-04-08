@@ -12,6 +12,9 @@ export enum PermissionLevel {
   LEADER = 'LEADER',
 }
 
+// Role on a workspace: OWNER (creator) or MEMBER (invited)
+export type WorkspaceRole = 'OWNER' | 'MEMBER'
+
 export interface User {
   id: string
   email: string
@@ -48,6 +51,45 @@ export interface ProjectMember {
   userId: string
   project?: Project
   user: User
+}
+
+export interface Workspace {
+  id: string
+  name: string
+  slug: string
+  description: string | null
+  ownerId: string
+  owner?: User
+  members?: WorkspaceMember[]
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface WorkspaceMember {
+  id: string
+  permission: PermissionLevel
+  joinedAt: Date
+  workspaceId: string
+  userId: string
+  workspace?: Workspace
+  user: User
+}
+
+// DTO returned by the API — includes computed role fields
+export interface WorkspaceMemberDTO {
+  id: string | null          // null when entry represents the owner (not in members table)
+  userId: string
+  name: string
+  email: string
+  avatarUrl: string | null
+  permission: PermissionLevel | null  // null for owner
+  isOwner: boolean
+  joinedAt: Date | null      // null for owner
+}
+
+export interface WorkspaceMembersResponse {
+  members: WorkspaceMemberDTO[]
+  currentUserRole: WorkspaceRole
 }
 
 export interface Task {
@@ -264,4 +306,43 @@ export interface PrismaProjectMemberResult {
   userId: string
   project?: Project
   user: User
+}
+
+export interface PrismaWorkspaceResult {
+  id: string
+  name: string
+  slug: string
+  description: string | null
+  ownerId: string
+  createdAt: Date
+  updatedAt: Date
+  owner?: User
+  members?: PrismaWorkspaceMemberResult[]
+}
+
+export interface PrismaWorkspaceMemberResult {
+  id: string
+  permission: PermissionLevel
+  joinedAt: Date
+  workspaceId: string
+  userId: string
+  workspace?: Workspace
+  user: User
+}
+
+export interface PrismaSharedResourceResult {
+  id: string
+  itemType: 'PROJECT' | 'NOTE'
+  senderId: string
+  receiverId: string
+  status: 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'CANCELLED'
+  permission: 'VIEW' | 'COPY'
+  projectId: string | null
+  noteId: string | null
+  createdAt: Date
+  updatedAt: Date
+  sender?: User
+  receiver?: User
+  project?: Project | null
+  note?: Note | null
 }

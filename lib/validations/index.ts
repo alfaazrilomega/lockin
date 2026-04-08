@@ -148,7 +148,7 @@ export const createFlashcardSchema = z.object({
     .min(1, 'Deck ID is required'),
 });
 
-// Member invitation schema
+// Member invitation schema (Project level)
 export const addMemberSchema = z.object({
   userId: z.string()
     .uuid('User ID must be a valid UUID'),
@@ -156,4 +156,36 @@ export const addMemberSchema = z.object({
     .min(1, 'Role name is required')
     .max(50, 'Role name must be less than 50 characters'),
   permission: z.enum(['LEADER', 'EDITOR', 'VIEWER']),
+});
+
+// Workspace member schemas
+export const addWorkspaceMemberSchema = z.object({
+  userId: z.string()
+    .uuid('User ID must be a valid UUID'),
+  permission: z.enum(['LEADER', 'EDITOR', 'VIEWER'])
+    .default('EDITOR'),
+});
+
+export const inviteWorkspaceMemberByEmailSchema = z.object({
+  email: z.string()
+    .email('Please provide a valid email address')
+    .toLowerCase(),
+  permission: z.enum(['LEADER', 'EDITOR', 'VIEWER'])
+    .default('EDITOR'),
+});
+
+export const updateWorkspaceMemberSchema = z.object({
+  permission: z.enum(['LEADER', 'EDITOR', 'VIEWER']),
+});
+
+// Share schemas
+export const createShareSchema = z.object({
+  itemType: z.enum(['PROJECT', 'NOTE']),
+  itemId: z.string().min(1, 'Item ID is required'),
+  receiverId: z.string().min(1, 'Receiver ID is required'),
+  permission: z.enum(['VIEW', 'COPY']).default('VIEW'),
+});
+
+export const updateShareSchema = z.object({
+  action: z.enum(['ACCEPT', 'REJECT', 'CANCEL']),
 });

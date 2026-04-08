@@ -24,6 +24,9 @@ model User {
   notes         Note[]
   flashcards    FlashcardDeck[]
 
+  sentShares       SharedResource[] @relation("SentShares")
+  receivedShares   SharedResource[] @relation("ReceivedShares")
+
   @@map("users")
 }
 
@@ -45,6 +48,7 @@ model Project {
   members ProjectMember[]
   tasks   Task[]
   notes   Note[]
+  shares  SharedResource[] @relation("SharedProjects")
 
   @@map("projects")
 }
@@ -156,6 +160,7 @@ model Note {
   project Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   flashcardDecks FlashcardDeck[]
+  shares         SharedResource[] @relation("SharedNotes")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -196,4 +201,45 @@ model Flashcard {
   deck   FlashcardDeck @relation(fields: [deckId], references: [id], onDelete: Cascade)
 
   @@map("flashcards")
+}
+
+enum ShareItemType {
+  PROJECT
+  NOTE
+}
+
+enum ShareStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  CANCELLED
+}
+
+enum SharePermission {
+  VIEW
+  COPY
+}
+
+model SharedResource {
+  id          String          @id @default(uuid())
+  itemType    ShareItemType   @map("item_type")
+  
+  senderId    String          @map("sender_id")
+  receiverId  String          @map("receiver_id")
+  
+  status      ShareStatus     @default(PENDING)
+  permission  SharePermission @default(VIEW)
+
+  projectId   String?         @map("project_id")
+  noteId      String?         @map("note_id")
+
+  createdAt   DateTime        @default(now()) @map("created_at")
+  updatedAt   DateTime        @updatedAt @map("updated_at")
+
+  sender      User            @relation("SentShares", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver    User            @relation("ReceivedShares", fields: [receiverId], references: [id], onDelete: Cascade)
+  project     Project?        @relation("SharedProjects", fields: [projectId], references: [id], onDelete: Cascade)
+  note        Note?           @relation("SharedNotes", fields: [noteId], references: [id], onDelete: Cascade)
+
+  @@map("shared_resources")
 }
