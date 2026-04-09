@@ -6,6 +6,7 @@ import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
 import { FlowHoverButton } from "@/components/ui/flow-hover-button"
 import { ArrowRight } from "lucide-react"
+import { VideoModal } from "@/components/landing/video-modal"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Project Data — LockIn features as "projects"
@@ -68,6 +69,7 @@ export default function FeaturedSection() {
   const [activeProject, setActiveProject] = useState(projects[0])
   const [direction, setDirection] = useState<1 | -1>(1)
   const [isPlayingHovered, setIsPlayingHovered] = useState(false)
+  const [isVideoModalOpen, setIsVideoModalOpen] = useState(false)
 
   const posRef = useRef<HTMLDivElement>(null)
   const sectionRef = useRef<HTMLDivElement>(null)
@@ -197,7 +199,7 @@ export default function FeaturedSection() {
 
         <div className="md:col-span-4 flex flex-col justify-end pb-4 pl-2 md:pl-4 xl:pl-8">
           <p className="font-['Aeonik',sans-serif] font-normal text-[18px] md:text-[20px] leading-[1.6] text-[#1c1629]/90 mb-8 md:mb-12">
-            {"We combine design, motion, 3D, and development to create digital experiences that feel visually striking and technically seamless.".split(" ").map((word, i, arr) => (
+            {"LockIn brings your most ambitious projects to life with an AI-driven workspace where intelligent task management, real-time collaboration, and limitless productivity converge.".split(" ").map((word, i, arr) => (
               <span key={i}>
                 <span className="inline-block overflow-hidden pb-1 -mb-1 pt-1 -mt-1">
                   <span
@@ -422,6 +424,7 @@ export default function FeaturedSection() {
                   className="relative w-24 h-14 md:w-40 md:h-24 bg-white rounded-full flex items-center justify-center overflow-hidden transition-all duration-500 ease-out hover:scale-[1.05] hover:shadow-2xl cursor-pointer"
                   onMouseEnter={() => setIsPlayingHovered(true)}
                   onMouseLeave={() => setIsPlayingHovered(false)}
+                  onClick={() => setIsVideoModalOpen(true)}
                 >
                   {/* Blue sweep background from bottom */}
                   <div className={`absolute inset-0 bg-[#2383E2] transition-transform duration-500 ease-[cubic-bezier(0.19,1,0.22,1)] ${isPlayingHovered ? 'translate-y-0' : 'translate-y-[101%]'}`} />
@@ -561,6 +564,13 @@ export default function FeaturedSection() {
 
         </div>
       </div>
+
+      {/* Video Modal Overlay */}
+      <VideoModal 
+        isOpen={isVideoModalOpen} 
+        onClose={() => setIsVideoModalOpen(false)} 
+        videoSrc="/video/Video-Showcase-Test.mp4" 
+      />
     </section>
   )
 }

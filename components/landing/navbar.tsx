@@ -110,6 +110,7 @@ export default function Navbar({ delay = 0 }: { delay?: number }) {
     return (
         <div
             ref={navRef}
+            id="main-navbar"
             className={`${actualDelay > 0 ? 'animate-fade-in-down' : ''} fixed top-0 inset-x-0 z-50 flex items-center justify-between px-6 md:px-10 pointer-events-auto transition-all duration-500 will-change-[padding,background-color,backdrop-filter] ${isScrolled
                 ? "py-4 backdrop-blur-lg bg-white/10"
                 : "py-6 bg-transparent"

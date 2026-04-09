@@ -1,6 +1,7 @@
 "use client"
 
 import { useRef, useEffect, useState } from "react"
+import { toast } from "sonner"
 
 // Letter-by-letter stagger hover — same as "Learn More About Our Agents" button
 // Uses named group 'group/btn' to scope hover strictly to the button, not the parent section
@@ -40,6 +41,34 @@ export default function ContactFormSection() {
   const [preloaderFinished, setPreloaderFinished] = useState(false)
   const [isInView, setIsInView] = useState(false)
   const [hasStarted, setHasStarted] = useState(false)
+  
+  // Form State
+  const [formData, setFormData] = useState({ name: "", email: "", message: "" })
+  const [isLoading, setIsLoading] = useState(false)
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsLoading(true)
+
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      })
+
+      if (res.ok) {
+        toast.success("Message sent successfully! We will get back to you soon.")
+        setFormData({ name: "", email: "", message: "" })
+      } else {
+        toast.error("Failed to send message. Please try again.")
+      }
+    } catch (error) {
+      toast.error("An error occurred.")
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   useEffect(() => {
     const isPreloaderDone = typeof window !== 'undefined' && (window as Window & { __preloaderDone?: boolean }).__preloaderDone
@@ -129,7 +158,7 @@ export default function ContactFormSection() {
         </div>
 
         {/* Minimalist Form */}
-        <form className="max-w-xl flex flex-col gap-12" onSubmit={(e) => e.preventDefault()}>
+        <form className="max-w-xl flex flex-col gap-12" onSubmit={handleSubmit}>
           {[
             { id: "name", label: "Enter your name*", type: "text" },
             { id: "email", label: "Enter your email*", type: "email" },
@@ -147,18 +176,24 @@ export default function ContactFormSection() {
                   <textarea 
                     rows={2}
                     required
-                    className="w-full bg-transparent border-b border-black/20 py-3 text-lg font-satoshi text-black focus:outline-none focus:border-black transition-colors peer placeholder-transparent resize-y"
+                    value={formData[field.id as keyof typeof formData]}
+                    onChange={(e) => setFormData(prev => ({ ...prev, [field.id]: e.target.value }))}
+                    disabled={isLoading}
+                    className="w-full bg-transparent border-b border-black/20 py-3 text-lg font-satoshi text-black focus:outline-none focus:border-black transition-colors peer placeholder-transparent resize-y disabled:opacity-50"
                     placeholder={field.label}
                   />
                 ) : (
                   <input 
                     type={field.type}
                     required
-                    className="w-full bg-transparent border-b border-black/20 py-3 text-lg font-satoshi text-black focus:outline-none focus:border-black transition-colors peer placeholder-transparent"
+                    value={formData[field.id as keyof typeof formData]}
+                    onChange={(e) => setFormData(prev => ({ ...prev, [field.id]: e.target.value }))}
+                    disabled={isLoading}
+                    className="w-full bg-transparent border-b border-black/20 py-3 text-lg font-satoshi text-black focus:outline-none focus:border-black transition-colors peer placeholder-transparent disabled:opacity-50"
                     placeholder={field.label}
                   />
                 )}
-                <label className="absolute left-0 top-3 text-black/60 font-satoshi text-lg transition-all peer-focus:-top-6 peer-focus:text-sm peer-focus:text-black peer-valid:-top-6 peer-valid:text-sm peer-valid:text-black pointer-events-none">
+                <label className="absolute left-0 top-3 text-black/60 font-satoshi text-lg transition-all peer-focus:-top-6 peer-focus:text-sm peer-focus:text-black peer-[:not(:placeholder-shown)]:-top-6 peer-[:not(:placeholder-shown)]:text-sm peer-[:not(:placeholder-shown)]:text-black pointer-events-none">
                   {field.label}
                 </label>
               </div>
@@ -172,9 +207,10 @@ export default function ContactFormSection() {
             >
               <button 
                 type="submit"
-                className="group/btn mt-4 w-full bg-[#111] hover:bg-black text-white font-satoshi font-semibold tracking-wide py-5 rounded-[2rem] transition-colors duration-300 active:scale-[0.98] shadow-lg"
+                disabled={isLoading}
+                className="group/btn mt-4 w-full bg-[#111] hover:bg-black text-white font-satoshi font-semibold tracking-wide py-5 rounded-[2rem] transition-colors duration-300 active:scale-[0.98] shadow-lg disabled:opacity-70"
               >
-                <StaggeredHoverText text="HIT ME UP!" />
+                <StaggeredHoverText text={isLoading ? "SENDING..." : "HIT ME UP!"} />
               </button>
             </div>
           </div>
