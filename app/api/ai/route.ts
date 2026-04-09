@@ -3,6 +3,10 @@
 import { NextResponse } from 'next/server'
 import { openrouter } from '@/lib/openrouter'
 
+// Prevent Next.js from statically evaluating this route at build time.
+// This route requires runtime env vars (OPENROUTER_API_KEY).
+export const dynamic = 'force-dynamic'
+
 export async function POST(request: Request) {
   try {
     const { type, content, model = 'minimax/minimax-m2.5:free' } = await request.json()

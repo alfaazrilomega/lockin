@@ -1,11 +1,32 @@
 import { OpenAI } from 'openai'
 
-export const openrouter = new OpenAI({
-  baseURL: 'https://openrouter.ai/api/v1',
-  apiKey: process.env.OPENROUTER_API_KEY,
-  defaultHeaders: {
-    'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL,
-    'X-Title': 'LockIn',
+// Lazy client — only instantiated on first call, NEVER at module load time.
+// This prevents Next.js build from crashing when env vars are not set.
+let _client: OpenAI | null = null
+
+function getClient(): OpenAI {
+  if (!_client) {
+    if (!process.env.OPENROUTER_API_KEY) {
+      throw new Error('OPENROUTER_API_KEY environment variable is not set.')
+    }
+    _client = new OpenAI({
+      baseURL: 'https://openrouter.ai/api/v1',
+      apiKey: process.env.OPENROUTER_API_KEY,
+      defaultHeaders: {
+        'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL,
+        'X-Title': 'LockIn',
+      },
+    })
+  }
+  return _client
+}
+
+/** Use this everywhere instead of the old `openrouter` export */
+export const openrouter = new Proxy({} as OpenAI, {
+  get(_target, prop) {
+    const client = getClient()
+    const value = (client as unknown as Record<string | symbol, unknown>)[prop]
+    return typeof value === 'function' ? value.bind(client) : value
   },
 })
 
