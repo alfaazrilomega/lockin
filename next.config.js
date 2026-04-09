@@ -7,6 +7,14 @@ const nextConfig = {
   },
   // Allow Turbopack/Webpack to bundle the pure-ESM @chenglou/pretext package
   transpilePackages: ["@chenglou/pretext"],
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+      },
+    ],
+  },
 }
 
 module.exports = nextConfig

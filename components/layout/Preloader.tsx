@@ -158,6 +158,9 @@ export default function Preloader({ children }: PreloaderProps) {
     addTimer(() => {
       setPhase('done');
       document.body.style.overflow = '';
+      if (typeof window !== 'undefined') {
+          (window as any).__preloaderDone = true;
+      }
     }, PHASE1_START_DELAY + PROGRESS_TOTAL + EXIT_DELAY + EXIT_DURATION);
 
     return () => {

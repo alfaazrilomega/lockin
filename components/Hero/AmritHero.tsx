@@ -1,28 +1,97 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { useAuth } from "@/hooks/use-auth";
-import { User, Settings, LogOut } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-    Popover,
-    PopoverBody,
-    PopoverContent,
-    PopoverDescription,
-    PopoverHeader,
-    PopoverTitle,
-    PopoverTrigger,
-    PopoverFooter,
-} from "@/components/ui/popover";
+import Navbar from "@/components/landing/navbar";
 
-interface SupabaseAuthUser {
-    email?: string;
-    user_metadata?: { full_name?: string; avatar_url?: string };
-}
+import { StaggeredHoverText } from "@/components/shared/staggered-hover-text";
+
+const ScrollAnimatedStat = ({ endValue, suffix, label, delayMs, isFloat = false, baseDelayOffset = 0 }: { endValue: number, suffix: React.ReactNode, label: string, delayMs: number, isFloat?: boolean, baseDelayOffset?: number }) => {
+  const [count, setCount] = useState(0);
+  const [isVisible, setIsVisible] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const [hasInitialLoaded, setHasInitialLoaded] = useState(false);
+
+  useEffect(() => {
+    // If we've finished the initial cinematic delay (baseDelayOffset), mark as loaded
+    const timer = setTimeout(() => setHasInitialLoaded(true), baseDelayOffset * 1000 + 100);
+    return () => clearTimeout(timer);
+  }, [baseDelayOffset]);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.intersectionRatio > 0.1) setIsVisible(true);
+      else if (entry.intersectionRatio === 0) setIsVisible(false);
+    }, { threshold: [0, 0.1] });
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!isVisible) {
+      setCount(0);
+      return;
+    }
+
+    const easeOutExpo = (t: number) => t === 1 ? 1 : 1 - Math.pow(2, -10 * t);
+    let startTime: number;
+    let rAF: number;
+    
+    // Calculate the actual delay: 
+    // If not first load, use a fast reveal (100ms + incremental offset)
+    // If first load, use the full cinematic delayMs
+    const incrementalOffset = delayMs - 4600; // e.g., 4600 -> 0, 4700 -> 100
+    const actualDelay = hasInitialLoaded ? (100 + incrementalOffset) : delayMs;
+
+    const timer = setTimeout(() => {
+      const tick = (time: number) => {
+        if (!startTime) startTime = time;
+        const progress = Math.min((time - startTime) / 2000, 1);
+        setCount(easeOutExpo(progress) * endValue);
+        if (progress < 1) {
+          rAF = requestAnimationFrame(tick);
+        }
+      };
+      rAF = requestAnimationFrame(tick);
+    }, actualDelay);
+
+    return () => {
+      clearTimeout(timer);
+      if (rAF) cancelAnimationFrame(rAF);
+    };
+  }, [isVisible, endValue, delayMs, hasInitialLoaded]);
+
+  const incrementalOffset = delayMs - 4600;
+  const actualDelay = hasInitialLoaded ? (100 + incrementalOffset) : delayMs;
+
+  return (
+    <div 
+      ref={ref} 
+      className={`flex flex-col gap-1 transition-all duration-1000 ease-[cubic-bezier(0.16,1,0.3,1)] ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`} 
+      style={{ transitionDelay: `${actualDelay}ms` }}
+    >
+        <h3 className="font-outfit text-3xl sm:text-4xl font-bold text-slate-800 tracking-tight flex items-baseline">
+          {isFloat ? count.toFixed(1) : Math.floor(count)}
+          <span className="text-slate-400">{suffix}</span>
+        </h3>
+        <p className="font-satoshi text-[10px] font-medium text-slate-500 tracking-[0.2em] uppercase mt-1 overflow-hidden">
+          <span className="flex">
+            {label.split("").map((char, i) => (
+              <span
+                key={i}
+                className={`inline-block transition-transform duration-[0.6s] ease-[cubic-bezier(0.16,1,0.3,1)] ${isVisible ? "translate-y-0" : "translate-y-[120%]"}`}
+                style={{ transitionDelay: `${actualDelay + (i * 15)}ms` }}
+              >
+                {char === " " ? "\u00A0" : char}
+              </span>
+            ))}
+          </span>
+        </p>
+    </div>
+  );
+};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // chief-architect-agent Notes:
@@ -42,107 +111,20 @@ interface SupabaseAuthUser {
 // ─────────────────────────────────────────────────────────────────────────────
 
 const AmritHero = () => {
-    const { user, loading, signOut } = useAuth();
-    const [isScrolled, setIsScrolled] = useState(false);
+    // Simplified logic, Navbar handles its own scroll logic and state.
+    const [baseDelay, setBaseDelay] = useState(4.5);
 
     useEffect(() => {
-        const handleScroll = () => {
-            setIsScrolled(window.scrollY > 20);
-        };
-        window.addEventListener("scroll", handleScroll);
-        return () => window.removeEventListener("scroll", handleScroll);
+        if (typeof window !== 'undefined' && (window as any).__preloaderDone) {
+            setBaseDelay(0);
+        }
     }, []);
 
     return (
         <section className="relative h-[100svh] w-full overflow-hidden bg-white font-sans text-black">
-        
-            {/* ─── FIXED NAVBAR (z-50) ─────────────────────────────────────── */}
-            <div className="animate-fade-in-down fixed top-0 inset-x-0 z-50 flex items-center justify-between p-6 md:p-10 pointer-events-auto transition-all duration-500" style={{ animationDelay: '4.5s' }}>
-                
-                {/* Logo */}
-                <Link href="/" className="flex items-center gap-2 group flex-shrink-0">
-                    <div className="h-8 w-8 text-black transition-transform duration-500 ease-out hover:scale-105 active:scale-95">
-                        <svg 
-                            viewBox="0 0 24 26" 
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="h-full w-full fill-current"
-                        >
-                            <path d="M 18.229 15.111 L 23.201 7.527 C 24.749 5.172 23.974 1.991 21.518 0.621 C 17.877 -1.409 13.559 1.844 14.479 5.926 L 16.413 14.508 C 16.418 14.54 16.423 14.573 16.428 14.607 C 16.511 14.939 16.961 16.482 16.588 17.583 C 15.746 20.071 12.335 20.429 10.098 19.18 C 9.555 18.81 8.572 17.97 8.049 16.479 C 7.981 16.285 7.913 16.124 7.846 15.992 L 7.846 15.992 L 5.641 10.356 C 4.746 8.067 1.615 7.832 0.392 9.962 C -0.405 11.349 0.052 13.123 1.419 13.947 L 7.445 17.583 L 7.445 17.583 C 7.924 17.904 8.793 18.587 9.243 19.563 L 10.82 23.595 C 12.514 27.925 18.985 25.924 17.962 21.385 L 17.464 18.841 C 17.373 18.305 17.416 17.69 17.485 17.2 C 17.571 16.592 17.79 16.016 18.055 15.463 C 18.142 15.281 18.213 15.134 18.229 15.111 Z" />
-                            <path d="M 5.813 23.069 C 5.813 24.688 4.511 26 2.906 26 C 1.301 26 0 24.688 0 23.069 C 0 21.45 1.301 20.137 2.906 20.137 C 4.511 20.137 5.813 21.45 5.813 23.069 Z" />
-                        </svg>
-                    </div>
-                </Link>
 
-                {/* Center glass pill (Dynamic Scroll State) */}
-                <div className={`hidden lg:flex items-center gap-10 rounded-full px-10 py-3.5 transition-all duration-500 border absolute left-1/2 -translate-x-1/2 ${
-                    isScrolled 
-                        ? "bg-white/20 border-white/40 backdrop-blur-md shadow-sm"
-                        : "bg-transparent border-transparent backdrop-blur-none shadow-none"
-                }`}>
-                    {[
-                        { name: "Features", href: "#features" },
-                        { name: "Contact", href: "/contact" },
-                        { name: "Workspace", href: "/dashboard" },
-                    ].map((item) => (
-                        <Link key={item.name} href={item.href} className="text-sm font-medium text-slate-800 hover:text-black transition-colors">
-                            {item.name}
-                        </Link>
-                    ))}
-                </div>
-
-                {/* Auth */}
-                <div className="flex items-center gap-4 sm:gap-6 flex-shrink-0">
-                    {!loading && user ? (
-                        <Popover>
-                            <PopoverTrigger asChild>
-                                <Button variant="ghost" className="h-10 w-10 rounded-full p-0 flex-shrink-0 cursor-pointer">
-                                    <Avatar className="h-10 w-10 ring-2 ring-white/60 hover:ring-white transition-all shadow-sm">
-                                        <AvatarImage src={`https://avatar.vercel.sh/${user.email}`} className="object-cover" />
-                                        <AvatarFallback className="bg-slate-100 text-slate-800 font-semibold text-sm">
-                                            {(user as SupabaseAuthUser).user_metadata?.full_name?.charAt(0)?.toUpperCase() || user.email?.charAt(0)?.toUpperCase() || "U"}
-                                        </AvatarFallback>
-                                    </Avatar>
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-64 z-[60] bg-white/90 backdrop-blur-xl border border-slate-200/50 text-black shadow-xl rounded-xl pointer-events-auto">
-                                <PopoverHeader className="border-black/5">
-                                    <div className="flex items-center space-x-3">
-                                        <Avatar className="h-10 w-10 border border-black/5">
-                                            <AvatarImage src={`https://avatar.vercel.sh/${user.email}`} className="object-cover" />
-                                            <AvatarFallback className="bg-slate-100 text-slate-800 font-semibold text-sm">
-                                                {(user as SupabaseAuthUser).user_metadata?.full_name?.charAt(0)?.toUpperCase() || user.email?.charAt(0)?.toUpperCase() || "U"}
-                                            </AvatarFallback>
-                                        </Avatar>
-                                        <div>
-                                            <PopoverTitle className="text-black font-semibold">{(user as SupabaseAuthUser).user_metadata?.full_name || "User Profile"}</PopoverTitle>
-                                            <PopoverDescription className="text-xs text-black/60">{user.email}</PopoverDescription>
-                                        </div>
-                                    </div>
-                                </PopoverHeader>
-                                <PopoverBody className="space-y-1 px-2 py-1 mt-2">
-                                    <Button variant="ghost" className="w-full justify-start text-black/70 hover:text-black hover:bg-black/5 transition-colors" size="sm" asChild>
-                                        <Link href="/dashboard"><User className="mr-2 h-4 w-4" />View Profile</Link>
-                                    </Button>
-                                    <Button variant="ghost" className="w-full justify-start text-black/70 hover:text-black hover:bg-black/5 transition-colors" size="sm" asChild>
-                                        <Link href="/dashboard/settings"><Settings className="mr-2 h-4 w-4" />Settings</Link>
-                                    </Button>
-                                </PopoverBody>
-                                <PopoverFooter className="border-black/5 mt-2 pt-2">
-                                    <Button variant="outline" className="w-full bg-transparent border-black/20 text-black hover:bg-black hover:text-white transition-colors shadow-none" size="sm"
-                                        onClick={async () => { await signOut(); window.location.reload(); }}>
-                                        <LogOut className="mr-2 h-4 w-4" />Sign Out
-                                    </Button>
-                                </PopoverFooter>
-                            </PopoverContent>
-                        </Popover>
-                    ) : (
-                        <>
-                            <Link href="/auth/sign-in" className="hidden sm:block text-sm font-medium text-slate-700 hover:text-black transition-colors">Log in</Link>
-                            <Link href="/auth/sign-in" className="rounded-full bg-black text-white px-5 py-2.5 text-sm font-bold shadow-md hover:bg-slate-800 hover:scale-[1.02] active:scale-95 transition-all duration-200">Sign up</Link>
-                        </>
-                    )}
-                </div>
-            </div>
+            {/* Unified Global Navbar */}
+            <Navbar delay={baseDelay} />
 
             {/* ─── LAYER 0: Bright Sky Background ──────────────────────────── */}
             <div className="absolute inset-0 z-0">
@@ -152,7 +134,6 @@ const AmritHero = () => {
                     fill
                     className="object-cover object-center"
                     priority
-                    unoptimized
                 />
                 {/* Light frosted gradient — keeps bottom HUD legible */}
                 <div className="absolute inset-0 bg-gradient-to-b from-white/10 via-transparent to-white/90 pointer-events-none" />
@@ -162,7 +143,7 @@ const AmritHero = () => {
                   .hero-text-brush wrapper: clip-path wipes L→R via textBrush @keyframe.
                   The h1 inside is UNTOUCHED — mask-image, mix-blend, tracking all preserved. */}
             <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
-                <div className="hero-text-brush">
+                <div className="hero-text-brush" style={{ animationDelay: `${baseDelay}s` }}>
                     <h1
                         className="font-satoshi text-[clamp(4rem,15vw,22rem)] font-black leading-none tracking-tighter text-slate-900/60 uppercase mix-blend-multiply select-none mb-[15vh]"
                         style={{
@@ -188,9 +169,8 @@ const AmritHero = () => {
                         width={1200}
                         height={1200}
                         priority
-                        unoptimized
                         className="w-full h-auto drop-shadow-2xl origin-bottom scale-[1.42]"
-                        style={{ animation: 'buildingRise 1s cubic-bezier(0.22, 1, 0.36, 1) both', animationDelay: '4.5s' }}
+                        style={{ animation: 'buildingRise 1s cubic-bezier(0.22, 1, 0.36, 1) both', animationDelay: `${baseDelay}s` }}
                     />
 
                     {/* LEFT WING — Anchored strictly to the LEFT side of the middle */}
@@ -202,9 +182,8 @@ const AmritHero = () => {
                             width={1200}
                             height={1200}
                             priority
-                            unoptimized
                             className="w-full h-auto object-bottom drop-shadow-2xl translate-x-[10px]"
-                            style={{ animation: 'buildingRise 1s cubic-bezier(0.22, 1, 0.36, 1) both', animationDelay: '4.65s' }}
+                            style={{ animation: 'buildingRise 1s cubic-bezier(0.22, 1, 0.36, 1) both', animationDelay: `${baseDelay + 0.15}s` }}
                         />
                     </div>
 
@@ -217,9 +196,8 @@ const AmritHero = () => {
                             width={1200}
                             height={1200}
                             priority
-                            unoptimized
                             className="w-full h-auto object-bottom drop-shadow-2xl -translate-x-[10px]"
-                            style={{ animation: 'buildingRise 1s cubic-bezier(0.22, 1, 0.36, 1) both', animationDelay: '4.8s' }}
+                            style={{ animation: 'buildingRise 1s cubic-bezier(0.22, 1, 0.36, 1) both', animationDelay: `${baseDelay + 0.3}s` }}
                         />
                     </div>
                 </div>
@@ -232,43 +210,37 @@ const AmritHero = () => {
             <div className="absolute inset-0 z-30 flex flex-col justify-end pointer-events-none">
 
                 {/* ── Bottom HUD — fades in at 4800ms ──────────────────────── */}
-                <div className="hero-ui-fade-bottom flex flex-col md:flex-row items-center md:items-end w-full justify-between p-6 md:p-10 lg:p-14 gap-10 md:gap-0 pointer-events-auto">
+                <div 
+                  className="hero-ui-fade-bottom flex flex-col md:flex-row items-center md:items-end w-full justify-between p-6 md:p-10 lg:p-14 gap-10 md:gap-0 pointer-events-auto"
+                  style={{ animationDelay: `${baseDelay + 0.3}s` }}
+                >
 
                     {/* Left: Stats + CTA */}
                     <div className="flex flex-col gap-6">
                         {/* Stats row */}
                         <div className="flex flex-row items-start gap-8 md:gap-12">
-                            <div className="flex flex-col gap-1 animate-fade-in-up" style={{ animationDelay: '4.6s' }}>
-                                <h3 className="font-outfit text-3xl sm:text-4xl font-bold text-slate-800 tracking-tight">10K<span className="text-slate-400">+</span></h3>
-                                <p className="font-satoshi text-[10px] font-medium text-slate-500 tracking-[0.2em] uppercase mt-1">Active Users</p>
-                            </div>
-                            <div className="flex flex-col gap-1 animate-fade-in-up" style={{ animationDelay: '4.7s' }}>
-                                <h3 className="font-outfit text-3xl sm:text-4xl font-bold text-slate-800 tracking-tight">99.9<span className="text-slate-400">%</span></h3>
-                                <p className="font-satoshi text-[10px] font-medium text-slate-500 tracking-[0.2em] uppercase mt-1">Uptime</p>
-                            </div>
-                            <div className="flex flex-col gap-1 animate-fade-in-up" style={{ animationDelay: '4.8s' }}>
-                                <h3 className="font-outfit text-3xl sm:text-4xl font-bold text-slate-800 tracking-tight">24/7</h3>
-                                <p className="font-satoshi text-[10px] font-medium text-slate-500 tracking-[0.2em] uppercase mt-1">Support</p>
-                            </div>
+                            <ScrollAnimatedStat endValue={10} suffix="K+" label="Active Users" delayMs={baseDelay * 1000 + 100} baseDelayOffset={baseDelay} />
+                            <ScrollAnimatedStat endValue={99.9} suffix="%" label="Uptime" delayMs={baseDelay * 1000 + 200} baseDelayOffset={baseDelay} isFloat={true} />
+                            <ScrollAnimatedStat endValue={24} suffix="/7" label="Support" delayMs={baseDelay * 1000 + 300} baseDelayOffset={baseDelay} />
                         </div>
 
                         {/* CTA */}
-                        <div className="flex flex-col gap-4 mt-8 animate-fade-in-up" style={{ animationDelay: '4.9s' }}>
-                            <Link href="/dashboard" className="inline-flex items-center gap-3 self-start rounded-full bg-black pl-6 pr-2 py-2 text-sm font-bold tracking-wide text-white hover:bg-black/80 hover:scale-[1.03] active:scale-95 transition-all duration-300 shadow-xl">
-                                Get Started
-                                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white">
-                                    <ArrowRight className="h-4 w-4" />
+                        <div className="flex flex-col gap-4 mt-8 animate-fade-in-up" style={{ animationDelay: `${baseDelay + 0.4}s` }}>
+                            <Link href="/dashboard" className="group inline-flex items-center gap-3 self-start rounded-full bg-black pl-6 pr-2 py-2 text-sm font-bold tracking-wide text-white hover:bg-black/80 hover:scale-[1.03] active:scale-95 transition-all duration-300 shadow-xl">
+                                <StaggeredHoverText text="Get Started" />
+                                <div className="flex overflow-hidden h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white relative">
+                                    <ArrowRight className="h-4 w-4 absolute transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:translate-x-1" />
                                 </div>
                             </Link>
                             {/* Apple blur reveal at 5000ms */}
-                            <p className="hero-blur-reveal font-satoshi text-sm font-normal text-slate-600 leading-relaxed max-w-md">
+                            <p className="hero-blur-reveal font-satoshi text-sm font-normal text-slate-600 leading-relaxed max-w-md" style={{ animationDelay: `${baseDelay + 0.5}s` }}>
                                 LockIn brings together the intelligence of AI with the timeless art of high-performance management. Your definitive workspace.
                             </p>
                         </div>
                     </div>
 
                     {/* Right: Awwwards Scroll Indicator */}
-                    <div className="hidden md:flex flex-col items-center gap-3 self-end pb-1 animate-fade-in" style={{ animationDelay: '5.2s' }}>
+                    <div className="hidden md:flex flex-col items-center gap-3 self-end pb-1 animate-fade-in" style={{ animationDelay: `${baseDelay + 0.7}s` }}>
                         <span
                             className="font-satoshi text-[10px] font-semibold tracking-[0.35em] uppercase text-slate-800/60 select-none"
                             style={{ writingMode: "vertical-rl", textOrientation: "mixed" }}

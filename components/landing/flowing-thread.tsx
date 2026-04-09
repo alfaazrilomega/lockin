@@ -13,9 +13,12 @@ interface FlowingThreadProps {
 const PATH_LENGTH = 6000
 
 export default function FlowingThread({ progress }: FlowingThreadProps) {
-  // Shrink dashoffset from PATH_LENGTH to 0 to "draw" the line
-  const dashoffset = useTransform(progress, [0, 1], [PATH_LENGTH, 0])
-  const opacity = useTransform(progress, [0, 0.05], [0, 0.6])
+  // ── HIDDEN — using Vector 1.svg inline in FeaturedSection instead ──
+  // To restore scroll-draw animation, remove the return null below and uncomment:
+  //   const dashoffset = useTransform(progress, [0, 1], [PATH_LENGTH, 0])
+  //   const opacity = useTransform(progress, [0, 0.05], [0, 0.6])
+  void progress // suppress unused-param warning
+  return null
 
   return (
     <div className="absolute inset-0 w-full h-full z-0 pointer-events-none">
@@ -28,8 +31,8 @@ export default function FlowingThread({ progress }: FlowingThreadProps) {
       >
         <motion.path
           d={PATH_D}
-          stroke="var(--primary)"
-          strokeWidth="16"
+          stroke="#5162FF"
+          strokeWidth="20"
           strokeLinecap="round"
           strokeDasharray={PATH_LENGTH}
           style={{

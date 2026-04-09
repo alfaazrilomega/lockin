@@ -1,9 +1,15 @@
 "use client"
 
 import { useRef } from "react"
-import Link from "next/link"
 import { motion, useMotionValue, useSpring } from "framer-motion"
 import { ArrowRight } from "lucide-react"
+import { FAQ } from "./faq"
+
+const MailIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="rgb(49, 16, 129)" style={{ width: '18px', height: '18px' }}>
+    <path d="M224,48H32a8,8,0,0,0-8,8V192a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A8,8,0,0,0,224,48ZM203.43,64,128,133.15,52.57,64ZM216,192H40V74.19l82.59,75.71a8,8,0,0,0,10.82,0L216,74.19V192Z" />
+  </svg>
+)
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Lusion-inspected tokens
@@ -62,38 +68,6 @@ function MagneticButton() {
   )
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Stat item with entrance animation
-// ─────────────────────────────────────────────────────────────────────────────
-function StatItem({
-  value,
-  label,
-  index,
-}: {
-  value: string
-  label: string
-  index: number
-}) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 40 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.7, delay: index * 0.1, ease: [0.16, 1, 0.3, 1] }}
-      className="text-center transform-gpu"
-      style={{ willChange: "transform" }}
-    >
-      <p
-        className="text-5xl md:text-6xl font-black tracking-tighter text-foreground"
-      >
-        {value}
-      </p>
-      <p className="text-xs tracking-widest uppercase text-zinc-400 mt-2 font-medium">
-        {label}
-      </p>
-    </motion.div>
-  )
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Main section
@@ -102,130 +76,80 @@ export default function ContactSection() {
   return (
     <section
       id="contact"
-      className="relative w-full min-h-screen z-10 bg-transparent flex flex-col overflow-hidden"
+      className="relative w-full min-h-screen z-10 flex flex-col overflow-hidden"
+      style={{
+        background: 'linear-gradient(180deg, #ffffff 0%, #F0F4FF 50%, #ffffff 100%)',
+      }}
     >
+      {/* Radial glow behind heading */}
+      <div
+        className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] pointer-events-none"
+        style={{
+          background: 'radial-gradient(ellipse at center, rgba(81, 98, 255, 0.08) 0%, transparent 70%)',
+        }}
+      />
+
       {/* ── Glass divider — ties back to Hero nav pill ────────────────── */}
-      <div className="w-full h-px bg-gradient-to-r from-transparent via-zinc-200 to-transparent" />
+      <div className="w-full h-px relative z-10 bg-gradient-to-r from-transparent via-zinc-200 to-transparent" />
 
       {/* ── Main CTA block ────────────────────────────────────────────── */}
       <div className="flex-1 flex flex-col items-center justify-center px-8 md:px-16 pt-24 pb-16 text-center">
 
-        {/* Tag line */}
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-          className="text-xs tracking-widest uppercase text-zinc-400 font-medium mb-10 transform-gpu"
-        >
-          Join thousands of focused teams
-        </motion.p>
+        {/* FAQ Section */}
+        <FAQ />
 
-        {/* Maximalist heading — Inspector Check 3: 10vw, font-black, tracking-tighter, zinc-900 */}
-        <div className="overflow-hidden mb-10">
-          <motion.h2
-            initial={{ y: "110%" }}
-            whileInView={{ y: "0%" }}
-            viewport={{ once: true }}
-            transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-            className="text-[10vw] md:text-[9vw] font-black tracking-tighter text-foreground leading-[0.85] transform-gpu uppercase whitespace-nowrap"
-            style={{ willChange: "transform" }}
-          >
-            Ready to
-          </motion.h2>
-        </div>
-        <div className="overflow-hidden mb-14">
-          <motion.h2
-            initial={{ y: "110%" }}
-            whileInView={{ y: "0%" }}
-            viewport={{ once: true }}
-            transition={{ duration: 1, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
-            className="text-[10vw] md:text-[9vw] font-black tracking-tighter leading-[0.85] transform-gpu uppercase whitespace-nowrap"
-            style={{ color: ACCENT, willChange: "transform" }}
-          >
-            Lock In?
-          </motion.h2>
-        </div>
-
-        {/* Sub-text */}
-        <motion.p
+        {/* Horizontal CTA Row */}
+        <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+          viewport={{ once: false }}
           transition={{ duration: 0.8, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-          className="text-base md:text-lg text-zinc-500 max-w-md mb-12 leading-relaxed transform-gpu"
+          className="flex flex-col md:flex-row items-center justify-center gap-5 mt-5 mb-16 transform-gpu"
         >
-          Stop switching between apps. LockIn brings your tasks, notes, and calendar into one razor-sharp workspace.
-        </motion.p>
-
-        {/* Magnetic CTA */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.8, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
-          className="mb-6"
-        >
-          <MagneticButton />
+          <p className="text-base md:text-lg text-zinc-500 max-w-[280px] md:text-right leading-relaxed m-0">
+            Stop switching between apps. LockIn calendar into one
+          </p>
+          <div className="shrink-0">
+            <MagneticButton />
+          </div>
+          <p className="text-base md:text-lg text-zinc-500 max-w-[280px] md:text-left leading-relaxed m-0">
+            brings your tasks, notes, and your Single workspace.
+          </p>
         </motion.div>
 
-        {/* Secondary link */}
-        <motion.p
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
+        {/* Footer Contact */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: false }}
           transition={{ duration: 0.6, delay: 0.5 }}
-          className="text-xs text-zinc-400"
+          className="flex items-center justify-center pb-12 gap-2"
         >
-          Already have an account?{" "}
-          <Link
-            href="/auth/sign-in"
-            className="text-zinc-700 hover:text-zinc-900 underline underline-offset-2 transition-colors"
+          <MailIcon />
+          <p
+            style={{
+              fontFamily: 'Inter, sans-serif',
+              fontSize: '14px',
+              fontWeight: 400,
+              color: 'rgba(28, 22, 41, 0.6)',
+              margin: 0,
+            }}
           >
-            Sign in
-          </Link>
-        </motion.p>
+            Feel free to mail us for any enquiries:{' '}
+            <a
+              href="mailto:hello@lockin.com"
+              style={{
+                color: 'rgb(49, 16, 129)',
+                textDecoration: 'none',
+              }}
+            >
+              hello@lockin.com
+            </a>
+          </p>
+        </motion.div>
       </div>
 
-      {/* ── Stats row ─────────────────────────────────────────────────── */}
-      <div className="w-full border-t border-zinc-100 py-16 px-8 md:px-16">
-        <div className="max-w-4xl mx-auto grid grid-cols-3 gap-8">
-          <StatItem value="10K+" label="Active users" index={0} />
-          <StatItem value="99.9%" label="Uptime" index={1} />
-          <StatItem value="24/7" label="AI available" index={2} />
-        </div>
-      </div>
 
-      {/* ── Footer bar ────────────────────────────────────────────────── */}
-      <div className="w-full border-t border-zinc-100 py-8 px-8 md:px-16 flex items-center justify-between">
-        {/* Logo mark */}
-        <div className="flex items-center gap-2">
-          <div
-            className="w-5 h-5 rounded-full"
-            style={{ backgroundColor: ACCENT }}
-          />
-          <span className="text-xs font-semibold tracking-widest uppercase text-foreground">
-            LockIn
-          </span>
-        </div>
-
-        <p className="text-xs text-zinc-400">
-          © {new Date().getFullYear()} LockIn · CC26-PS118
-        </p>
-
-        {/* Glass pill — Glassmorphism echo of Hero nav */}
-        <div className="hidden md:flex items-center gap-6 bg-white/60 backdrop-blur-md border border-zinc-200/60 rounded-full px-6 py-2.5">
-          <Link href="#featured" className="text-xs font-medium text-zinc-500 hover:text-zinc-900 transition-colors">
-            Features
-          </Link>
-          <Link href="#workspace" className="text-xs font-medium text-zinc-500 hover:text-zinc-900 transition-colors">
-            Workspace
-          </Link>
-          <Link href="/auth/sign-up" className="text-xs font-medium text-zinc-500 hover:text-zinc-900 transition-colors">
-            Sign up
-          </Link>
-        </div>
-      </div>
     </section>
   )
 }

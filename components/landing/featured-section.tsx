@@ -1,203 +1,565 @@
 "use client"
 
-import { useRef, memo } from "react"
+import { useState, useRef, useEffect, useCallback } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import {
-  motion,
-  useScroll,
-  useTransform,
-  useSpring,
-} from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
+import { FlowHoverButton } from "@/components/ui/flow-hover-button"
+import { ArrowRight } from "lucide-react"
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Extracted from live DOM inspection of lusion.co
+// Project Data — LockIn features as "projects"
 // ─────────────────────────────────────────────────────────────────────────────
-const SPRING_CFG = { stiffness: 100, damping: 30, restDelta: 0.001 } as const
-const ACCENT = "#5162FF"   // Lusion electric indigo-blue (ribbon color)
+const projects = [
+  {
+    id: 1,
+    name: "Smart Task Boards",
+    category: "AI · Productivity",
+    href: "/dashboard",
+    image: "https://dennissnellenberg.com/media/pages/work/twice/0ab7e43954-1710404752/thumbnail-twice-810x810-crop-q72.jpg",
+    imageBg: "#f1f1f1",
+  },
+  {
+    id: 2,
+    name: "AI Voice Transcripts",
+    category: "AI · Voice",
+    href: "/dashboard/notes",
+    image: "https://dennissnellenberg.com/media/pages/work/the-damai/b511d32d21-1710452224/thumbnail-thedamai-v2-810x810-crop-q72.jpg",
+    imageBg: "#E0D9D1",
+  },
+  {
+    id: 3,
+    name: "Flashcard Engine",
+    category: "Learning · AI",
+    href: "/dashboard/notes",
+    image: "https://dennissnellenberg.com/media/pages/work/fabric/ac07564a5f-1688453092/thumbnail-fabric-darkgray-810x810-crop-q72.jpg",
+    imageBg: "#48494A",
+  },
+  {
+    id: 4,
+    name: "Project Workspaces",
+    category: "Collaboration",
+    href: "/dashboard/projects",
+    image: "https://dennissnellenberg.com/media/pages/work/aanstekelijk/441187fb44-1687423090/thumbnail-aanstekelijk-810x810-crop-q72.jpg",
+    imageBg: "#101010",
+  },
+]
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Lusion signature crosshair corner marker
+// Rolling reel variants — slot-machine style, no opacity
 // ─────────────────────────────────────────────────────────────────────────────
-function Crosshair({ className }: { className: string }) {
-  return (
-    <div className={`absolute z-20 text-zinc-400 select-none pointer-events-none ${className}`}
-      style={{ fontSize: "18px", fontWeight: 300, lineHeight: 1 }}
-      aria-hidden="true"
-    >
-      +
-    </div>
-  )
+const REEL_EASE = [0.76, 0, 0.24, 1] as const
+const REEL_DUR = 0.55
+
+const reelVariants = {
+  enter: (dir: number) => ({ y: dir > 0 ? "100%" : "-100%" }),
+  visible: { y: "0%", transition: { duration: REEL_DUR, ease: REEL_EASE } },
+  exit: (dir: number) => ({
+    y: dir > 0 ? "-100%" : "100%",
+    transition: { duration: REEL_DUR, ease: REEL_EASE },
+  }),
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Project card — 2-column grid (Lusion "Featured Work" style)
-// ─────────────────────────────────────────────────────────────────────────────
-interface ProjectCardProps {
-  label: string
-  title: string
-  gradient: string
-  href: string
-  index: number
-}
-
-const ProjectCard = memo(function ProjectCard({ label, title, gradient, href, index }: ProjectCardProps) {
-  return (
-    <motion.a
-      href={href}
-      initial={{ opacity: 0, y: 60 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-80px" }}
-      transition={{ duration: 0.8, delay: index * 0.15, ease: [0.16, 1, 0.3, 1] }}
-      whileHover={{ y: -8 }}
-      className="group block transform-gpu"
-      style={{ willChange: "transform" }}
-    >
-      {/* Image container */}
-      <div
-        className="relative w-full overflow-hidden rounded-2xl mb-4"
-        style={{ aspectRatio: "16/10" }}
-      >
-        <div
-          className="absolute inset-0 transition-transform duration-700 group-hover:scale-105"
-          style={{ background: gradient }}
-        />
-        {/* Hover overlay */}
-        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-500" />
-      </div>
-
-      {/* Label */}
-      <p className="text-[10px] tracking-widest uppercase text-zinc-400 mb-2 font-medium">
-        {label}
-      </p>
-
-      {/* Title */}
-      <h3 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground group-hover:text-muted-foreground transition-colors duration-300">
-        {title}
-      </h3>
-    </motion.a>
-  )
-})
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Main component
 // ─────────────────────────────────────────────────────────────────────────────
 export default function FeaturedSection() {
+  const [hoveredId, setHoveredId] = useState<number | null>(null)
+  const [activeProject, setActiveProject] = useState(projects[0])
+  const [direction, setDirection] = useState<1 | -1>(1)
+  const [isPlayingHovered, setIsPlayingHovered] = useState(false)
+
+  const posRef = useRef<HTMLDivElement>(null)
+  const sectionRef = useRef<HTMLDivElement>(null)
+  const headingSectionRef = useRef<HTMLDivElement>(null)
+  const mouseRef = useRef({ x: 0, y: 0 })
+  const lerpRef = useRef({ x: 0, y: 0, init: false })
+  const rafRef = useRef<number | null>(null)
+  const hoveredIdRef = useRef<number | null>(null)
+  const lastIdxRef = useRef<number>(-1)
+
+  useEffect(() => {
+    hoveredIdRef.current = hoveredId
+  }, [hoveredId])
+
+  useEffect(() => {
+    const headingObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.intersectionRatio >= 0.15) {
+          entry.target.classList.add('is-visible')
+        } else if (entry.intersectionRatio === 0) {
+          entry.target.classList.remove('is-visible')
+        }
+      })
+    }, { threshold: [0, 0.15] })
+
+    if (headingSectionRef.current) {
+      headingObserver.observe(headingSectionRef.current)
+    }
+
+    return () => headingObserver.disconnect()
+  }, [])
+
+  useEffect(() => {
+    const onMove = (e: MouseEvent) => {
+      mouseRef.current = { x: e.clientX, y: e.clientY }
+    }
+    window.addEventListener("mousemove", onMove, { passive: true })
+    return () => window.removeEventListener("mousemove", onMove)
+  }, [])
+
+  useEffect(() => {
+    const onScroll = () => {
+      if (hoveredIdRef.current === null || !sectionRef.current) return
+      const { top, bottom, left, right } = sectionRef.current.getBoundingClientRect()
+      const { x, y } = mouseRef.current
+      if (y < top || y > bottom || x < left || x > right) setHoveredId(null)
+    }
+    window.addEventListener("scroll", onScroll, { passive: true })
+    return () => window.removeEventListener("scroll", onScroll)
+  }, [])
+
+  useEffect(() => {
+    const LERP = 0.085
+
+    const tick = () => {
+      const { x: mx, y: my } = mouseRef.current
+      if (!lerpRef.current.init && mx !== 0) {
+        lerpRef.current = { x: mx, y: my, init: true }
+      }
+      lerpRef.current.x += (mx - lerpRef.current.x) * LERP
+      lerpRef.current.y += (my - lerpRef.current.y) * LERP
+
+      if (posRef.current) {
+        posRef.current.style.transform = `translate(${lerpRef.current.x}px, ${lerpRef.current.y}px) translate(-50%, -53%)`
+      }
+
+      rafRef.current = requestAnimationFrame(tick)
+    }
+
+    rafRef.current = requestAnimationFrame(tick)
+    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current) }
+  }, [])
+
+  const handleEnter = useCallback((id: number) => {
+    const newIdx = projects.findIndex(p => p.id === id)
+    if (newIdx !== lastIdxRef.current) {
+      setDirection(newIdx > lastIdxRef.current ? 1 : -1)
+      lastIdxRef.current = newIdx
+      setActiveProject(projects[newIdx])
+    }
+    setHoveredId(id)
+  }, [])
+
+  const handleListLeave = useCallback(() => {
+    setHoveredId(null)
+  }, [])
+
+  const isHovering = hoveredId !== null
+
   return (
-    <section id="featured" className="relative w-full z-10 bg-transparent flex flex-col overflow-hidden">
-      
-      {/* Asymmetric Header Grid */}
-      <div className="w-[100vw] relative left-1/2 -translate-x-1/2 px-4 md:px-12 pt-32 pb-4 grid grid-cols-1 md:grid-cols-12 gap-8 z-10">
-        
-        {/* Mega Heading (Left Column) */}
+    <section id="featured" className="relative w-full z-10 bg-[#ffffff] text-[#1c1629] flex flex-col overflow-hidden">
+
+
+
+
+      {/* ── Phase 1: Mega Heading & Video ───────────────────────────────── */}
+      <div
+        ref={headingSectionRef}
+        className="w-[100vw] relative left-1/2 -translate-x-1/2 px-4 md:px-12 pt-32 pb-8 grid grid-cols-1 md:grid-cols-12 gap-8 z-10 items-end border-t-0 group"
+      >
         <div className="md:col-span-8 flex flex-col justify-end whitespace-nowrap">
-          <h2 className="font-['Aeonik',sans-serif] font-normal tracking-tight leading-none text-foreground text-[clamp(4rem,10vw,9rem)]">
-            Bold Ideas,
-          </h2>
-          <h2 className="font-['Aeonik',sans-serif] font-normal tracking-tight leading-none text-foreground text-[clamp(4rem,10vw,9rem)]">
-            Brought to Life
-          </h2>
-        </div>
-      </div>
-
-      {/* Media & Button Container */}
-      <div className="w-[100vw] relative left-1/2 -translate-x-1/2 px-4 md:px-12 z-10 mb-32 grid grid-cols-1 md:grid-cols-12 gap-8 items-stretch border-t-0">
-        {/* Video Box (Left Column) */}
-        <div className="md:col-span-8 w-full h-[50vh] md:h-[70vh] bg-primary/10 rounded-[3rem] md:rounded-[4rem] overflow-hidden relative shadow-2xl mt-8 md:mt-12">
-          {/* Dashboard preview image */}
-          <div className="absolute inset-0">
-            <Image
-              src="/dashboard-preview.jpg"
-              alt="LockIn Dashboard"
-              fill
-              className="object-cover"
-              priority
-              sizes="100vw"
-            />
+          <div className="overflow-hidden pb-4 -mb-4" style={{ lineHeight: 1.1 }}>
+            <div className="translate-y-[110%] group-[.is-visible]:translate-y-0 transition-transform duration-[1.2s] ease-[cubic-bezier(0.16,1,0.3,1)]">
+              <h2 className="font-['Aeonik',sans-serif] font-normal tracking-tight leading-none text-[clamp(4rem,10vw,9rem)] translate-x-[15vw] md:translate-x-[250px] lg:translate-x-[300px] group-[.is-visible]:translate-x-0 transition-transform duration-[1.2s] ease-[cubic-bezier(0.16,1,0.3,1)] delay-[1000ms]">
+                Bold Ideas,
+              </h2>
+            </div>
+          </div>
+          <div className="flex gap-[1.2em]" style={{ lineHeight: 1.1 }}>
+            <div className="overflow-hidden pb-6 -mb-6 pt-2 -mt-2">
+              <h2 className="font-['Aeonik',sans-serif] font-normal tracking-tight leading-none text-[clamp(4rem,10vw,9rem)] -translate-y-[110%] group-[.is-visible]:translate-y-0 transition-transform duration-[1.2s] ease-[cubic-bezier(0.16,1,0.3,1)] delay-[100ms]">
+                Brought
+              </h2>
+            </div>
+            <div className="overflow-hidden pb-6 -mb-6 pt-2 -mt-2">
+              <h2 className="font-['Aeonik',sans-serif] font-normal tracking-tight leading-none text-[clamp(4rem,10vw,9rem)] -translate-y-[110%] group-[.is-visible]:translate-y-0 transition-transform duration-[1.2s] ease-[cubic-bezier(0.16,1,0.3,1)] delay-[500ms]">
+                to
+              </h2>
+            </div>
+            <div className="overflow-hidden pb-6 -mb-6 pt-2 -mt-2">
+              <h2 className="font-['Aeonik',sans-serif] font-normal tracking-tight leading-none text-[clamp(4rem,10vw,9rem)] -translate-y-[110%] group-[.is-visible]:translate-y-0 transition-transform duration-[1.2s] ease-[cubic-bezier(0.16,1,0.3,1)] delay-[900ms]">
+                Life
+              </h2>
+            </div>
           </div>
         </div>
 
-        {/* Text and Button (Right Column) */}
-        <div className="md:col-span-4 flex flex-col justify-start pt-4 md:pt-12 pl-2 md:pl-4 xl:pl-8 mt-8 md:mt-12">
-          <p className="font-satoshi text-lg md:text-xl leading-relaxed text-muted-foreground mb-12 md:mb-16">
-            We combine design, motion, 3D, and development to create digital experiences that feel visually striking and technically seamless. From campaign launches to immersive brand worlds, we build work that captures attention and invites interaction.
+        <div className="md:col-span-4 flex flex-col justify-end pb-4 pl-2 md:pl-4 xl:pl-8">
+          <p className="font-['Aeonik',sans-serif] font-normal text-[18px] md:text-[20px] leading-[1.6] text-[#1c1629]/90 mb-8 md:mb-12">
+            {"We combine design, motion, 3D, and development to create digital experiences that feel visually striking and technically seamless.".split(" ").map((word, i, arr) => (
+              <span key={i}>
+                <span className="inline-block overflow-hidden pb-1 -mb-1 pt-1 -mt-1">
+                  <span
+                    className="inline-block translate-y-[110%] group-[.is-visible]:translate-y-0 transition-transform duration-[0.9s] ease-[cubic-bezier(0.16,1,0.3,1)]"
+                    style={{ transitionDelay: `${200 + i * 35}ms` }}
+                  >
+                    {word}
+                  </span>
+                </span>
+                {i < arr.length - 1 && " "}
+              </span>
+            ))}
           </p>
 
-          <div className="flex justify-start">
-            <button className="flex items-center gap-3 bg-foreground hover:bg-muted-foreground transition-colors duration-300 text-background rounded-full px-8 py-4 text-sm font-outfit font-bold tracking-widest uppercase shadow-xl hover:scale-105 active:scale-95 transform-gpu">
-              <div className="w-2 h-2 bg-background rounded-full" />
-              OUR APPROACH
-            </button>
+          <div className="flex justify-start overflow-hidden py-4 -my-4 px-4 -mx-4 mt-2">
+            <div className="translate-y-[150%] translate-x-[50px] group-[.is-visible]:translate-y-0 group-[.is-visible]:translate-x-0 transition-transform duration-[1.2s] ease-[cubic-bezier(0.16,1,0.3,1)] delay-[800ms]">
+              <FlowHoverButton icon={<ArrowRight className="w-4 h-4" />}>
+                OUR APPROACH
+              </FlowHoverButton>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* ── Phase 2: Featured Work Grid (Lusion "Featured Work" style) ─── */}
-      <div className="w-full bg-transparent pt-20 pb-24 px-8 md:px-16">
-        {/* Section header */}
-        <motion.div
-           initial={{ opacity: 0, y: 40 }}
-           whileInView={{ opacity: 1, y: 0 }}
-           viewport={{ once: true, margin: "-80px" }}
-           transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-           className="flex flex-col md:flex-row md:items-end justify-between mb-16"
-        >
-          <h2 className="text-[7vw] font-black tracking-tighter text-foreground leading-none uppercase whitespace-nowrap">
-            Featured Work
-          </h2>
-          <p className="text-xs tracking-widest uppercase text-zinc-400 mt-4 md:mt-0 max-w-xs text-right hidden md:block">
-            A selection of productivity tools<br />built for ambitious teams.
-          </p>
-        </motion.div>
+      {/* Media Container (Lusion Style Video) */}
+      <div className="w-[100vw] relative left-1/2 -translate-x-1/2 px-4 md:px-12 z-10 mb-32 pt-8 pb-8">
 
-        {/* 2-column grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16">
-          <ProjectCard
-            index={0}
-            href="/dashboard"
-            label="WEB • AI • PRODUCTIVITY"
-            title="Smart Task Boards"
-            gradient="linear-gradient(135deg, #1a1a2e 0%, #16213e 40%, #0f3460 100%)"
-          />
-          <ProjectCard
-            index={1}
-            href="/dashboard/notes"
-            label="WEB • AI • VOICE"
-            title="AI Voice Transcripts"
-            gradient="linear-gradient(135deg, #0f0f1a 0%, #1a0533 40%, #2d1b69 100%)"
-          />
-          <ProjectCard
-            index={2}
-            href="/dashboard/notes"
-            label="WEB • LEARNING • AI"
-            title="Flashcard Engine"
-            gradient="linear-gradient(135deg, #0a1628 0%, #0d2137 40%, #1a3a5c 100%)"
-          />
-          <ProjectCard
-            index={3}
-            href="/dashboard/projects"
-            label="WEB • COLLABORATION"
-            title="Project Workspaces"
-            gradient="linear-gradient(135deg, #1a1a1a 0%, #2d1a36 40%, #4a1942 100%)"
-          />
+        {/* Outer Bounding Box */}
+        <div className="relative w-full h-[50vh] md:h-[65vh] max-h-[700px] mx-auto">
+
+          {/* Tracker Crosses & Marquee (Top Row) */}
+          <div className="absolute -top-8 left-0 w-full flex items-center justify-between text-[#1c1629] z-0 select-none overflow-hidden h-8">
+            {/* The + marks */}
+            <div className={`absolute inset-0 w-full flex items-center justify-between transition-opacity duration-500 px-2 font-light text-xl ${isPlayingHovered ? 'opacity-0' : 'opacity-60'}`}>
+              <span>+</span><span>+</span><span>+</span><span>+</span><span>+</span>
+            </div>
+
+            {/* Top Marquee (Right to Left) */}
+            <div className={`absolute inset-0 w-full flex items-center translate-y-[2px] transition-opacity duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${isPlayingHovered ? 'opacity-100' : 'opacity-0'}`}>
+              <motion.div
+                className="flex items-center whitespace-nowrap h-full will-change-transform"
+                animate={{ x: ["0%", "-50%"] }}
+                transition={{ ease: "linear", duration: 8, repeat: Infinity }}
+              >
+                <div className="flex shrink-0 w-max">
+                  {/* First identical half */}
+                  <div className="flex shrink-0">
+                    {[...Array(4)].map((_, i) => (
+                      <div key={i} className="flex items-center justify-center w-[25vw] min-w-[25vw] gap-2 md:gap-4 text-[#1c1629] font-satoshi font-medium tracking-widest text-[0.65rem] md:text-lg uppercase h-full overflow-hidden">
+                        <span className="flex">
+                          {"PLAY REEL".split('').map((char, index) => (
+                            <span
+                              key={index}
+                              className="inline-block transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] pb-1"
+                              style={{
+                                transform: isPlayingHovered ? 'translateY(0)' : 'translateY(110%)',
+                                transitionDelay: isPlayingHovered ? `${index * 30}ms` : '0ms'
+                              }}
+                            >
+                              {char === ' ' ? '\u00A0' : char}
+                            </span>
+                          ))}
+                        </span>
+                        <Image
+                          src="/svg/Arrow-Path.svg"
+                          alt="Arrows"
+                          width={16}
+                          height={16}
+                          className="h-2 w-auto md:h-4 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]"
+                          style={{
+                            transform: isPlayingHovered ? 'translateY(0)' : 'translateY(150%)',
+                            transitionDelay: isPlayingHovered ? `${9 * 30}ms` : '0ms'
+                          }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  {/* Second identical half (for perfect -50% loop) */}
+                  <div className="flex shrink-0">
+                    {[...Array(4)].map((_, i) => (
+                      <div key={i} className="flex items-center justify-center w-[25vw] min-w-[25vw] gap-2 md:gap-4 text-[#1c1629] font-satoshi font-medium tracking-widest text-[0.65rem] md:text-lg uppercase h-full overflow-hidden">
+                        <span className="flex">
+                          {"PLAY REEL".split('').map((char, index) => (
+                            <span
+                              key={index}
+                              className="inline-block transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] pb-1"
+                              style={{
+                                transform: isPlayingHovered ? 'translateY(0)' : 'translateY(110%)',
+                                transitionDelay: isPlayingHovered ? `${index * 30}ms` : '0ms'
+                              }}
+                            >
+                              {char === ' ' ? '\u00A0' : char}
+                            </span>
+                          ))}
+                        </span>
+                        <Image
+                          src="/svg/Arrow-Path.svg"
+                          alt="Arrows"
+                          width={16}
+                          height={16}
+                          className="h-2 w-auto md:h-4 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]"
+                          style={{
+                            transform: isPlayingHovered ? 'translateY(0)' : 'translateY(150%)',
+                            transitionDelay: isPlayingHovered ? `${9 * 30}ms` : '0ms'
+                          }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          </div>
+
+          {/* Tracker Crosses & Marquee (Bottom Row) */}
+          <div className="absolute -bottom-8 left-0 w-full flex items-center justify-between text-[#1c1629] z-0 select-none overflow-hidden h-8">
+            {/* The + marks */}
+            <div className={`absolute inset-0 w-full flex items-center justify-between transition-opacity duration-500 px-2 font-light text-xl ${isPlayingHovered ? 'opacity-0' : 'opacity-60'}`}>
+              <span>+</span><span>+</span><span>+</span><span>+</span><span>+</span>
+            </div>
+
+            {/* Bottom Marquee (Left to Right) */}
+            <div className={`absolute inset-0 w-full flex items-center translate-y-[2px] transition-opacity duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${isPlayingHovered ? 'opacity-100' : 'opacity-0'}`}>
+              <motion.div
+                className="flex items-center whitespace-nowrap h-full will-change-transform"
+                animate={{ x: ["-50%", "0%"] }}
+                transition={{ ease: "linear", duration: 8, repeat: Infinity }}
+              >
+                <div className="flex shrink-0 w-max">
+                  {/* First identical half */}
+                  <div className="flex shrink-0">
+                    {[...Array(4)].map((_, i) => (
+                      <div key={i} className="flex items-center justify-center w-[25vw] min-w-[25vw] gap-2 md:gap-4 text-[#1c1629] font-satoshi font-medium tracking-widest text-[0.65rem] md:text-lg uppercase h-full overflow-hidden">
+                        <span className="flex">
+                          {"PLAY REEL".split('').map((char, index) => (
+                            <span
+                              key={index}
+                              className="inline-block transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] pb-1"
+                              style={{
+                                transform: isPlayingHovered ? 'translateY(0)' : 'translateY(110%)',
+                                transitionDelay: isPlayingHovered ? `${index * 30}ms` : '0ms'
+                              }}
+                            >
+                              {char === ' ' ? '\u00A0' : char}
+                            </span>
+                          ))}
+                        </span>
+                        <Image
+                          src="/svg/Arrow-Path.svg"
+                          alt="Arrows"
+                          width={16}
+                          height={16}
+                          className="h-2 w-auto md:h-4 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]"
+                          style={{
+                            transform: isPlayingHovered ? 'translateY(0)' : 'translateY(150%)',
+                            transitionDelay: isPlayingHovered ? `${9 * 30}ms` : '0ms'
+                          }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  {/* Second identical half (for perfect -50% loop) */}
+                  <div className="flex shrink-0">
+                    {[...Array(4)].map((_, i) => (
+                      <div key={i} className="flex items-center justify-center w-[25vw] min-w-[25vw] gap-2 md:gap-4 text-[#1c1629] font-satoshi font-medium tracking-widest text-[0.65rem] md:text-lg uppercase h-full overflow-hidden">
+                        <span className="flex">
+                          {"PLAY REEL".split('').map((char, index) => (
+                            <span
+                              key={index}
+                              className="inline-block transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] pb-1"
+                              style={{
+                                transform: isPlayingHovered ? 'translateY(0)' : 'translateY(110%)',
+                                transitionDelay: isPlayingHovered ? `${index * 30}ms` : '0ms'
+                              }}
+                            >
+                              {char === ' ' ? '\u00A0' : char}
+                            </span>
+                          ))}
+                        </span>
+                        <Image
+                          src="/svg/Arrow-Path.svg"
+                          alt="Arrows"
+                          width={16}
+                          height={16}
+                          className="h-2 w-auto md:h-4 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]"
+                          style={{
+                            transform: isPlayingHovered ? 'translateY(0)' : 'translateY(150%)',
+                            transitionDelay: isPlayingHovered ? `${9 * 30}ms` : '0ms'
+                          }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          </div>
+
+          {/* Video Container with rounded corners */}
+          <div className={`w-full h-full bg-[#1c1629] rounded-[2rem] md:rounded-[3rem] overflow-hidden relative shadow-2xl z-10 transition-transform duration-700 will-change-transform ${isPlayingHovered ? 'scale-[1.015]' : 'scale-100'}`}>
+
+            {/* Background Video */}
+            <video
+              autoPlay
+              loop
+              muted
+              playsInline
+              className="w-full h-full object-cover will-change-transform"
+            >
+              <source src="/video/Video-Showcase-Test.mp4" type="video/mp4" />
+            </video>
+
+            {/* Center "PLAY (btn) REEL" Overlay */}
+            <div className="absolute inset-0 flex items-center justify-center p-4 z-30 pointer-events-none">
+              <div className="flex items-center gap-4 md:gap-10 pointer-events-auto">
+                <span className="text-white font-satoshi font-bold text-4xl md:text-7xl lg:text-[7rem] tracking-tight drop-shadow-lg">
+                  PLAY
+                </span>
+
+                {/* Pill Button */}
+                <div
+                  className="relative w-24 h-14 md:w-40 md:h-24 bg-white rounded-full flex items-center justify-center overflow-hidden transition-all duration-500 ease-out hover:scale-[1.05] hover:shadow-2xl cursor-pointer"
+                  onMouseEnter={() => setIsPlayingHovered(true)}
+                  onMouseLeave={() => setIsPlayingHovered(false)}
+                >
+                  {/* Blue sweep background from bottom */}
+                  <div className={`absolute inset-0 bg-[#2383E2] transition-transform duration-500 ease-[cubic-bezier(0.19,1,0.22,1)] ${isPlayingHovered ? 'translate-y-0' : 'translate-y-[101%]'}`} />
+
+                  {/* Play Icon (Black -> White on hover) */}
+                  <svg
+                    className={`w-6 h-6 md:w-10 md:h-10 relative z-10 transition-colors duration-500 ml-1 md:ml-2 ${isPlayingHovered ? 'text-white' : 'text-black'}`}
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                  >
+                    <path d="M8 5v14l11-7z" />
+                  </svg>
+                </div>
+
+                <span className="text-white font-satoshi font-bold text-4xl md:text-7xl lg:text-[7rem] tracking-tight drop-shadow-lg">
+                  REEL
+                </span>
+              </div>
+            </div>
+
+          </div>
         </div>
+      </div>
 
-        {/* See all CTA */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.4 }}
-          className="flex justify-center mt-20"
+      {/* ── Phase 2: Interactive Reel List ──────────────────────────────── */}
+      <div className="relative w-full pt-10 pb-24" ref={sectionRef}>
+
+        {/* Floating Reel Container */}
+        <div
+          ref={posRef}
+          className="pointer-events-none fixed z-[9999]"
+          style={{ top: 0, left: 0 }}
         >
-          <Link
-            href="/dashboard"
-            className="flex items-center gap-3 bg-foreground hover:bg-muted-foreground transition-colors duration-300 text-background rounded-full px-8 py-4 text-sm font-medium tracking-wide"
+          <motion.div
+            animate={isHovering ? { scale: 1, opacity: 1 } : { scale: 0.55, opacity: 0 }}
+            transition={{
+              scale: { duration: isHovering ? 0.45 : 0.4, ease: isHovering ? [0.16, 1, 0.3, 1] : [0.7, 0, 0.84, 0] },
+              opacity: { duration: isHovering ? 0.25 : 0.35, ease: isHovering ? "easeOut" : "easeIn" },
+            }}
           >
-            <div className="w-2 h-2 bg-background rounded-full" />
-            SEE ALL FEATURES
-          </Link>
-        </motion.div>
+            <div style={{ width: "300px", height: "300px", borderRadius: "8px", overflow: "hidden", position: "relative" }}>
+              <AnimatePresence initial={false} custom={direction} mode="sync">
+                <motion.div
+                  key={activeProject.id}
+                  custom={direction}
+                  variants={reelVariants}
+                  initial="enter"
+                  animate="visible"
+                  exit="exit"
+                  style={{ position: "absolute", inset: 0, backgroundColor: activeProject.imageBg, willChange: "transform" }}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={activeProject.image} alt={activeProject.name} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                </motion.div>
+              </AnimatePresence>
+
+              <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10, pointerEvents: "none" }}>
+                <div style={{ background: "#3B67F5", color: "#fff", borderRadius: "999px", padding: "10px 26px", fontFamily: "Satoshi, Inter, sans-serif", fontSize: "16px", fontWeight: 500 }}>
+                  View
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+
+        {/* Content Container */}
+        <div className="mx-auto" style={{ maxWidth: "1200px", paddingLeft: "40px", paddingRight: "40px" }}>
+
+          {/* Label */}
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            style={{ marginBottom: "40px" }}
+          >
+            {/* <span style={{ fontFamily: "Inter, sans-serif", fontSize: "11px", fontWeight: 500, letterSpacing: "0.14em", textTransform: "uppercase", color: "rgba(28, 22, 41, 0.4)" }}>
+              Featured work
+            </span> */}
+          </motion.div>
+
+          <ul style={{ listStyle: "none", margin: 0, padding: 0 }} onMouseLeave={handleListLeave}>
+            {projects.map((project, index) => {
+              const isActive = hoveredId === project.id
+              return (
+                <motion.li
+                  key={project.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: false }}
+                  transition={{ duration: 0.5, delay: index * 0.07 }}
+                  onMouseEnter={() => handleEnter(project.id)}
+                  style={{ position: "relative" }}
+                >
+                  <div style={{ height: "1px", background: "rgba(28, 22, 41, 0.12)" }} />
+
+                  <Link href={project.href} style={{ textDecoration: "none", display: "block", cursor: "none" }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "26px 0" }}>
+                      <h4
+                        style={{
+                          fontFamily: "Satoshi, Inter, sans-serif",
+                          fontSize: "clamp(34px, 4.8vw, 72px)",
+                          fontWeight: 500,
+                          lineHeight: 1,
+                          letterSpacing: "-0.02em",
+                          margin: 0,
+                          color: isHovering && !isActive ? "rgba(28,22,41,0.2)" : "rgba(28,22,41,1)",
+                          transform: isActive ? "translateY(-2px)" : "translateY(0)",
+                          transition: "color 0.4s ease, transform 0.4s cubic-bezier(0.16,1,0.3,1)",
+                        }}
+                      >
+                        {project.name}
+                      </h4>
+
+                      <p
+                        style={{
+                          fontFamily: "Inter, sans-serif",
+                          fontSize: "14px",
+                          fontWeight: 400,
+                          margin: 0,
+                          whiteSpace: "nowrap",
+                          paddingLeft: "24px",
+                          flexShrink: 0,
+                          color: isHovering && !isActive ? "rgba(28,22,41,0.12)" : "rgba(28,22,41,0.45)",
+                          transition: "color 0.4s ease",
+                        }}
+                      >
+                        {project.category}
+                      </p>
+                    </div>
+                  </Link>
+                </motion.li>
+              )
+            })}
+            <div style={{ height: "1px", background: "rgba(28, 22, 41, 0.12)" }} />
+          </ul>
+
+        </div>
       </div>
     </section>
   )

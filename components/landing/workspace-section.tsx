@@ -1,265 +1,317 @@
 "use client"
 
-import { useRef, useEffect, useState, memo } from "react"
-import { motion } from "framer-motion"
-import { CheckCircle2, Mic, BookOpen, Layout, Zap, Clock } from "lucide-react"
-import { prepare, layout } from "@chenglou/pretext"
+import { useRef } from "react"
+import { motion, useScroll, useSpring, useTransform } from "framer-motion"
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Lusion-inspected accent tokens
-// ─────────────────────────────────────────────────────────────────────────────
-const ACCENT = "#5162FF"
-const ACCENT_CYAN = "#2CEFDD"
+// ─── Design tokens ────────────────────────────────────────────────────────────
+const ACCENT      = "#5162FF"
+const ACCENT_SOFT = "#A5ADFF"
+const SPRING_CFG  = { stiffness: 100, damping: 30, restDelta: 0.001 } as const
 
-// ─────────────────────────────────────────────────────────────────────────────
-// @chenglou/pretext hook — DOM-free text height pre-calculation
-// Eliminates layout shift before whileInView stagger fires.
-// Runs once per card (prepare) + on resize (layout). ~0.0002ms per layout call.
-// ─────────────────────────────────────────────────────────────────────────────
-function useCardHeight(text: string, font: string, lineHeightPx: number) {
-  const containerRef = useRef<HTMLDivElement>(null)
-  const [minHeight, setMinHeight] = useState<number | undefined>(undefined)
-
-  useEffect(() => {
-    // Segment + measure text once
-    const prepared = prepare(text, font)
-
-    function calculate() {
-      const el = containerRef.current
-      if (!el) return
-      const containerWidth = el.getBoundingClientRect().width
-      if (containerWidth === 0) return
-      // p-8 = 64px total horizontal padding; subtract from card width
-      const { height } = layout(prepared, containerWidth - 64, lineHeightPx)
-      setMinHeight(height)
-    }
-
-    calculate()
-
-    const observer = new ResizeObserver(calculate)
-    if (containerRef.current) observer.observe(containerRef.current)
-    return () => observer.disconnect()
-  }, [text, font, lineHeightPx])
-
-  return { containerRef, minHeight }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Stagger variants — per PLAN.md physics spec
-// ─────────────────────────────────────────────────────────────────────────────
-const containerVariants = {
-  hidden: {},
-  visible: { transition: { staggerChildren: 0.12 } },
-}
-
-const cardVariants = {
-  hidden: { opacity: 0, y: 80 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.75, ease: [0.16, 1, 0.3, 1] as [number, number, number, number] },
-  },
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// CapabilityCard — React.memo to prevent re-renders on parent scroll
-// ─────────────────────────────────────────────────────────────────────────────
-interface CapabilityCardProps {
-  icon: React.ReactNode
-  title: string
-  description: string
-  features: string[]
-  accentColor: string
-}
-
-const CapabilityCard = memo(function CapabilityCard({
-  icon,
-  title,
-  description,
-  features,
-  accentColor,
-}: CapabilityCardProps) {
-  // Pretext: "14px Satoshi", 22px line height — matches description text style
-  const { containerRef, minHeight } = useCardHeight(description, "14px Satoshi", 22)
-
+// ─── Image Card (browser-frame wrapper around a real screenshot) ──────────────
+// Shows actual Refokus project screenshots inside a macOS-style chrome bar.
+function ImageCard({ src, label }: { src: string; label: string }) {
   return (
-    <motion.div
-      ref={containerRef}
-      variants={cardVariants}
-      whileHover={{ scale: 1.02, transition: { ease: [0.35, 0, 0, 1], duration: 0.5 } }}
-      transition={{ duration: 0.4 }}
-      className="group relative bg-card border border-border rounded-[0.8em] p-8 shadow-sm hover:shadow-2xl transition-shadow duration-500 transform-gpu cursor-default"
-      style={{ willChange: "transform" }}
+    <div
+      className="w-full flex flex-col"
+      style={{
+        borderRadius: 14,
+        overflow: "hidden",
+        boxShadow: "0 32px 80px rgba(0,0,0,0.55), 0 4px 16px rgba(0,0,0,0.35)",
+      }}
     >
-      {/* Icon */}
+      {/* macOS-style chrome / title bar */}
       <div
-        className="w-12 h-12 rounded-xl flex items-center justify-center mb-6"
-        style={{ backgroundColor: `${accentColor}15`, border: `1px solid ${accentColor}30` }}
-      >
-        <div style={{ color: accentColor }}>{icon}</div>
-      </div>
-
-      {/* Title */}
-      <h3 className="text-xl font-bold tracking-tight text-foreground mb-3">
-        {title}
-      </h3>
-
-      {/* Description — minHeight pre-set by Pretext to prevent CLS during stagger */}
-      <p
-        className="text-sm text-muted-foreground leading-relaxed mb-6"
-        style={{ minHeight: minHeight ? `${minHeight}px` : undefined }}
-      >
-        {description}
-      </p>
-
-      {/* Features */}
-      <ul className="space-y-2">
-        {features.map((f) => (
-          <li key={f} className="flex items-center gap-2 text-xs text-zinc-400">
-            <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0" style={{ color: accentColor }} />
-            {f}
-          </li>
-        ))}
-      </ul>
-
-      {/* Corner glow on hover — CSS transition (not motion) to avoid GPU compositing conflict */}
-      <div
-        className="absolute top-0 right-0 w-24 h-24 rounded-tr-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+        className="flex items-center gap-1.5 px-4 flex-shrink-0"
         style={{
-          background: `radial-gradient(circle at top right, ${accentColor}20, transparent 70%)`,
+          height: 36,
+          background: "#1A1828",
+          borderBottom: "1px solid rgba(255,255,255,0.07)",
         }}
+      >
+        <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#FF5F57" }} />
+        <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#FFBD2E" }} />
+        <div className="w-2.5 h-2.5 rounded-full" style={{ background: "#28CA41" }} />
+        <span className="ml-2 text-white/30 text-xs font-medium tracking-wide">{label}</span>
+      </div>
+      {/* Screenshot */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={src}
+        alt={label}
+        className="w-full block object-cover object-top"
+        style={{ maxHeight: 340 }}
+        draggable={false}
       />
-    </motion.div>
+    </div>
   )
-})
+}
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Capability data
-// ─────────────────────────────────────────────────────────────────────────────
-const capabilities = [
-  {
-    icon: <Layout className="w-5 h-5" />,
-    title: "Focus Mode",
-    description:
-      "Kanban-style project boards that keep your team aligned, your tasks moving, and your deadlines met.",
-    features: ["Drag-and-drop Kanban", "Team collaboration", "Deadline tracking"],
-    accentColor: ACCENT,
-  },
-  {
-    icon: <Mic className="w-5 h-5" />,
-    title: "AI Transcripts",
-    description:
-      "Record your thoughts, lectures, or meetings. AI converts voice to structured, searchable notes instantly.",
-    features: ["Real-time transcription", "AI summarization", "Smart tagging"],
-    accentColor: ACCENT_CYAN,
-  },
-  {
-    icon: <BookOpen className="w-5 h-5" />,
-    title: "Smart Flashcards",
-    description:
-      "Transform any note into an adaptive review deck. Spaced repetition science ensures nothing is forgotten.",
-    features: ["Spaced repetition", "Auto-generated decks", "Progress tracking"],
-    accentColor: "#FF6B6B",
-  },
-  {
-    icon: <Zap className="w-5 h-5" />,
-    title: "AI Co-pilot",
-    description:
-      "An AI assistant embedded across every tool — summarize, explain, brainstorm, and draft at any moment.",
-    features: ["Contextual suggestions", "Draft generation", "Research assist"],
-    accentColor: "#F59E0B",
-  },
-  {
-    icon: <Clock className="w-5 h-5" />,
-    title: "Calendar Engine",
-    description:
-      "Visualize your week, schedule tasks, and let LockIn intelligently slot your deep work sessions.",
-    features: ["Visual week view", "Smart scheduling", "Time blocking"],
-    accentColor: "#10B981",
-  },
-  {
-    icon: <CheckCircle2 className="w-5 h-5" />,
-    title: "Project Workspaces",
-    description:
-      "Dedicated spaces per project — tasks, notes, files, and collaborators living together in one view.",
-    features: ["Per-project spaces", "File attachments", "Activity feed"],
-    accentColor: "#8B5CF6",
-  },
-]
+// ─── Feature ticker ───────────────────────────────────────────────────────────
+const TICKER_ITEMS = ["Focus Board", "AI Notes", "Smart Calendar", "AI Co-pilot", "Flashcards", "Workspaces"]
+const TICKER_DOUBLED = [...TICKER_ITEMS, ...TICKER_ITEMS]
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Main section
+//
+// ARCHITECTURE NOTE: This component MUST live OUTSIDE <ContentWrapper> in
+// page.tsx. Adding 400vh inside ContentWrapper stretches the FlowingThread SVG.
 // ─────────────────────────────────────────────────────────────────────────────
 export default function WorkspaceSection() {
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start start", "end end"],
+  })
+  const smooth = useSpring(scrollYProgress, SPRING_CFG)
+
+  // ── Phase 1: Opposing text [0.00 → 0.22] ──────────────────────────────────
+  const topX        = useTransform(smooth, [0, 0.22], ["-110vw", "0vw"])
+  const bottomX     = useTransform(smooth, [0, 0.22], ["110vw",  "0vw"])
+  const textOpacity = useTransform(smooth, [0.18, 0.27], [1, 0])
+
+  // ── Phase 2: Staggered 4-block reveal ─────────────────────────────────────
+  // Pair A (TR + BL) expands first: [0.22 → 0.40]
+  const blockA = useTransform(smooth, [0.22, 0.40], [0, 1])
+  // Pair B (TL + BR) expands second: [0.30 → 0.48]
+  const blockB = useTransform(smooth, [0.30, 0.48], [0, 1])
+
+  // ── Phase 3: Sequential cards ─────────────────────────────────────────────
+  //
+  // KEY DESIGN: Each card is independently invisible (opacity:0) until its
+  // phase window begins. This guarantees no card bleeds through earlier phases,
+  // even if transform clipping is unreliable in certain scroll contexts.
+  //
+  // Cards travel from +1400px (far below screen) to their settled position.
+  // All values are pure px — no vh/vw mixing to avoid unit conversion bugs.
+  //
+  // STACK: Later cards land ON TOP and earlier cards get pushed UP + scaled down.
+  //
+  //  Card 1: enters [0.48 → 0.57], pushed as 2, 3, 4 land
+  //  Card 2: enters [0.57 → 0.66], pushed as 3, 4 land
+  //  Card 3: enters [0.66 → 0.75], pushed as 4 lands
+  //  Card 4: enters [0.75 → 0.84], stays on top
+
+  // ── Card 1
+  const c1Opacity = useTransform(smooth, [0.46, 0.49], [0, 1])
+  const c1Y = useTransform(
+    smooth,
+    [0.48, 0.57,  0.57, 0.66,  0.66, 0.75,  0.75, 0.84],
+    [1400, 0,     0,    -16,    -16,  -26,    -26,  -32]
+  )
+  const c1Scale = useTransform(
+    smooth,
+    [0.48, 0.57, 0.66, 0.75, 0.84],
+    [1,    1,    0.88, 0.82, 0.78]
+  )
+
+  // ── Card 2
+  const c2Opacity = useTransform(smooth, [0.55, 0.58], [0, 1])
+  const c2Y = useTransform(
+    smooth,
+    [0.57, 0.66,  0.66, 0.75,  0.75, 0.84],
+    [1400, 0,     0,    -12,    -12,  -18]
+  )
+  const c2Scale = useTransform(
+    smooth,
+    [0.57, 0.66, 0.75, 0.84],
+    [1,    1,    0.92, 0.88]
+  )
+
+  // ── Card 3
+  const c3Opacity = useTransform(smooth, [0.64, 0.67], [0, 1])
+  const c3Y = useTransform(
+    smooth,
+    [0.66, 0.75, 0.75, 0.84],
+    [1400, 0,    0,    -7]
+  )
+  const c3Scale = useTransform(smooth, [0.66, 0.75, 0.84], [1, 1, 0.96])
+
+  // ── Card 4
+  const c4Opacity = useTransform(smooth, [0.73, 0.76], [0, 1])
+  const c4Y       = useTransform(smooth, [0.75, 0.84], [1400, 0])
+
+  // Group fade-out when entering Phase 4
+  const cardsGroupOpacity = useTransform(smooth, [0.84, 0.90], [1, 0])
+
+  // ── Phase 4: Cinematic text reveal [0.88 → 1.00] ──────────────────────────
+  const finalOpacity = useTransform(smooth, [0.88, 1.0], [0, 1])
+  const finalY       = useTransform(smooth, [0.88, 1.0], [60, 0])
+
   return (
-    <section id="workspace" className="relative w-full z-10 bg-transparent overflow-hidden">
+    <div
+      id="workspace"
+      ref={containerRef}
+      className="relative w-full"
+      style={{ height: "400vh" }}
+    >
+      {/* ── Sticky pinned viewport ─────────────────────────────────────────── */}
+      <div
+        className="sticky top-0 h-screen w-full overflow-hidden"
+        style={{ background: "#07061A" }}
+      >
 
-      {/* ── Heading block — Lusion "Where Creative Ideas Become..." style ── */}
-      <div className="w-full px-8 md:px-16 pt-24 pb-16">
-        {/* Tag label — fade in */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 0.6 }}
-          className="mb-3"
-        >
-          <p className="text-xs tracking-widest uppercase text-zinc-400 font-medium">
-            The Platform
-          </p>
-        </motion.div>
-
-        {/* ── Text curtain reveal — PLAN.md upgrade: y: "110%" → "0%" clip ── */}
-        <div className="overflow-hidden">
-          <motion.h2
-            initial={{ y: "110%" }}
-            whileInView={{ y: "0%" }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.95, ease: [0.16, 1, 0.3, 1] }}
-            className="text-[8vw] md:text-[7vw] font-black tracking-tighter text-foreground leading-[0.88] transform-gpu uppercase whitespace-nowrap"
-            style={{ willChange: "transform" }}
-          >
-            Where Deep Work
-          </motion.h2>
-        </div>
-        <div className="overflow-hidden">
-          <motion.h2
-            initial={{ y: "110%" }}
-            whileInView={{ y: "0%" }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.95, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
-            className="text-[8vw] md:text-[7vw] font-black tracking-tighter text-foreground leading-[0.88] transform-gpu uppercase whitespace-nowrap"
-            style={{ willChange: "transform" }}
-          >
-            <span style={{ color: ACCENT }}>Becomes</span> Reality.
-          </motion.h2>
-        </div>
-
-        {/* Accent line — scaleX expand on enter */}
-        <motion.div
-          initial={{ scaleX: 0, originX: 0 }}
-          whileInView={{ scaleX: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 1.2, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
-          className="h-0.5 w-32 mt-8 rounded-full transform-gpu"
-          style={{ backgroundColor: ACCENT, willChange: "transform" }}
+        {/* ── Dot grid overlay (always visible, z-index above everything) ─── */}
+        <div
+          className="absolute inset-0 z-[60] pointer-events-none"
+          style={{
+            backgroundImage: `radial-gradient(circle, rgba(255,255,255,0.07) 1px, transparent 1px)`,
+            backgroundSize: "28px 28px",
+          }}
         />
-      </div>
 
-      {/* ── 3-column stagger grid — container variant drives staggerChildren ── */}
-      <div className="px-8 md:px-16 pb-28">
+        {/* ── PHASE 1: Opposing text ──────────────────────────────────────── */}
         <motion.div
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8"
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-100px" }}
+          className="absolute inset-0 z-10 pointer-events-none"
+          style={{ opacity: textOpacity }}
         >
-          {capabilities.map((cap) => (
-            <CapabilityCard key={cap.title} {...cap} />
-          ))}
+          {/* Upper half — "the best" from left */}
+          <div className="absolute top-0 left-0 w-full h-1/2 flex items-center overflow-hidden px-[7vw]">
+            <motion.p
+              className="font-outfit font-black text-white transform-gpu select-none"
+              style={{
+                fontSize: "clamp(3.5rem, 11vw, 9rem)",
+                letterSpacing: "-0.035em",
+                lineHeight: 1,
+                x: topX,
+                willChange: "transform",
+              }}
+            >
+              the best
+            </motion.p>
+          </div>
+
+          {/* Lower half — "workspace" from right */}
+          <div className="absolute bottom-0 left-0 w-full h-1/2 flex items-center justify-end overflow-hidden px-[7vw]">
+            <motion.p
+              className="font-outfit font-black text-white transform-gpu select-none"
+              style={{
+                fontSize: "clamp(3.5rem, 11vw, 9rem)",
+                letterSpacing: "-0.035em",
+                lineHeight: 1,
+                x: bottomX,
+                willChange: "transform",
+              }}
+            >
+              workspace
+            </motion.p>
+          </div>
         </motion.div>
+
+        {/* ── PHASE 2: Staggered 4-block quadrant reveal ──────────────────── */}
+        {/*
+          FIX: originX/originY MUST be in Framer style prop.
+          CSS origin-* classes are silently ignored by Framer's transform matrix.
+
+          Blocks sized 50.5vw × 50.5vh (0.5% overlap) — prevents center seam gap.
+          Pair A (TR+BL) expands from center outward FIRST.
+          Pair B (TL+BR) follows 0.08 progress later — creates staggered diagonal feel.
+        */}
+
+        {/* Pair A — TOP-RIGHT */}
+        <motion.div
+          className="absolute top-0 right-0 z-20 transform-gpu"
+          style={{ width: "50.5vw", height: "50.5vh", background: ACCENT, scale: blockA, originX: 0, originY: 1, willChange: "transform" }}
+        />
+        {/* Pair A — BOTTOM-LEFT */}
+        <motion.div
+          className="absolute bottom-0 left-0 z-20 transform-gpu"
+          style={{ width: "50.5vw", height: "50.5vh", background: ACCENT, scale: blockA, originX: 1, originY: 0, willChange: "transform" }}
+        />
+        {/* Pair B — TOP-LEFT */}
+        <motion.div
+          className="absolute top-0 left-0 z-20 transform-gpu"
+          style={{ width: "50.5vw", height: "50.5vh", background: ACCENT, scale: blockB, originX: 1, originY: 1, willChange: "transform" }}
+        />
+        {/* Pair B — BOTTOM-RIGHT */}
+        <motion.div
+          className="absolute bottom-0 right-0 z-20 transform-gpu"
+          style={{ width: "50.5vw", height: "50.5vh", background: ACCENT, scale: blockB, originX: 0, originY: 0, willChange: "transform" }}
+        />
+
+        {/* ── PHASE 3: Sequential card arrivals ───────────────────────────── */}
+        <motion.div
+          className="absolute inset-0 flex items-center justify-center z-30"
+          style={{ opacity: cardsGroupOpacity }}
+        >
+          {/*
+            Each card has its own cXOpacity that keeps it invisible (opacity:0)
+            until its specific phase starts. This is the hard guarantee that
+            no card is visible before its turn, even if transform clipping fails.
+          */}
+
+          {/* Card 1 — Rainfall (Fintech dark): first to arrive, ends deep in the stack */}
+          <motion.div
+            className="absolute w-[clamp(260px,62vw,760px)] transform-gpu"
+            style={{ y: c1Y, scale: c1Scale, opacity: c1Opacity, willChange: "transform, opacity" }}
+          >
+            <ImageCard src="/images/platform/card1.png" label="rainfall.io" />
+          </motion.div>
+
+          {/* Card 2 — Remind (Light educational): second to arrive */}
+          <motion.div
+            className="absolute w-[clamp(260px,62vw,760px)] transform-gpu"
+            style={{ y: c2Y, scale: c2Scale, opacity: c2Opacity, willChange: "transform, opacity" }}
+          >
+            <ImageCard src="/images/platform/card2.png" label="remind.com" />
+          </motion.div>
+
+          {/* Card 3 — Maisie Wilen (Bold colorful): third to arrive */}
+          <motion.div
+            className="absolute w-[clamp(260px,62vw,760px)] transform-gpu"
+            style={{ y: c3Y, scale: c3Scale, opacity: c3Opacity, willChange: "transform, opacity" }}
+          >
+            <ImageCard src="/images/platform/card3.png" label="maisiewilen.com" />
+          </motion.div>
+
+          {/* Card 4 — Weglot (Translation SaaS): last to arrive, stays on top */}
+          <motion.div
+            className="absolute w-[clamp(260px,62vw,760px)] transform-gpu"
+            style={{ y: c4Y, scale: 1, opacity: c4Opacity, willChange: "transform, opacity" }}
+          >
+            <ImageCard src="/images/platform/card4.png" label="weglot.com" />
+          </motion.div>
+        </motion.div>
+
+        {/* ── PHASE 4: Cinematic final text + feature ticker ───────────────── */}
+        <motion.div
+          className="absolute inset-0 flex flex-col items-center justify-center z-40 pointer-events-none transform-gpu"
+          style={{
+            opacity: finalOpacity,
+            y: finalY,
+            willChange: "opacity, transform",
+          }}
+        >
+          <div className="px-8 text-center max-w-4xl">
+            <p
+              className="font-satoshi font-medium text-white leading-tight"
+              style={{ fontSize: "clamp(1.8rem, 4vw, 3.5rem)" }}
+            >
+              While focus for our users is what matters most, it&rsquo;s nice to build something{" "}
+              <span style={{ color: ACCENT_SOFT }}>truly remarkable.</span>
+            </p>
+          </div>
+
+          {/* Scrolling feature ticker */}
+          <div
+            className="mt-14 w-full overflow-hidden"
+            style={{ borderTop: "1px solid rgba(255,255,255,0.12)", paddingTop: "20px" }}
+          >
+            <div
+              className="flex gap-16 whitespace-nowrap"
+              style={{ animation: "platform-marquee 18s linear infinite", width: "max-content" }}
+            >
+              {TICKER_DOUBLED.map((item, i) => (
+                <span key={i} className="text-sm font-outfit uppercase tracking-widest" style={{ color: "rgba(255,255,255,0.28)" }}>
+                  {item}
+                </span>
+              ))}
+            </div>
+          </div>
+        </motion.div>
+
       </div>
-    </section>
+    </div>
   )
 }
