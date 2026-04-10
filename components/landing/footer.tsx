@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import { Logo } from "@/components/shared/Logo"
 import { Instagram, Linkedin } from "lucide-react"
 import { useState } from "react"
 import { toast } from "sonner"
@@ -27,7 +28,7 @@ export default function Footer() {
       } else {
         toast.error("Failed to subscribe. Please try again.")
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error("An error occurred.")
     } finally {
       setIsLoading(false)
@@ -56,11 +57,8 @@ export default function Footer() {
         {/* Left: Nav Links */}
         <div className="flex flex-col gap-6 w-full md:w-1/2">
           {/* Logo */}
-          <div className="mb-4">
-            <svg viewBox="0 0 24 26" xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 fill-white">
-              <path d="M 18.229 15.111 L 23.201 7.527 C 24.749 5.172 23.974 1.991 21.518 0.621 C 17.877 -1.409 13.559 1.844 14.479 5.926 L 16.413 14.508 C 16.418 14.54 16.423 14.573 16.428 14.607 C 16.511 14.939 16.961 16.482 16.588 17.583 C 15.746 20.071 12.335 20.429 10.098 19.18 C 9.555 18.81 8.572 17.97 8.049 16.479 C 7.981 16.285 7.913 16.124 7.846 15.992 L 7.846 15.992 L 5.641 10.356 C 4.746 8.067 1.615 7.832 0.392 9.962 C -0.405 11.349 0.052 13.123 1.419 13.947 L 7.445 17.583 L 7.445 17.583 C 7.924 17.904 8.793 18.587 9.243 19.563 L 10.82 23.595 C 12.514 27.925 18.985 25.924 17.962 21.385 L 17.464 18.841 C 17.373 18.305 17.416 17.69 17.485 17.2 C 17.571 16.592 17.79 16.016 18.055 15.463 C 18.142 15.281 18.213 15.134 18.229 15.111 Z" />
-              <path d="M 5.813 23.069 C 5.813 24.688 4.511 26 2.906 26 C 1.301 26 0 24.688 0 23.069 C 0 21.45 1.301 20.137 2.906 20.137 C 4.511 20.137 5.813 21.45 5.813 23.069 Z" />
-            </svg>
+          <div className="flex items-center gap-4 mb-6">
+            <Logo className="h-16 w-16" />
           </div>
 
           <nav className="flex flex-col gap-1">
@@ -103,8 +101,8 @@ export default function Footer() {
                   disabled={isLoading}
                   className="bg-transparent text-white placeholder-white/50 text-[15px] focus:outline-none w-full disabled:opacity-50"
                 />
-                <button 
-                  type="submit" 
+                <button
+                  type="submit"
                   disabled={isLoading}
                   className="shrink-0 bg-white text-black text-xs font-bold px-4 py-[0.4rem] rounded-full hover:bg-white/90 transition-colors disabled:opacity-70"
                 >

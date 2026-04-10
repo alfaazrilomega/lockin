@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -23,6 +24,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+
+import { Logo } from "@/components/shared/Logo"
 
 interface SidebarProps {
   currentUser?: User
@@ -49,8 +52,8 @@ export function Sidebar({ currentUser, onMobileClose }: SidebarProps) {
   return (
     <div className="flex flex-col h-full">
       {/* Logo/Header */}
-      <div className="flex items-center justify-between p-4 border-b border-border">
-        <h1 className="text-xl font-semibold text-foreground">LockIn</h1>
+      <div className="flex items-center gap-3 p-4 px-5 border-b border-border">
+        <Logo className="size-8" />
         {onMobileClose && (
           <Button
             variant="ghost"
@@ -67,8 +70,8 @@ export function Sidebar({ currentUser, onMobileClose }: SidebarProps) {
       <nav className="flex-1 overflow-y-auto py-4">
         <ul className="space-y-1 px-3">
           {navigationItems.map((item) => {
-            const isActive = item.href === '/dashboard' 
-              ? pathname === item.href 
+            const isActive = item.href === '/dashboard'
+              ? pathname === item.href
               : pathname === item.href || pathname?.startsWith(`${item.href}/`)
 
             return (
@@ -100,7 +103,13 @@ export function Sidebar({ currentUser, onMobileClose }: SidebarProps) {
               <div className="flex items-center space-x-3 overflow-hidden">
                 <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-xs ring-2 ring-transparent transition-all hover:ring-primary/50 overflow-hidden shrink-0">
                   {currentUser?.avatarUrl ? (
-                    <img src={currentUser.avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
+                    <Image
+                      src={currentUser.avatarUrl}
+                      alt="Avatar"
+                      width={32}
+                      height={32}
+                      className="h-full w-full object-cover"
+                    />
                   ) : (
                     currentUser?.name?.[0]?.toUpperCase() || 'U'
                   )}

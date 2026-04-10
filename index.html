@@ -1,0 +1,461 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Havenix Real Estate Login</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <!-- Material Symbols -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+      rel="stylesheet"
+    />
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <!-- Tailwind Config -->
+    <script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              primary: "#6b3474",
+              "background-light": "#f7f6f7",
+              "background-dark": "#1c151d",
+            },
+            fontFamily: {
+              display: ["Inter", "Noto Sans", "sans-serif"],
+            },
+            borderRadius: {
+              DEFAULT: "0.25rem",
+              lg: "0.5rem",
+              xl: "0.75rem",
+              full: "9999px",
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      /* Custom styles beyond Tailwind */
+      .login-card {
+        box-shadow:
+          0 20px 60px rgba(0, 0, 0, 0.12),
+          0 4px 20px rgba(0, 0, 0, 0.08);
+      }
+
+      /* Panel blob shape using clip-path */
+      .image-panel {
+        clip-path: polygon(
+          8% 0%,
+          92% 0%,
+          100% 0%,
+          100% 92%,
+          96% 100%,
+          4% 100%,
+          0% 96%,
+          0% 4%
+        );
+        border-radius: 2rem;
+      }
+
+      /* Organic blob shape */
+      .blob-panel {
+        border-radius: 40% 60% 55% 45% / 45% 55% 45% 55%;
+      }
+
+      /* Smooth password eye toggle */
+      #toggle-password {
+        cursor: pointer;
+        background: none;
+        border: none;
+        padding: 0;
+      }
+
+      /* Social button hover */
+      .social-btn {
+        transition: all 0.2s ease;
+      }
+      .social-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+
+      /* Login button press effect */
+      .btn-login:active {
+        transform: scale(0.98);
+      }
+
+      /* Input focus glow */
+      input:focus {
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(107, 52, 116, 0.3);
+      }
+
+      /* Entrance animations */
+      @keyframes fadeInLeft {
+        from {
+          opacity: 0;
+          transform: translateX(-24px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+      @keyframes fadeInRight {
+        from {
+          opacity: 0;
+          transform: translateX(24px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(16px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .anim-left {
+        animation: fadeInLeft 0.6s ease both;
+      }
+      .anim-right {
+        animation: fadeInRight 0.6s ease 0.2s both;
+      }
+      .anim-up {
+        animation: fadeInUp 0.5s ease both;
+      }
+      .anim-up-1 {
+        animation: fadeInUp 0.5s ease 0.1s both;
+      }
+      .anim-up-2 {
+        animation: fadeInUp 0.5s ease 0.15s both;
+      }
+      .anim-up-3 {
+        animation: fadeInUp 0.5s ease 0.2s both;
+      }
+      .anim-up-4 {
+        animation: fadeInUp 0.5s ease 0.25s both;
+      }
+      .anim-up-5 {
+        animation: fadeInUp 0.5s ease 0.3s both;
+      }
+      .anim-up-6 {
+        animation: fadeInUp 0.5s ease 0.35s both;
+      }
+      .anim-up-7 {
+        animation: fadeInUp 0.5s ease 0.4s both;
+      }
+    </style>
+  </head>
+  <body
+    class="bg-background-light dark:bg-background-dark font-display antialiased text-slate-900 dark:text-slate-100 min-h-screen flex items-center justify-center p-4 sm:p-6 lg:p-8"
+  >
+    <!-- Main Container Card -->
+    <div
+      class="login-card bg-white dark:bg-slate-800 rounded-3xl w-full max-w-[1100px] overflow-hidden flex flex-col lg:flex-row"
+      style="min-height: 680px"
+    >
+      <!-- ===== LEFT COLUMN: Login Form ===== -->
+      <div
+        class="anim-left w-full lg:w-[46%] p-8 sm:p-12 xl:p-14 flex flex-col justify-center"
+      >
+        <!-- Logo (matching Stitch design) -->
+        <div class="anim-up flex items-center gap-3 mb-8">
+          <div
+            class="size-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary"
+          >
+            <span class="material-symbols-outlined" style="font-size: 26px"
+              >home_app_logo</span
+            >
+          </div>
+          <span
+            class="text-[1.4rem] font-bold tracking-tight text-slate-900 dark:text-white"
+            >BINAAN</span
+          >
+        </div>
+
+        <!-- Header -->
+        <div class="anim-up-1 mb-7">
+          <h1
+            class="text-3xl sm:text-[2.1rem] font-extrabold text-slate-900 dark:text-white mb-1.5 tracking-tight"
+          >
+            Wellcome Back
+          </h1>
+          <p class="text-slate-500 dark:text-slate-400 text-sm">
+            Let's login to grab amazing deal
+          </p>
+        </div>
+
+        <!-- Social Login Buttons -->
+        <div class="anim-up-2 flex flex-col gap-3 mb-5">
+          <button
+            class="social-btn flex items-center justify-center gap-2.5 px-4 py-2.5 border border-slate-200 dark:border-slate-600 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 w-full"
+          >
+            <!-- Google G SVG Icon -->
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                fill="#4285F4"
+              />
+              <path
+                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                fill="#34A853"
+              />
+              <path
+                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                fill="#FBBC05"
+              />
+              <path
+                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                fill="#EA4335"
+              />
+            </svg>
+            <span
+              class="text-sm font-semibold text-slate-700 dark:text-slate-200"
+              >Continue with Google</span
+            >
+          </button>
+
+          <button
+            class="social-btn flex items-center justify-center gap-2.5 px-4 py-2.5 border border-slate-200 dark:border-slate-600 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 w-full"
+          >
+            <!-- Facebook icon -->
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.469h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.469h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"
+                fill="#1877F2"
+              />
+              <path
+                d="M16.671 15.542l.532-3.469h-3.328V9.815c0-.949.465-1.874 1.956-1.874h1.513V4.988s-1.374-.235-2.686-.235c-2.741 0-4.533 1.662-4.533 4.669v2.651H7.078v3.469h3.047v8.385a12.09 12.09 0 003.75 0v-8.385h2.796z"
+                fill="#ffffff"
+              />
+            </svg>
+            <span
+              class="text-sm font-semibold text-slate-700 dark:text-slate-200"
+              >Continue with Facebook</span
+            >
+          </button>
+        </div>
+
+        <!-- Or Divider -->
+        <div class="anim-up-3 relative flex items-center justify-center mb-5">
+          <div
+            class="border-t border-slate-200 dark:border-slate-600 w-full absolute"
+          ></div>
+          <span
+            class="bg-white dark:bg-slate-800 px-3 text-xs font-medium text-slate-400 relative z-10 uppercase tracking-widest"
+            >Or</span
+          >
+        </div>
+
+        <!-- Login Form -->
+        <form class="space-y-5">
+          <!-- Email Input -->
+          <div class="space-y-1.5">
+            <label
+              class="block text-sm font-medium text-slate-700 dark:text-slate-300"
+              for="email"
+              >Email</label
+            >
+            <div class="relative">
+              <input
+                class="block w-full rounded-xl border-slate-300 dark:border-slate-600 dark:bg-slate-900/50 shadow-sm focus:border-primary focus:ring-primary sm:text-sm py-3 px-4 text-slate-900 dark:text-white placeholder-slate-400"
+                id="email"
+                name="email"
+                placeholder="you@example.com"
+                type="email"
+                value=""
+              />
+              <div
+                class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-green-500"
+              >
+                <span class="material-symbols-outlined text-lg"
+                  >check_circle</span
+                >
+              </div>
+            </div>
+          </div>
+          <!-- Password Input -->
+          <div class="space-y-1.5">
+            <label
+              class="block text-sm font-medium text-slate-700 dark:text-slate-300"
+              for="password"
+              >Password</label
+            >
+            <div class="relative group">
+              <input
+                class="block w-full rounded-xl border-slate-300 dark:border-slate-600 dark:bg-slate-900/50 shadow-sm focus:border-primary focus:ring-primary sm:text-sm py-3 px-4 text-slate-900 dark:text-white placeholder-slate-400"
+                id="password"
+                name="password"
+                placeholder="••••••••"
+                type="password"
+                value=""
+              />
+              <button
+                class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                type="button"
+                onclick="togglePassword()"
+              >
+                <span class="material-symbols-outlined text-xl" id="eye-icon"
+                  >visibility</span
+                >
+              </button>
+            </div>
+          </div>
+          <!-- Actions -->
+          <div class="flex items-center justify-between">
+            <div class="flex items-center">
+              <input
+                class="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary cursor-pointer"
+                id="remember-me"
+                name="remember-me"
+                type="checkbox"
+              />
+              <label
+                class="ml-2 block text-sm text-slate-600 dark:text-slate-400 cursor-pointer select-none"
+                for="remember-me"
+                >Remember me</label
+              >
+            </div>
+            <div class="text-sm">
+              <a
+                class="font-semibold text-primary hover:text-primary/80 transition-colors"
+                href="#"
+                >Forgot Password?</a
+              >
+            </div>
+          </div>
+          <!-- Login Button -->
+          <button
+            class="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-xl shadow-sm text-sm font-bold text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all duration-200 transform hover:scale-[1.01]"
+            type="button"
+          >
+            LOGIN
+          </button>
+        </form>
+
+        <!-- Sign Up Footer -->
+        <p
+          class="anim-up-7 mt-6 text-center text-sm text-slate-500 dark:text-slate-400"
+        >
+          Don't have an account?
+          <a
+            class="font-bold text-primary hover:text-primary/80 transition-colors ml-1"
+            href="#"
+            >Sign Up</a
+          >
+        </p>
+      </div>
+
+      <!-- ===== RIGHT COLUMN: Decorative Image Panel ===== -->
+      <div
+        class="anim-right hidden lg:block w-[54%] p-4 bg-white dark:bg-slate-800"
+      >
+        <div
+          class="h-full w-full relative overflow-hidden"
+          style="border-radius: 1.8rem; min-height: 580px"
+        >
+          <!-- Background cityscape image (portal/door effect) -->
+          <div
+            class="absolute inset-0 bg-cover bg-center transition-transform duration-700 hover:scale-105"
+            style="
+              background-image: url(&quot;https://lh3.googleusercontent.com/aida-public/AB6AXuDCae9IVN2DkKlKmCN_ThPNiETQ1ItXULvE8DIGaXD6zkbwv4zazgA8dsAQLCXVuPiPR2NJT_hmLkuoqHo76TDp6V2-eDs0puuabsRQfeDwJIKGHMPGPwUbzxYJ5zLM85SAsFGd_YNjLqfraMakZ1ic-x7A3kBC8qZ3vIwTMYbzDjDnbAUM6-hdb3Qfg2fpm5Kbb3MB1Q7IAP33kI2lggAn3-byQuTKhumsCe7TjjbmORxROtS6l2uKK3iKQ_Rw_KPk0qN8qs_1lcg&quot;);
+            "
+          ></div>
+
+          <!-- Dark gradient overlay (stronger at top for text legibility) -->
+          <div
+            class="absolute inset-0"
+            style="
+              background: linear-gradient(
+                to bottom,
+                rgba(30, 20, 50, 0.65) 0%,
+                rgba(30, 20, 50, 0.15) 40%,
+                rgba(10, 5, 20, 0.75) 100%
+              );
+            "
+          ></div>
+
+          <!-- Top text overlay -->
+          <div class="absolute top-0 left-0 right-0 p-8">
+            <p
+              class="text-white/90 text-sm font-semibold text-right leading-relaxed drop-shadow-md"
+              style="max-width: 280px; margin-left: auto"
+            >
+              Browse thousands of properties to buy, sell,<br />or rent with
+              trusted agents.
+            </p>
+          </div>
+
+          <!-- Bottom stats overlay -->
+          <div class="absolute bottom-0 left-0 right-0 p-8 text-white">
+            <div class="w-12 h-0.5 bg-white/30 rounded-full mb-5"></div>
+            <div class="flex gap-8 border-t border-white/20 pt-5">
+              <div>
+                <p class="text-2xl font-bold">12k+</p>
+                <p class="text-xs text-white/70 mt-0.5">Properties</p>
+              </div>
+              <div>
+                <p class="text-2xl font-bold">8.5k</p>
+                <p class="text-xs text-white/70 mt-0.5">Happy Clients</p>
+              </div>
+              <div>
+                <p class="text-2xl font-bold">150+</p>
+                <p class="text-xs text-white/70 mt-0.5">Awards</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Floating location pill -->
+          <div
+            class="absolute top-7 left-8 bg-white/10 backdrop-blur-md border border-white/20 text-white text-xs font-semibold px-3 py-1.5 rounded-full flex items-center gap-1.5"
+          >
+            <span class="material-symbols-outlined" style="font-size: 14px"
+              >location_on</span
+            >
+            New York City, USA
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      function togglePassword() {
+        const pwInput = document.getElementById("password");
+        const eyeIcon = document.getElementById("eye-icon");
+        if (pwInput.type === "password") {
+          pwInput.type = "text";
+          eyeIcon.textContent = "visibility_off";
+        } else {
+          pwInput.type = "password";
+          eyeIcon.textContent = "visibility";
+        }
+      }
+    </script>
+  </body>
+</html>
