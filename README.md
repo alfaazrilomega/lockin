@@ -1,40 +1,3 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
-
-## Getting Started
-
-First, run the development server:
-
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-
 # 🚀 LockIn: All-in-One Productivity & Adaptive Learning Workspace
 
 [![Next.js](https://img.shields.io/badge/Next.js-16+-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
@@ -44,24 +7,82 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 [![Prisma](https://img.shields.io/badge/Prisma-ORM-2D3748?style=for-the-badge&logo=prisma)](https://www.prisma.io/)
 [![Dicoding](https://img.shields.io/badge/Capstone-Dicoding_CC26--PS118-gray?style=for-the-badge)](#)
 
-> **LockIn** adalah platform produktivitas web yang memecahkan masalah disorganisasi dengan menggabungkan penjadwalan, kolaborasi tim, dan pencatatan berbasis _Speech-to-Text_. Dilengkapi AI perangkum rapat dan pembuat _flashcard_ otomatis, aplikasi ini memastikan penggunanya dapat bekerja dan belajar dengan efisiensi maksimal.
+> **LockIn** adalah platform produktivitas web yang menggabungkan penjadwalan, kolaborasi tim, dan pencatatan berbasis *Speech-to-Text* dengan kecerdasan buatan. Aplikasi ini dirancang untuk memecahkan masalah fragmentasi informasi dengan mengintegrasikan seluruh alur kerja produktivitas (pencatatan, penjadwalan, dan pembelajaran adaptif) ke dalam satu ruang kerja digital yang premium.
 
 ---
 
-## 📖 Latar Belakang (The Problem)
+## 🛠️ Petunjuk Setup Environment
 
-Mengatur prioritas seringkali menuntut pembagian fokus yang ketat. Mahasiswa, pekerja magang, _freelancer_, hingga pemilik bisnis seringkali terjebak dalam masalah **Fragmentasi Informasi** (Context Switching). Mereka harus melompat antara aplikasi kalender, aplikasi _to-do list_, dan aplikasi pencatat _meeting_. Hal ini menghambat produktivitas hingga 20%, memicu miskomunikasi, dan menunda pencapaian target.
+Ikuti langkah-langkah di bawah ini untuk menyiapkan lingkungan pengembangan lokal Anda:
 
-## 💡 Solusi (The LockIn Way)
+### 1. Prasyarat
+- Node.js versi 20.x atau lebih baru.
+- Akun [Supabase](https://supabase.com/) untuk database dan autentikasi.
+- API Key dari [OpenRouter](https://openrouter.ai/) atau Google Gemini.
 
-LockIn hadir sebagai ruang kerja digital terpadu (_All-in-One Workspace_) untuk mengeksekusi proyek dan pembagian waktu agar lebih terstruktur dan transparan.
+### 2. Konfigurasi Variabel Lingkungan
+Salin file `.env.example` menjadi `.env`:
+```bash
+cp .env.example .env
+```
+Isi variabel-variabel di dalam `.env` dengan kredensial Anda (Database URL, Supabase Keys, API AI, dll.).
 
-### ✨ Fitur Utama
+### 3. Instalasi Dependensi
+```bash
+npm install
+```
 
-1. **🗓️ Kalender Terpusat (The Core):** Jantung utama aplikasi yang menyinkronkan seluruh tenggat waktu proyek, jadwal _meeting_, dan jadwal _review flashcard_ dalam satu tampilan komprehensif.
-2. **📝 Smart Notes & AI Transcript:** Editor _rich-text_ (berbasis Slate.js) yang terintegrasi dengan perekam suara. Audio rapat akan otomatis ditranskripsi dan dirangkum menjadi _action items_ menggunakan AI (Gemini 2.5 Flash).
-3. **📊 Manajemen Proyek Holistik:** Melacak proyek secara _real-time_ menggunakan indikator persentase (0-100%). Mendukung penugasan spesifik per _role_ dan _deadline_ individu.
-4. **🧠 Flashcard Interaktif (Adaptive Learning):** Mengubah teks catatan panjang menjadi kartu pintar secara otomatis menggunakan AI. Dilengkapi algoritma _Spaced Repetition_ untuk memaksimalkan retensi memori belajar.
+### 4. Konfigurasi Database (Prisma)
+Jalankan perintah berikut untuk menghasilkan client Prisma dan menyinkronkan skema ke database Anda:
+```bash
+npx prisma generate
+npx prisma db push
+```
+
+---
+
+## 🤖 Cara Menjalankan Aplikasi
+
+### Mode Pengembangan (Development)
+Jalankan server pengembangan lokal:
+```bash
+npm run dev
+```
+Akses aplikasi melalui browser di [http://localhost:3001](http://localhost:3001).
+
+### Mode Produksi (Build & Start)
+Untuk menjalankan aplikasi dalam lingkungan produksi:
+```bash
+npm run build
+npm run start
+```
+
+---
+
+## 🧠 Model Machine Learning (ML)
+LockIn mengadopsi arsitektur **Hybrid Cloud AI**. Aplikasi ini tidak memerlukan pengunduhan bobot model (weights) lokal yang besar, melainkan berinteraksi dengan model state-of-the-art melalui API:
+
+- **Cognitive Engine:** Menggunakan `Gemini 2.5 Flash` dan model OpenRouter (seperti `minimax/minimax-m2.5:free`) untuk rangkuman rapat dan pembuatan flashcard otomatis.
+- **Transkripsi:** Mengintegrasikan model *Speech-to-Text* (STT) untuk mengubah rekaman suara menjadi teks secara real-time.
+
+---
+
+## 🦾 Ekosistem AI Agent (Submission Metadata)
+Proyek ini dibangun menggunakan metodologi **Agent-First Development**. Seluruh proses pengembangan diarahkan oleh orkestrator kecerdasan buatan yang menyimpan context dan logikanya di dalam repositori ini.
+
+Folder metadata berikut disertakan sesuai dengan persyaratan penugasan:
+- **`.agent/` & `.agents/`**: Berisi "Skills" dan internal rules yang melatih asisten AI (Antigravity) untuk memahami domain proyek.
+- **`everything-claude-code/`**: Matriks logika ECC untuk otomasi workflow developer.
+- **`.antigravity-agents.md`**: Master Reference yang mendikte persona dan protokol operasional seluruh sub-agent AI.
+- **`.cursorrules`**: File jembatan untuk memastikan inspektur atau asisten AI lainnya dapat langsung memuat seluruh konteks proyek secara instan.
+
+---
+
+## ✨ Fitur Utama
+1. **🗓️ Kalender Terpusat:** Sinkronisasi tenggat waktu proyek, jadwal meeting, dan review flashcard.
+2. **📝 Smart Notes & AI Transcript:** Editor rich-text terintegrasi dengan perekam suara dan transkripsi AI.
+3. **📊 Manajemen Proyek:** Pelacak progress proyek real-time dengan status indikator visual.
+4. **🧠 Flashcard Interaktif:** Sistem pembelajaran adaptif menggunakan algoritma *Spaced Repetition*.
 
 ---
 

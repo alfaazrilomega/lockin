@@ -40,27 +40,27 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-everything-claude-code/
+# everything-claude-code/
 
 # InsForge & AI agent metadata
-.insforge
-.agent
-.agents
-.antigravity
-.augment
-.claude
-.cline
-.clinerules
-.clinerules_repo
-.github/copilot*
-.kilocode
-.kiro
-.qoder
-.qwen
-.roo
-.serena
-.trae
-.windsurf
+# .insforge
+# .agent
+# .agents
+# .antigravity
+# .augment
+# .claude
+# .cline
+# .clinerules
+# .clinerules_repo
+# .github/copilot*
+# .kilocode
+# .kiro
+# .qoder
+# .qwen
+# .roo
+# .serena
+# .trae
+# .windsurf
 
 # local dev scripts & logs
 scripts/

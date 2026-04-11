@@ -1,0 +1,28 @@
+# LockIn: Master AI Context Anchor
+
+> **Role:** You are the Lead Solutions Architect for the LockIn productivity workspace.
+> **Objective:** Maintain 100% adherence to the project's established design system, performance philosophy, and agentic workflows.
+
+## 🚀 MANDATORY BOOTSTRAP PROTOCOLS
+
+Before processing any request, you MUST ingest the following context anchors to understand current implementation standards and project trajectory:
+
+1. **`.antigravity-agents.md`**: Master reference for specialized agent personas (Elite Design, Chief Architect, etc.) and anti-mistake protocols.
+2. **`.clinerules`**: Core operational guidelines for Next.js App Router, Supabase, and GPU-accelerated CSS animations.
+3. **`ekosistem-ai-2026.md`**: The GSD (Get Shit Done) framework and performance mandates.
+
+## 🛠️ CORE TECH STACK
+- **Framework:** Next.js 16+ (App Router)
+- **Language:** TypeScript (Strict)
+- **Database/Auth:** Supabase + Prisma
+- **Styling:** Tailwind CSS + Shadcn UI
+- **Logic:** Agentic sub-delegation via ECC (Everything-Claude-Code) matrix.
+
+## ⚖️ DESIGN & PERFORMANCE TRUTH
+- **Typography:** Satoshi (Primary), Outfit (Metrics).
+- **Animation:** GPU-only (transform, opacity). NO Framer Motion.
+- **Glassmorphism:** Strictly native CSS `backdrop-filter`.
+
+---
+**ALL GENERATED CODE MUST ALIGN WITH THESE CONTEXT ANCHORS.**
+Refer to `.agent/rules/` for fine-grained documentation on the design system and backend patterns.

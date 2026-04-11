@@ -1,0 +1,18 @@
+{
+  "description": "Auto-fetch Qodo coding rules at session start to ensure rules are loaded before any coding tasks",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"${CLAUDE_PLUGIN_ROOT}/scripts/fetch-qodo-rules.py\"",
+            "timeout": 30,
+            "statusMessage": "📋 Loading Qodo rules from API..."
+          }
+        ]
+      }
+    ]
+  }
+}
