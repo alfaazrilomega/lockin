@@ -28,7 +28,7 @@ export default function Footer() {
       } else {
         toast.error("Failed to subscribe. Please try again.")
       }
-    } catch (_error) {
+    } catch {
       toast.error("An error occurred.")
     } finally {
       setIsLoading(false)
@@ -131,7 +131,7 @@ export default function Footer() {
 
       {/* ── Bottom Half: Giant Logo & Copyright ─────────────────────────── */}
       <div className="relative z-10 flex flex-col md:flex-row justify-between items-end w-full mt-auto">
-        <h1 className="font-satoshi text-[20vw] md:text-[23vw] font-black leading-[0.75] tracking-tighter text-white -ml-[1vw]">
+        <h1 className="pointer-events-none font-satoshi text-[20vw] md:text-[23vw] font-black leading-[0.75] tracking-tighter text-white -ml-[1vw]">
           Lockin<span className="text-[6vw] align-top relative top-[2vw] font-bold">®</span>
         </h1>
 
