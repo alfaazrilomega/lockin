@@ -104,7 +104,7 @@ Proyek ini dibangun dengan penekanan ekstrim pada **Performa, Zero-Latency, dan 
 - **Frontend:** Next.js 16 (App Router), TypeScript, Tailwind CSS, Shadcn UI.
 - **Backend & Database:** Supabase (PostgreSQL, Auth, Storage).
 - **ORM:** Prisma Client.
-- **AI Aggregator:** OpenRouter API (`minimax/minimax-m2.5:free` & `Gemini 2.5 Flash Multimodal`).
+- **AI Aggregator:** OpenRouter API (`minimax/minimax-m2.5:free` & `Groq Whisper-large-v3`).
 - **Micro-Libraries:** React Big Calendar, Slate.js, Lenis (Khusus Landing Page).
 
 ### ⚡ Filosofi Performa (Wajib Dibaca oleh Tim Dev)
