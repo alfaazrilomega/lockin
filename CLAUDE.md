@@ -20,7 +20,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **UI Components**: Shadcn UI (Radix Vega style) with custom Lucide icons
 - **Database**: Supabase (PostgreSQL) with Prisma ORM v7
 - **Auth**: Supabase Auth (email/password, OAuth)
-- **AI**: OpenRouter API (Gemini 2.0 Flash Lite & Gemini 2.5 Flash)
+- **AI**: Groq (Whisper-large-v3) & OpenRouter (LLM)
 - **Rich Text**: Slate.js for note editor
 - **Calendar**: React Big Calendar
 
@@ -107,7 +107,7 @@ Server actions automatically revalidate paths with `revalidatePath()` after muta
 - **Features**:
   - Meeting transcription → summary
   - Text → flashcards (JSON schema enforced)
-  - Audio transcription (Gemini 2.5 Flash)
+  - Audio transcription (Groq Whisper)
 - **API route**: `app/api/ai/route.ts` provides unified endpoint for AI features
 - **Environment**: Requires `OPENROUTER_API_KEY` and `NEXT_PUBLIC_APP_URL`
 

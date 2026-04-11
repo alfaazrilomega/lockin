@@ -62,8 +62,8 @@ npm run start
 ## 🧠 Model Machine Learning (ML)
 LockIn mengadopsi arsitektur **Hybrid Cloud AI**. Aplikasi ini tidak memerlukan pengunduhan bobot model (weights) lokal yang besar, melainkan berinteraksi dengan model state-of-the-art melalui API:
 
-- **Cognitive Engine:** Menggunakan `Gemini 2.5 Flash` dan model OpenRouter (seperti `minimax/minimax-m2.5:free`) untuk rangkuman rapat dan pembuatan flashcard otomatis.
-- **Transkripsi:** Mengintegrasikan model *Speech-to-Text* (STT) untuk mengubah rekaman suara menjadi teks secara real-time.
+- **Cognitive Engine:** Menggunakan API **OpenRouter** (dengan model seperti `openrouter/free`) untuk proses perangkuman rapat dan pembuatan kartu belajar (*flashcard*) secara otomatis.
+- **Transkripsi:** Menggunakan **Groq AI (Whisper-large-v3)** untuk mengubah rekaman suara menjadi teks secara *real-time* dengan performa tinggi dan latensi rendah.
 
 ---
 
@@ -80,9 +80,18 @@ Folder metadata berikut disertakan sesuai dengan persyaratan penugasan:
 
 ## ✨ Fitur Utama
 1. **🗓️ Kalender Terpusat:** Sinkronisasi tenggat waktu proyek, jadwal meeting, dan review flashcard.
-2. **📝 Smart Notes & AI Transcript:** Editor rich-text terintegrasi dengan perekam suara dan transkripsi AI.
+2. **📝 Smart Notes & AI Transcript:** Editor rich-text terintegrasi dengan perekam suara dan transkripsi **Groq Whisper**.
 3. **📊 Manajemen Proyek:** Pelacak progress proyek real-time dengan status indikator visual.
 4. **🧠 Flashcard Interaktif:** Sistem pembelajaran adaptif menggunakan algoritma *Spaced Repetition*.
+
+---
+
+## 🛠️ Stack Teknologi
+- **Frontend:** Next.js 16 (App Router), TypeScript, Tailwind CSS, Shadcn UI.
+- **Backend:** Supabase (Database, Auth, Storage).
+- **ORM:** Prisma.
+- **AI Integrations:** **Groq API** (Transcription), **OpenRouter API** (LLM).
+- **Performance:** GPU-Accelerated CSS (Zero Framer Motion/WebGL policy).
 
 ---
 
