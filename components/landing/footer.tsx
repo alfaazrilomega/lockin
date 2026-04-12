@@ -83,7 +83,8 @@ export default function Footer() {
               <p className="text-white/60 text-sm mb-4 font-medium uppercase tracking-wider">Contact</p>
               <div className="flex flex-col gap-1 text-[15px] font-medium">
                 <p>US +1 916 740 305</p>
-                <p>ID +62 811 851 141</p>
+                <p>ID +62 857 043 478 50</p>
+                <p>ID +62 851 371 054 63</p>
                 <p className="mt-1">Around the world.</p>
               </div>
             </div>
@@ -116,10 +117,10 @@ export default function Footer() {
           <div>
             <p className="text-white/60 text-sm mb-4 font-medium uppercase tracking-wider">Our Voice</p>
             <div className="flex gap-4 mt-2">
-              <a href="#" className="flex items-center justify-center p-3 rounded-full border border-white/20 hover:bg-white/10 hover:border-white/40 transition-all group">
+              <a href="https://www.instagram.com/azrilalfajri/" className="flex items-center justify-center p-3 rounded-full border border-white/20 hover:bg-white/10 hover:border-white/40 transition-all group">
                 <Instagram className="w-5 h-5 text-white group-hover:scale-110 transition-transform" />
               </a>
-              <a href="#" className="flex items-center justify-center p-3 rounded-full border border-white/20 hover:bg-white/10 hover:border-white/40 transition-all group">
+              <a href="https://www.linkedin.com/in/azril-al-fajri-designer/" className="flex items-center justify-center p-3 rounded-full border border-white/20 hover:bg-white/10 hover:border-white/40 transition-all group">
                 <Linkedin className="w-5 h-5 text-white group-hover:scale-110 transition-transform" />
               </a>
             </div>
