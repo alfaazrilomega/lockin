@@ -1,248 +1,267 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { useAuth } from "@/hooks/use-auth"
-import { Loader2, Eye, EyeOff, MapPin, CheckCircle2 } from "lucide-react"
+import { Loader2, Eye, EyeOff, ArrowRight } from "lucide-react"
 import Link from "next/link"
 import { Logo } from "@/components/shared/Logo"
+
+// Stagger hover text — same mechanic as contact page button
+const StaggeredHoverText = ({ text }: { text: string }) => {
+  return (
+    <span className="relative inline-flex overflow-hidden">
+      <span className="flex items-center">
+        {text.split("").map((char, i) => (
+          <span
+            key={`p-${i}`}
+            className="inline-block transition-transform duration-[0.4s] ease-[cubic-bezier(0.85,0,0.15,1)] group-hover/btn:-translate-y-full"
+            style={{ transitionDelay: `${i * 12}ms` }}
+          >
+            {char === " " ? "\u00A0" : char}
+          </span>
+        ))}
+      </span>
+      <span className="absolute left-0 top-0 flex items-center h-full">
+        {text.split("").map((char, i) => (
+          <span
+            key={`s-${i}`}
+            className="inline-block transition-transform duration-[0.4s] ease-[cubic-bezier(0.85,0,0.15,1)] translate-y-full group-hover/btn:translate-y-0"
+            style={{ transitionDelay: `${i * 12}ms` }}
+          >
+            {char === " " ? "\u00A0" : char}
+          </span>
+        ))}
+      </span>
+    </span>
+  )
+}
 
 export function SignIn() {
   const searchParams = useSearchParams()
   const { signIn, loading } = useAuth()
 
-  const [formData, setFormData] = useState({
-    email: '',
-    password: ''
-  })
+  const [formData, setFormData] = useState({ email: "", password: "" })
   const [showPassword, setShowPassword] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
+  const [hasStarted, setHasStarted] = useState(false)
 
-  // Get redirect URL from query params
-  const redirectUrl = searchParams.get('redirect') || '/dashboard'
+  const redirectUrl = searchParams.get("redirect") || "/dashboard"
+
+  useEffect(() => {
+    const timer = setTimeout(() => setHasStarted(true), 100)
+    return () => clearTimeout(timer)
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setFormError(null)
 
     if (!formData.email || !formData.password) {
-      setFormError('Please fill in all fields')
+      setFormError("Please fill in all fields")
       return
     }
-
     if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      setFormError('Please enter a valid email address')
+      setFormError("Please enter a valid email address")
       return
     }
 
     const result = await signIn(formData.email, formData.password)
-
     if (result.success) {
       window.location.assign(redirectUrl)
     } else {
-      setFormError(result.error || 'Sign in failed')
+      setFormError(result.error || "Sign in failed")
     }
   }
 
+  const fields = [
+    { id: "email", label: "Enter your email*", type: "email", key: "email" as const },
+    { id: "password", label: "Enter your password*", type: showPassword ? "text" : "password", key: "password" as const },
+  ]
+
   return (
-    <div
-      className="login-card bg-white dark:bg-slate-800 rounded-3xl w-full max-w-[1100px] overflow-hidden flex flex-col lg:flex-row shadow-2xl"
-      style={{ minHeight: "680px" }}
-    >
-      {/* ===== LEFT COLUMN: Login Form ===== */}
-      <div className="anim-left w-full lg:w-[46%] p-8 sm:p-12 xl:p-14 flex flex-col justify-center">
-        {/* Logo */}
-        <div className="anim-up flex items-center gap-3 mb-8">
-          <Logo className="size-15" />
-        </div>
+    <div className="w-full min-h-screen bg-[#F8F9FA] flex flex-col md:flex-row overflow-hidden">
 
-        {/* Header */}
-        <div className="anim-up-1 mb-7">
-          <h1 className="text-3xl sm:text-[2.1rem] font-extrabold text-slate-900 dark:text-white mb-1.5 tracking-tight">
-            Welcome Back
-          </h1>
-          <p className="text-slate-500 dark:text-slate-400 text-sm">
-            Let&apos;s login to grab amazing productivity
-          </p>
-        </div>
+      {/* ── LEFT: Branding Visual Column ─────────────────── */}
+      <div className="relative w-full md:w-[45%] min-h-[35vh] md:min-h-screen overflow-hidden flex-shrink-0">
+        {/* Video background */}
+        <video
+          autoPlay loop muted playsInline
+          className="absolute inset-0 w-full h-full object-cover object-center"
+        >
+          <source src="/video/Gradient-background.mp4" type="video/mp4" />
+        </video>
 
-        {/* Form Error */}
-        {formError && (
-          <div className="anim-up-2 mb-5 bg-destructive/10 border border-destructive/20 text-destructive rounded-xl p-3 text-sm">
-            {formError}
+        {/* Deep dark overlay for contrast */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/20 to-black/75" />
+        {/* Noise texture */}
+        <div className="absolute inset-0 bg-[url('/images/noise.png')] opacity-[0.04] pointer-events-none mix-blend-overlay z-10" />
+
+        {/* Content overlay */}
+        <div className="relative z-20 h-full flex flex-col justify-between p-10 md:p-14">
+          {/* Top: Logo */}
+          <div
+            className={`transition-all duration-[1.1s] ease-[cubic-bezier(0.16,1,0.3,1)] ${hasStarted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
+            style={{ transitionDelay: "100ms" }}
+          >
+            <Logo className="size-10 brightness-0 invert" />
+            {/* invert keeps logo white on the dark video side */}
           </div>
-        )}
 
-        {/* Login Form */}
-        <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Email Input */}
-          <div className="anim-up-3 space-y-1.5">
-            <Label
-              className="block text-sm font-medium text-slate-700 dark:text-slate-300"
-              htmlFor="email"
-            >
-              Email
-            </Label>
-            <div className="relative">
-              <Input
-                className="block w-full rounded-xl border-slate-300 dark:border-slate-600 dark:bg-slate-900/50 shadow-sm focus:border-primary focus:ring-primary sm:text-sm py-6 px-4 pl-4 pr-10 text-slate-900 dark:text-white placeholder-slate-400"
-                id="email"
-                name="email"
-                placeholder="you@example.com"
-                type="email"
-                disabled={loading}
-                value={formData.email}
-                onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-              />
-              <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-green-500">
-                <CheckCircle2 className="size-5" />
+          {/* Middle/Bottom: Big editorial headline */}
+          <div className="mt-auto">
+            <div className="overflow-hidden mb-3">
+              <div
+                className={`transition-transform duration-[1.3s] ease-[cubic-bezier(0.16,1,0.3,1)] ${hasStarted ? "translate-y-0" : "translate-y-[110%]"}`}
+                style={{ transitionDelay: "200ms" }}
+              >
+                <p className="font-satoshi text-white/50 text-sm font-medium tracking-widest uppercase mb-4">Welcome back</p>
               </div>
             </div>
-          </div>
 
-          {/* Password Input */}
-          <div className="anim-up-4 space-y-1.5">
-            <Label
-              className="block text-sm font-medium text-slate-700 dark:text-slate-300"
-              htmlFor="password"
+            {["Lock", "In."].map((word, i) => (
+              <div key={i} className="overflow-hidden">
+                <div
+                  className={`transition-transform duration-[1.3s] ease-[cubic-bezier(0.16,1,0.3,1)] ${hasStarted ? "translate-y-0" : "translate-y-[110%]"}`}
+                  style={{ transitionDelay: `${300 + i * 150}ms` }}
+                >
+                  <h1 className="font-satoshi text-[clamp(4rem,8vw,8rem)] font-bold leading-[0.88] tracking-tighter text-white">
+                    {word}
+                  </h1>
+                </div>
+              </div>
+            ))}
+
+            <div className="overflow-hidden mt-6">
+              <div
+                className={`transition-transform duration-[1.1s] ease-[cubic-bezier(0.16,1,0.3,1)] ${hasStarted ? "translate-y-0" : "translate-y-[110%]"}`}
+                style={{ transitionDelay: "650ms" }}
+              >
+                <p className="font-satoshi text-white/60 text-base leading-relaxed max-w-[280px]">
+                  Your workspace, your rules. Pick up right where you left off.
+                </p>
+              </div>
+            </div>
+
+            {/* Bottom divider + link */}
+            <div
+              className={`mt-10 pt-6 border-t border-white/10 transition-all duration-[1s] ease-[cubic-bezier(0.16,1,0.3,1)] ${hasStarted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
+              style={{ transitionDelay: "800ms" }}
             >
-              Password
-            </Label>
-            <div className="relative group">
-              <Input
-                className="block w-full rounded-xl border-slate-300 dark:border-slate-600 dark:bg-slate-900/50 shadow-sm focus:border-primary focus:ring-primary sm:text-sm py-6 px-4 pr-10 text-slate-900 dark:text-white placeholder-slate-400"
-                id="password"
-                name="password"
-                placeholder="••••••••"
-                type={showPassword ? "text" : "password"}
-                disabled={loading}
-                value={formData.password}
-                onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-              />
-              <button
-                className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? <EyeOff className="size-5" /> : <Eye className="size-5" />}
-              </button>
+              <p className="font-satoshi text-sm text-white/40">
+                New here?{" "}
+                <Link href="/auth/sign-up" className="text-white/70 hover:text-white transition-colors underline underline-offset-4">
+                  Create your account
+                </Link>
+              </p>
             </div>
           </div>
-
-          {/* Actions */}
-          <div className="anim-up-5 flex items-center justify-between">
-            <div className="flex items-center">
-              <input
-                className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary cursor-pointer"
-                id="remember-me"
-                name="remember-me"
-                type="checkbox"
-              />
-              <Label
-                className="ml-2 block text-sm text-slate-600 dark:text-slate-400 cursor-pointer select-none"
-                htmlFor="remember-me"
-              >
-                Remember me
-              </Label>
-            </div>
-            <div className="text-sm">
-              <Link
-                className="font-semibold text-primary hover:text-primary/80 transition-colors"
-                href="/auth/forgot-password"
-              >
-                Forgot Password?
-              </Link>
-            </div>
-          </div>
-
-          {/* Login Button */}
-          <Button
-            className="anim-up-6 w-full flex justify-center py-6 px-4 rounded-xl shadow-sm text-sm font-bold text-black bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-all duration-200 transform hover:scale-[1.01]"
-            type="submit"
-            disabled={loading}
-          >
-            {loading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                SIGNING IN...
-              </>
-            ) : (
-              "LOGIN"
-            )}
-          </Button>
-        </form>
-
-        {/* Sign Up Footer */}
-        <p className="anim-up-7 mt-6 text-center text-sm text-slate-500 dark:text-slate-400">
-          Don&apos;t have an account?
-          <Link
-            className="font-bold text-primary hover:text-primary/80 transition-colors ml-1"
-            href="/auth/sign-up"
-          >
-            Sign Up
-          </Link>
-        </p>
+        </div>
       </div>
 
-      {/* ===== RIGHT COLUMN: Decorative Image Panel ===== */}
-      <div className="anim-right hidden lg:block w-[54%] p-4 bg-white dark:bg-slate-800">
-        <div
-          className="h-full w-full relative overflow-hidden"
-          style={{ borderRadius: "1.8rem", minHeight: "580px" }}
-        >
-          {/* Background image */}
-          <div
-            className="absolute inset-0 bg-cover bg-center transition-transform duration-700 hover:scale-105"
-            style={{
-              backgroundImage: 'url("/images/BG-Login.png")',
-            }}
-          ></div>
+      {/* ── RIGHT: Form Column ────────────────────────────── */}
+      <div className="w-full md:w-[55%] flex flex-col justify-center px-8 md:px-16 lg:px-24 py-16 md:py-0 bg-[#F8F9FA]">
+        <div className="max-w-md w-full mx-auto md:mx-0">
 
-          {/* Dark gradient overlay */}
-          <div
-            className="absolute inset-0"
-            style={{
-              background: "linear-gradient(to bottom, rgba(30, 20, 50, 0.65) 0%, rgba(30, 20, 50, 0.15) 40%, rgba(10, 5, 20, 0.75) 100%)",
-            }}
-          ></div>
-
-          {/* Top text overlay */}
-          <div className="absolute top-0 left-0 right-0 p-8">
-            <p
-              className="text-white/90 text-sm font-semibold text-right leading-relaxed drop-shadow-md"
-              style={{ maxWidth: "280px", marginLeft: "auto" }}
-            >
-              Organize your workflow, manage projects,<br />and boost your team productivity.
-            </p>
-          </div>
-
-          {/* Bottom stats overlay */}
-          <div className="absolute bottom-0 left-0 right-0 p-8 text-white">
-            <div className="w-12 h-0.5 bg-white/30 rounded-full mb-5"></div>
-            <div className="flex gap-8 border-t border-white/20 pt-5">
-              <div>
-                <p className="text-2xl font-bold">10k+</p>
-                <p className="text-xs text-white/70 mt-0.5">Active Users</p>
+          {/* Heading */}
+          <div className="mb-14">
+            <div className="overflow-hidden mb-3">
+              <div
+                className={`transition-transform duration-[1.1s] ease-[cubic-bezier(0.16,1,0.3,1)] ${hasStarted ? "translate-y-0" : "translate-y-[110%]"}`}
+                style={{ transitionDelay: "400ms" }}
+              >
+                <p className="font-satoshi text-black/40 text-xs font-medium tracking-widest uppercase">Sign in</p>
               </div>
-              <div>
-                <p className="text-2xl font-bold">500k+</p>
-                <p className="text-xs text-white/70 mt-0.5">Tasks Done</p>
-              </div>
-              <div>
-                <p className="text-2xl font-bold">20k+</p>
-                <p className="text-xs text-white/70 mt-0.5">Projects</p>
+            </div>
+            <div className="overflow-hidden">
+              <div
+                className={`transition-transform duration-[1.3s] ease-[cubic-bezier(0.16,1,0.3,1)] ${hasStarted ? "translate-y-0" : "translate-y-[110%]"}`}
+                style={{ transitionDelay: "500ms" }}
+              >
+                <h2 className="font-satoshi text-[clamp(2.2rem,4vw,3.2rem)] font-bold text-black leading-[1] tracking-tight">
+                  Good to see<br />you again.
+                </h2>
               </div>
             </div>
           </div>
 
-          {/* Floating location pill */}
-          <div className="absolute top-7 left-8 bg-white/10 backdrop-blur-md border border-white/20 text-white text-xs font-semibold px-3 py-1.5 rounded-full flex items-center gap-1.5">
-            <MapPin className="size-3.5" />
-            Productivity Hub, Global
-          </div>
+          {/* Error */}
+          {formError && (
+            <div className="mb-8 bg-red-50 border border-red-200 text-red-600 rounded-xl p-3 text-sm font-satoshi">
+              {formError}
+            </div>
+          )}
+
+          {/* Form — floating label, bottom border, same as contact */}
+          <form onSubmit={handleSubmit} className="flex flex-col gap-10">
+            {fields.map((field, idx) => (
+              <div key={field.id} className="relative group/field overflow-hidden">
+                <div
+                  className={`transition-transform duration-[1.1s] ease-[cubic-bezier(0.16,1,0.3,1)] ${hasStarted ? "translate-y-0" : "translate-y-[120%]"}`}
+                  style={{ transitionDelay: `${700 + idx * 150}ms` }}
+                >
+                  <div className="relative">
+                    <input
+                      id={field.id}
+                      type={field.type}
+                      required
+                      disabled={loading}
+                      value={formData[field.key]}
+                      onChange={(e) => setFormData(prev => ({ ...prev, [field.key]: e.target.value }))}
+                      placeholder={field.label}
+                      className="w-full bg-transparent border-b border-black/20 py-3 text-lg font-satoshi text-black focus:outline-none focus:border-black transition-colors peer placeholder-transparent disabled:opacity-50"
+                    />
+                    <label
+                      htmlFor={field.id}
+                      className="absolute left-0 top-3 text-black/50 font-satoshi text-lg transition-all peer-focus:-top-6 peer-focus:text-sm peer-focus:text-black peer-[:not(:placeholder-shown)]:-top-6 peer-[:not(:placeholder-shown)]:text-sm peer-[:not(:placeholder-shown)]:text-black pointer-events-none"
+                    >
+                      {field.label}
+                    </label>
+                    {field.key === "password" && (
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-0 top-3 text-black/30 hover:text-black/60 transition-colors"
+                      >
+                        {showPassword ? <EyeOff className="size-5" /> : <Eye className="size-5" />}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            {/* Forgot password */}
+            <div
+              className={`-mt-6 text-right transition-all duration-[1s] ease-[cubic-bezier(0.16,1,0.3,1)] ${hasStarted ? "opacity-100" : "opacity-0"}`}
+              style={{ transitionDelay: "1050ms" }}
+            >
+              <Link href="/auth/forgot-password" className="font-satoshi text-sm text-black/40 hover:text-black transition-colors">
+                Forgot password?
+              </Link>
+            </div>
+
+            {/* Submit */}
+            <div className="overflow-hidden">
+              <div
+                className={`transition-transform duration-[1.1s] ease-[cubic-bezier(0.16,1,0.3,1)] ${hasStarted ? "translate-y-0" : "translate-y-[120%]"}`}
+                style={{ transitionDelay: "1100ms" }}
+              >
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="group/btn w-full bg-[#111] hover:bg-black text-white font-satoshi font-bold tracking-wide py-5 rounded-[2rem] transition-colors duration-300 active:scale-[0.98] shadow-lg disabled:opacity-60 flex items-center justify-center gap-3"
+                >
+                  {loading ? (
+                    <><Loader2 className="size-4 animate-spin" /> SIGNING IN...</>
+                  ) : (
+                    <><StaggeredHoverText text="ENTER WORKSPACE" /><ArrowRight className="size-4" /></>
+                  )}
+                </button>
+              </div>
+            </div>
+          </form>
+
         </div>
       </div>
     </div>
