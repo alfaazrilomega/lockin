@@ -4,7 +4,8 @@ import { useState, useEffect } from "react"
 import axios from "axios"
 import { NoteCard } from "@/components/shared/note-card"
 import { Button } from "@/components/ui/button"
-import { Plus, StickyNote, Loader2 } from "lucide-react"
+import { Plus, StickyNote, XCircle } from "lucide-react"
+import { Skeleton } from "@/components/ui/skeleton"
 import { NewNoteDialog } from "@/components/shared/new-note-dialog"
 import { type Note } from "@/lib/types"
 import { useToast } from "@/components/ui/use-toast"
@@ -62,23 +63,40 @@ export function NotesClientViewer() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <p className="mt-4 text-muted-foreground animate-pulse">Loading your notes...</p>
+      <div className="space-y-6 animate-in fade-in duration-500">
+        <div className="flex items-center justify-between">
+          <div className="space-y-2">
+            <Skeleton className="h-10 w-48" />
+            <Skeleton className="h-5 w-64" />
+          </div>
+          <Skeleton className="h-10 w-32" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="rounded-xl border border-border p-6 space-y-4">
+              <Skeleton className="h-6 w-3/4" />
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-5/6" />
+                <Skeleton className="h-4 w-4/6" />
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     )
   }
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
-        <div className="h-12 w-12 bg-destructive/10 rounded-full flex items-center justify-center text-destructive mb-4">
-          <StickyNote className="h-6 w-6" />
+      <div className="flex flex-col items-center justify-center min-h-[500px] text-center animate-in fade-in duration-500">
+        <div className="h-20 w-20 bg-destructive/10 rounded-full flex items-center justify-center text-destructive/80 mb-6 shadow-sm border border-border">
+          <XCircle className="h-10 w-10" />
         </div>
-        <h2 className="text-xl font-semibold">Failed to load notes</h2>
-        <p className="text-muted-foreground mt-2">{error}</p>
-        <Button variant="outline" className="mt-6" onClick={() => window.location.reload()}>
-          Retry
+        <h2 className="text-2xl font-bold font-satoshi text-foreground">Failed to load notes</h2>
+        <p className="text-muted-foreground mt-3 max-w-md text-sm md:text-base leading-relaxed">{error}</p>
+        <Button variant="outline" className="mt-8 hover:bg-muted" onClick={() => window.location.reload()}>
+          Retry Connection
         </Button>
       </div>
     )

@@ -76,6 +76,13 @@ export async function POST(req: Request) {
         workspaceId: workspaceId, // Use the resolved workspaceId
         assigneeId: validation.assigneeId,
         order: newOrder,
+        // Phase 0.5 Refinements
+        priority: validation.priority || 'MEDIUM',
+        storyPoints: validation.storyPoints || null,
+        timeSpent: validation.timeSpent || null,
+        parentId: validation.parentId || null,
+        epicId: validation.epicId || null,
+        milestoneId: validation.milestoneId || null,
       },
     });
 

@@ -8,7 +8,8 @@ import { z } from 'zod'
 import { type Note, type CreateNoteForm, type PrismaNoteResult } from '@/lib/types'
 
 // Helper function to transform Prisma Note to API response type
-function toNoteDTO(note: PrismaNoteResult): Note {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function toNoteDTO(note: any): Note {
   return {
     id: note.id,
     title: note.title,

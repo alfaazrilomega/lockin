@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
-import { ProjectDetailClientViewer } from "@/components/projects/ProjectDetailClientViewer"
+import { ProjectDetailWrapper } from "@/components/projects/ProjectDetailWrapper"
 
 export default async function ProjectDetailPage({
   params,
@@ -15,5 +15,5 @@ export default async function ProjectDetailPage({
     redirect('/')
   }
 
-  return <ProjectDetailClientViewer projectId={id} />
+  return <ProjectDetailWrapper projectId={id} />
 }

@@ -7,37 +7,59 @@ datasource db {
 }
 
 model User {
-  id        String   @id // Hapus @default(uuid()), isi manual pakai ID dari Supabase Auth
+  id        String   @id
   email     String   @unique
   name      String
   avatarUrl String?
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  ownedProjects Project[]       @relation("ProjectOwner")
-  memberships   ProjectMember[]
-  
-  ownedWorkspaces Workspace[]   @relation("OwnedWorkspaces")
+  ownedProjects        Project[]         @relation("ProjectOwner")
+  memberships          ProjectMember[]
+  ownedWorkspaces      Workspace[]       @relation("OwnedWorkspaces")
   workspaceMemberships WorkspaceMember[]
+  tasks                Task[]            @relation("AssignedTasks")
+  notes                Note[]
+  flashcards           FlashcardDeck[]
+  sentShares           SharedResource[]  @relation("SentShares")
+  receivedShares       SharedResource[]  @relation("ReceivedShares")
 
-  tasks         Task[]          @relation("AssignedTasks")
-  notes         Note[]
-  flashcards    FlashcardDeck[]
+  // Phase 1: Foundation
+  profile        UserProfile?
+  notifications  Notification[]
+  // Phase 2: Core Features
+  personalTasks  PersonalTask[]
+  noteTags       NoteTag[]
+  attachments    Attachment[]
+  // Phase 3: Collaboration
+  chatMessages   ChatMessage[]
+  presence       UserPresence?
+  taskComments   TaskComment[]
 
-  sentShares       SharedResource[] @relation("SentShares")
-  receivedShares   SharedResource[] @relation("ReceivedShares")
+  // Phase 0.5: Enterprise Additions
+  activityLogs   WorkspaceActivity[] @relation("ActivityActor")
 
   @@map("users")
 }
 
+enum ProjectStatus {
+  PLANNING
+  ACTIVE
+  PAUSED
+  COMPLETED
+  CANCELLED
+}
+
 model Project {
-  id          String    @id @default(uuid())
+  id          String        @id @default(uuid())
   name        String
-  description String?
-  progress    Int       @default(0)
+  description String?       @db.Text
+  progress    Int           @default(0) // Legacy, keeping for backwards compat
+  status      ProjectStatus @default(PLANNING)
+  priority    TaskPriority  @default(MEDIUM)
   deadline    DateTime?
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
 
   ownerId String @map("owner_id")
   owner   User   @relation("ProjectOwner", fields: [ownerId], references: [id], onDelete: Cascade)
@@ -45,10 +67,12 @@ model Project {
   workspaceId String? @map("workspace_id")
   workspace   Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
-  members ProjectMember[]
-  tasks   Task[]
-  notes   Note[]
-  shares  SharedResource[] @relation("SharedProjects")
+  members    ProjectMember[]
+  epics      Epic[]
+  milestones Milestone[]
+  tasks      Task[]
+  notes      Note[]
+  shares     SharedResource[] @relation("SharedProjects")
 
   @@map("projects")
 }
@@ -87,9 +111,12 @@ model Workspace {
   ownerId     String   @map("owner_id")
   owner       User     @relation("OwnedWorkspaces", fields: [ownerId], references: [id], onDelete: Cascade)
 
-  members     WorkspaceMember[]
-  projects    Project[]
-  tasks       Task[]
+  members      WorkspaceMember[]
+  projects     Project[]
+  tasks        Task[]
+  chatRooms    ChatRoom[]
+  noteFolders  NoteFolder[]
+  activityLogs WorkspaceActivity[]
 
   @@map("workspaces")
 }
@@ -118,18 +145,40 @@ enum TaskStatus {
 }
 
 model Task {
-  id          String     @id @default(uuid())
+  id          String       @id @default(uuid())
   title       String
-  description String?
-  status      TaskStatus @default(TODO)
-  order       Float      @default(0)
+  description String?      @db.Text
+  status      TaskStatus   @default(TODO)
+  priority    TaskPriority @default(MEDIUM)
+  order       Float        @default(0)
   deadline    DateTime?
+  
+  // Complexity & Tracking
+  storyPoints Int?         @map("story_points")
+  timeSpent   Int?         @map("time_spent") // stored in minutes
 
   // Proof of Work System
   proofUrl    String?    @map("proof_url")
   proofNotes  String?    @db.Text @map("proof_notes")
   feedback    String?    @db.Text
 
+  // Task Hierarchy (Subtasks)
+  parentId    String?    @map("parent_id")
+  parent      Task?      @relation("Subtasks", fields: [parentId], references: [id], onDelete: Cascade)
+  subtasks    Task[]     @relation("Subtasks")
+
+  // Dependency System
+  blocking    TaskDependency[] @relation("BlockingTasks")
+  blockedBy   TaskDependency[] @relation("BlockedByTasks")
+
+  // Groupings / Swimlanes
+  epicId      String?    @map("epic_id")
+  epic        Epic?      @relation(fields: [epicId], references: [id], onDelete: SetNull)
+  
+  milestoneId String?    @map("milestone_id")
+  milestone   Milestone? @relation(fields: [milestoneId], references: [id], onDelete: SetNull)
+
+  // Context & Assignment
   projectId   String?    @map("project_id")
   workspaceId String     @map("workspace_id")
   assigneeId  String?    @map("assignee_id")
@@ -138,20 +187,49 @@ model Task {
   workspace   Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   assignee    User?      @relation("AssignedTasks", fields: [assigneeId], references: [id], onDelete: SetNull)
 
+  comments    TaskComment[]
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("tasks")
 }
 
+model TaskComment {
+  id      String @id @default(uuid())
+  content String @db.Text
+
+  taskId   String @map("task_id")
+  authorId String @map("author_id")
+
+  task   Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  editedAt  DateTime? @map("edited_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  @@index([taskId, createdAt])
+  @@map("task_comments")
+}
+
 model Note {
   id           String    @id @default(uuid())
   title        String
-  content      String?
+  content      String?   @db.Text
   audioUrl     String?   @map("audio_url")
   transcript   String?   @db.Text
   summary      String?   @db.Text
   meetingDate  DateTime? @map("meeting_date")
+  wordCount    Int?      @map("word_count")
+  isPinned     Boolean   @default(false) @map("is_pinned")
+
+  // Hierarchical Wiki Structure
+  parentId    String?    @map("parent_id")
+  parent      Note?      @relation("NoteHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  subpages    Note[]     @relation("NoteHierarchy")
+
+  folderId    String?      @map("folder_id")
+  folder      NoteFolder?  @relation(fields: [folderId], references: [id], onDelete: SetNull)
 
   authorId  String  @map("author_id")
   projectId String? @map("project_id")
@@ -161,6 +239,8 @@ model Note {
 
   flashcardDecks FlashcardDeck[]
   shares         SharedResource[] @relation("SharedNotes")
+  tags           NoteTagAssignment[]
+  attachments    Attachment[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -242,4 +322,289 @@ model SharedResource {
   note        Note?           @relation("SharedNotes", fields: [noteId], references: [id], onDelete: Cascade)
 
   @@map("shared_resources")
+}
+
+// ─────────────────────────────────────────────────────────
+// PHASE 0.5: Enterprise Core Additions (Workflows & Org)
+// ─────────────────────────────────────────────────────────
+
+model Epic {
+  id          String   @id @default(uuid())
+  title       String
+  description String?  @db.Text
+  
+  projectId   String   @map("project_id")
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  tasks       Task[]
+  
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("epics")
+}
+
+model Milestone {
+  id          String    @id @default(uuid())
+  title       String
+  dueDate     DateTime? @map("due_date")
+  
+  projectId   String    @map("project_id")
+  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  tasks       Task[]
+  
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@map("milestones")
+}
+
+model TaskDependency {
+  id            String @id @default(uuid())
+  blockingId    String @map("blocking_id")
+  blockedById   String @map("blocked_by_id")
+
+  blockingTask  Task   @relation("BlockingTasks", fields: [blockingId], references: [id], onDelete: Cascade)
+  blockedByTask Task   @relation("BlockedByTasks", fields: [blockedById], references: [id], onDelete: Cascade)
+
+  @@unique([blockingId, blockedById])
+  @@map("task_dependencies")
+}
+
+model NoteFolder {
+  id          String    @id @default(uuid())
+  name        String
+  
+  workspaceId String    @map("workspace_id")
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  
+  notes       Note[]
+  
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@map("note_folders")
+}
+
+model WorkspaceActivity {
+  id          String   @id @default(uuid())
+  action      String   // e.g., "created_task", "completed_project"
+  entityType  String   @map("entity_type") // e.g., "TASK", "PROJECT"
+  entityId    String   @map("entity_id")
+  metadata    Json?    // Stores snapshot diffs or specific action details
+  
+  workspaceId String   @map("workspace_id")
+  actorId     String   @map("actor_id")
+
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  actor       User      @relation("ActivityActor", fields: [actorId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([workspaceId, createdAt])
+  @@map("workspace_activities")
+}
+
+// ─────────────────────────────────────────────────────────
+// PHASE 1: Foundation — User Profile & Notifications
+// ─────────────────────────────────────────────────────────
+
+model UserProfile {
+  id          String  @id @default(uuid())
+  bio         String? @db.Text
+  headline    String? // e.g. "CS Student @ BINUS"
+  website     String?
+  location    String?
+  githubUrl   String? @map("github_url")
+  linkedinUrl String? @map("linkedin_url")
+  twitterUrl  String? @map("twitter_url")
+
+  userId    String   @unique @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("user_profiles")
+}
+
+enum NotificationType {
+  SHARE_RECEIVED
+  TASK_ASSIGNED
+  TASK_REVIEW
+  TASK_APPROVED
+  TASK_REVISION
+  WORKSPACE_INVITE
+  CHAT_MENTION
+  AI_DIGEST
+  SYSTEM
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  type      NotificationType
+  title     String
+  body      String           @db.Text
+  isRead    Boolean          @default(false) @map("is_read")
+  actionUrl String?          @map("action_url")
+  metadata  Json?
+
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId, isRead])
+  @@map("notifications")
+}
+
+// ─────────────────────────────────────────────────────────
+// PHASE 2: Core — Personal Tasks, Tags, File Upload
+// ─────────────────────────────────────────────────────────
+
+enum PersonalTaskStatus {
+  PENDING
+  IN_PROGRESS
+  DONE
+  CANCELLED
+}
+
+enum TaskPriority {
+  HIGH
+  MEDIUM
+  LOW
+}
+
+model PersonalTask {
+  id           String             @id @default(uuid())
+  title        String
+  description  String?            @db.Text
+  status       PersonalTaskStatus @default(PENDING)
+  priority     TaskPriority       @default(MEDIUM)
+  tags         String[]
+  dueDate      DateTime?          @map("due_date")
+  isRecurring  Boolean            @default(false) @map("is_recurring")
+  recurPattern String?            @map("recur_pattern")
+  completedAt  DateTime?          @map("completed_at")
+  order        Float              @default(0)
+
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([userId, status])
+  @@map("personal_tasks")
+}
+
+model NoteTag {
+  id    String @id @default(uuid())
+  name  String
+  color String @default("#2383E2")
+
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  notes  NoteTagAssignment[]
+
+  @@unique([userId, name])
+  @@map("note_tags")
+}
+
+model NoteTagAssignment {
+  noteId String @map("note_id")
+  tagId  String @map("tag_id")
+
+  note Note    @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  tag  NoteTag @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([noteId, tagId])
+  @@map("note_tag_assignments")
+}
+
+enum ProcessingStatus {
+  PENDING
+  PROCESSING
+  DONE
+  FAILED
+}
+
+model Attachment {
+  id               String          @id @default(uuid())
+  fileName         String          @map("file_name")
+  fileType         String          @map("file_type")
+  fileSize         Int             @map("file_size")
+  storageUrl       String          @map("storage_url")
+  publicUrl        String?         @map("public_url")
+  processingStatus ProcessingStatus @default(PENDING) @map("processing_status")
+  extractedText    String?         @db.Text @map("extracted_text")
+  aiSummary        String?         @db.Text @map("ai_summary")
+
+  noteId     String? @map("note_id")
+  uploaderId String  @map("uploader_id")
+
+  note     Note? @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  uploader User  @relation(fields: [uploaderId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("attachments")
+}
+
+// ─────────────────────────────────────────────────────────
+// PHASE 3: Collaboration — Chat & Presence
+// ─────────────────────────────────────────────────────────
+
+enum ChatRoomType {
+  WORKSPACE
+  PROJECT
+  DIRECT
+}
+
+enum MessageType {
+  TEXT
+  FILE
+  SYSTEM
+}
+
+model ChatRoom {
+  id   String       @id @default(uuid())
+  name String
+  type ChatRoomType @default(WORKSPACE)
+
+  workspaceId String?    @map("workspace_id")
+  workspace   Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  messages  ChatMessage[]
+  createdAt DateTime     @default(now()) @map("created_at")
+
+  @@map("chat_rooms")
+}
+
+model ChatMessage {
+  id      String      @id @default(uuid())
+  content String      @db.Text
+  type    MessageType @default(TEXT)
+  fileUrl String?     @map("file_url")
+
+  roomId   String @map("room_id")
+  senderId String @map("sender_id")
+
+  room   ChatRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  sender User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  editedAt  DateTime? @map("edited_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  @@index([roomId, createdAt])
+  @@map("chat_messages")
+}
+
+model UserPresence {
+  id          String   @id @default(uuid())
+  lastSeenAt  DateTime @default(now()) @map("last_seen_at")
+  currentPath String?  @map("current_path")
+  isOnline    Boolean  @default(false) @map("is_online")
+
+  userId String @unique @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_presence")
 }

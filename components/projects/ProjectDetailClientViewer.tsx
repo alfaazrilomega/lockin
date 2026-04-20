@@ -7,6 +7,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
+import { Skeleton } from "@/components/ui/skeleton"
 import { 
   Calendar, 
   Users, 
@@ -16,13 +17,14 @@ import {
   Plus, 
   MoreHorizontal,
   ArrowLeft,
-  Loader2
+  XCircle
 } from "lucide-react"
 import Link from "next/link"
 import { formatDate } from "@/lib/utils"
 import { NewTaskDialog } from "@/components/shared/new-task-dialog"
 import { NewNoteDialog } from "@/components/shared/new-note-dialog"
 import { type Task, type ProjectMember, type Note, type Project } from "@/lib/types"
+import { KanbanBoard } from "@/components/kanban/KanbanBoard"
 
 export function ProjectDetailClientViewer({ projectId }: { projectId: string }) {
   const [project, setProject] = useState<Project | null>(null)
@@ -57,28 +59,68 @@ export function ProjectDetailClientViewer({ projectId }: { projectId: string }) 
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
-        <p className="text-muted-foreground">Loading project details...</p>
+      <div className="space-y-8 animate-in fade-in duration-500">
+        <div className="flex flex-col space-y-4">
+          <Skeleton className="h-4 w-32" />
+          <div className="flex items-start justify-between">
+            <div className="space-y-2">
+              <Skeleton className="h-10 w-64 md:w-96" />
+              <Skeleton className="h-6 w-full max-w-2xl" />
+            </div>
+            <div className="flex space-x-2">
+              <Skeleton className="h-10 w-28" />
+              <Skeleton className="h-10 w-28" />
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="col-span-2 space-y-6">
+            <div className="flex items-center space-x-6">
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-4 w-32" />
+            </div>
+            <Skeleton className="h-24 w-full rounded-xl" />
+          </div>
+          <Skeleton className="h-32 w-full rounded-xl" />
+        </div>
+        
+        <div className="space-y-4">
+          <Skeleton className="h-10 w-[300px]" />
+          <div className="grid gap-4">
+            <Skeleton className="h-20 w-full rounded-xl" />
+            <Skeleton className="h-20 w-full rounded-xl" />
+            <Skeleton className="h-20 w-full rounded-xl" />
+          </div>
+        </div>
       </div>
     )
   }
 
   if (error || !project) {
+    const isNotFound = error === "Project not found"
     return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
-        <div className="h-12 w-12 bg-destructive/10 rounded-full flex items-center justify-center text-destructive mb-4">
-          <FileText className="h-6 w-6" />
+      <div className="flex flex-col items-center justify-center min-h-[500px] text-center animate-in fade-in duration-500">
+        <div className="h-20 w-20 bg-muted/30 rounded-full flex items-center justify-center text-muted-foreground mb-6 shadow-sm border border-border">
+          {isNotFound ? <FileText className="h-10 w-10 opacity-50" /> : <XCircle className="h-10 w-10 text-destructive/80" />}
         </div>
-        <h2 className="text-xl font-semibold">Failed to load project</h2>
-        <p className="text-muted-foreground mt-2">{error || "Project not found"}</p>
-        <div className="flex space-x-4 mt-6">
+        <h2 className="text-2xl font-bold font-satoshi text-foreground">
+          {isNotFound ? "Project Not Found" : "Failed to Load Project"}
+        </h2>
+        <p className="text-muted-foreground mt-3 max-w-md text-sm md:text-base leading-relaxed">
+          {isNotFound 
+            ? "The project you are looking for doesn't exist, has been deleted, or you don't have permission to access it."
+            : error || "An unexpected error occurred while loading this workspace."}
+        </p>
+        <div className="flex space-x-4 mt-8">
+          <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground">
+            <Link href="/dashboard/projects">Return to Projects</Link>
+          </Button>
+          {!isNotFound && (
             <Button variant="outline" onClick={() => window.location.reload()}>
-                Retry
+              Retry Connection
             </Button>
-            <Button asChild>
-                <Link href="/dashboard/projects">Back to Projects</Link>
-            </Button>
+          )}
         </div>
       </div>
     )
@@ -178,48 +220,18 @@ export function ProjectDetailClientViewer({ projectId }: { projectId: string }) 
         </TabsList>
 
         <TabsContent value="tasks" className="space-y-4">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold font-satoshi">Project Tasks</h2>
-            <Badge variant="secondary" className="font-outfit">
-              {(project.tasks?.length ?? 0)} Total
-            </Badge>
-          </div>
-          <div className="grid gap-4">
-            {(project.tasks?.length ?? 0) === 0 ? (
-              <div className="text-center py-12 bg-muted/10 rounded-xl border border-dashed border-border">
-                <p className="text-muted-foreground">No tasks assigned to this project yet.</p>
-                <NewTaskDialog projectId={project.id} onSuccess={fetchProject}>
-                  <Button variant="link" className="mt-2 text-primary font-semibold">Create your first task</Button>
-                </NewTaskDialog>
-              </div>
-            ) : (
-              (project.tasks ?? []).map((task: Task) => (
-                <div key={task.id} className="flex items-center justify-between p-4 rounded-xl border border-border hover:border-primary/30 hover:bg-muted/30 transition-all group">
-                  <div className="flex items-center space-x-4">
-                     {/* NOTE: If task completion logic was here, it should be updated, but currently it's just display */}
-                    <CheckCircle2 className={`h-5 w-5 ${task.status === 'DONE' ? 'text-green-500 fill-green-50' : 'text-muted-foreground'}`} />
-                    <div>
-                      <p className={`text-sm font-medium ${task.status === 'DONE' ? 'line-through text-muted-foreground' : ''}`}>{task.title}</p>
-                      <div className="flex items-center space-x-2 mt-1">
-                        <Badge variant="secondary" className="text-[10px] scale-90 origin-left">
-                          {task.status}
-                        </Badge>
-                        {task.deadline && (
-                          <span className="text-[10px] text-muted-foreground flex items-center">
-                            <Clock className="mr-1 h-3 w-3" />
-                            {formatDate(task.deadline)}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  <Button variant="ghost" size="icon" className="group-hover:text-primary">
-                    <MoreHorizontal className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))
-            )}
-          </div>
+          {(project.tasks?.length ?? 0) === 0 ? (
+            <div className="text-center py-12 bg-muted/10 rounded-xl border border-dashed border-border">
+              <p className="text-muted-foreground">No tasks yet. Use the board below to create your first task.</p>
+              <NewTaskDialog projectId={project.id} onSuccess={fetchProject}>
+                <Button variant="link" className="mt-2 text-primary font-semibold">Or use the dialog</Button>
+              </NewTaskDialog>
+            </div>
+          ) : null}
+          <KanbanBoard
+            initialTasks={(project.tasks ?? []) as Task[]}
+            projectId={project.id}
+          />
         </TabsContent>
 
         <TabsContent value="members" className="space-y-4">

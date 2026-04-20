@@ -22,6 +22,11 @@ export interface AuthUser extends SupabaseUser {
     avatarUrl: string | null;
     createdAt: Date;
     updatedAt: Date;
+    profile?: {
+      id: string;
+      bio: string | null;
+      headline: string | null;
+    } | null;
   };
 }
 
@@ -40,6 +45,7 @@ export async function requireUser(): Promise<AuthUser> {
   // Verify user exists in our database
   let dbUser = await prisma.user.findUnique({
     where: { id: user.id },
+    include: { profile: { select: { id: true, bio: true, headline: true } } }
   });
 
   // Bulletproof Auth Sync: Auto-create the Prisma record if Supabase authenticated them but they are missing
@@ -51,13 +57,23 @@ export async function requireUser(): Promise<AuthUser> {
         email: user.email!,
         name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Unknown User',
         avatarUrl: user.user_metadata?.avatar_url || null,
+        profile: {
+          create: {} // Auto-initialize profile
+        }
       },
       update: {
         email: user.email!,
         name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Unknown User',
         avatarUrl: user.user_metadata?.avatar_url || null,
-      }
+      },
+      include: { profile: { select: { id: true, bio: true, headline: true } } }
     });
+  } else if (!dbUser.profile) {
+    // Retroactive backfill for existing users who login but don't have a profile yet
+    const newProfile = await prisma.userProfile.create({
+      data: { userId: user.id }
+    });
+    dbUser.profile = newProfile;
   }
 
   return {
@@ -284,4 +300,35 @@ export async function getWorkspaceRole(
   if (workspace.ownerId === userId) return 'OWNER';
   if (workspace.members.length > 0) return 'MEMBER';
   return null;
+}
+
+// ─────────────────────────────────────────────────────────
+// Notifications Helper
+// ─────────────────────────────────────────────────────────
+
+export async function createNotification({
+  userId,
+  type,
+  title,
+  body,
+  actionUrl,
+  metadata
+}: {
+  userId: string;
+  type: 'SHARE_RECEIVED' | 'TASK_ASSIGNED' | 'TASK_REVIEW' | 'TASK_APPROVED' | 'TASK_REVISION' | 'WORKSPACE_INVITE' | 'CHAT_MENTION' | 'AI_DIGEST' | 'SYSTEM';
+  title: string;
+  body: string;
+  actionUrl?: string;
+  metadata?: any;
+}) {
+  return prisma.notification.create({
+    data: {
+      userId,
+      type,
+      title,
+      body,
+      actionUrl,
+      metadata: metadata || undefined,
+    }
+  });
 }

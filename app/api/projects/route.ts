@@ -3,26 +3,6 @@ import { prisma } from '@/lib/prisma';
 import { requireUser } from '@/lib/auth-helpers';
 import { createProjectSchema } from '@/lib/validations';
 import { z } from 'zod';
-import { PrismaProjectResult } from '@/lib/types';
-
-// Helper function to transform Prisma Project to API response type
-function toProjectDTO(project: PrismaProjectResult) {
-  return {
-    id: project.id,
-    name: project.name,
-    description: project.description,
-    progress: project.progress,
-    deadline: project.deadline,
-    createdAt: project.createdAt,
-    updatedAt: project.updatedAt,
-    ownerId: project.ownerId,
-    _count: project._count,
-    owner: project.owner,
-    members: project.members,
-    tasks: project.tasks,
-    notes: project.notes,
-  };
-}
 
 export async function GET() {
   try {
@@ -35,6 +15,7 @@ export async function GET() {
       return NextResponse.json({ success: false, error: 'User account not found' }, { status: 404 });
     }
 
+    // Heavy "God-Tier" fetch mapping out the entire Agile architecture for the frontend
     const projects = await prisma.project.findMany({
       where: {
         OR: [
@@ -43,28 +24,87 @@ export async function GET() {
         ],
       },
       include: {
-        owner: true,
+        owner: { select: { id: true, name: true, avatarUrl: true } },
         members: {
           include: {
-            user: true,
+            user: { select: { id: true, name: true, avatarUrl: true } },
           },
         },
-        tasks: true,
-        notes: true,
+        epics: {
+          include: {
+            _count: { select: { tasks: true } }
+          }
+        },
+        milestones: {
+          include: {
+            _count: { select: { tasks: true } }
+          }
+        },
+        // We only pull summary data for tasks to calculate swift metrics
+        tasks: {
+          select: {
+            id: true,
+            status: true,
+            priority: true,
+            storyPoints: true,
+            epicId: true,
+            milestoneId: true,
+          }
+        },
+        _count: {
+          select: { notes: true, tasks: true, epics: true, milestones: true }
+        }
       },
       orderBy: {
         createdAt: 'desc',
       },
     });
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return NextResponse.json({ success: true, data: projects.map((p: any) => toProjectDTO(p as unknown as PrismaProjectResult)) });
+    // Map projects into calculated Dadmin / Linear views
+    const formattedProjects = projects.map(p => {
+      // Metric Calculation:
+      const totalPoints = p.tasks.reduce((sum, t) => sum + (t.storyPoints || 0), 0);
+      const completedPoints = p.tasks.filter(t => t.status === 'DONE').reduce((sum, t) => sum + (t.storyPoints || 0), 0);
+      const completedTasks = p.tasks.filter(t => t.status === 'DONE').length;
+      
+      const realProgress = p.tasks.length > 0 
+          ? Math.round((completedTasks / p.tasks.length) * 100) 
+          : 0;
+
+      const completionVelocity = totalPoints > 0 
+          ? Math.round((completedPoints / totalPoints) * 100) 
+          : 0;
+
+      return {
+        id: p.id,
+        name: p.name,
+        description: p.description,
+        status: p.status, // ACTIVE, PLANNING
+        priority: p.priority, // HIGH, MEDIUM, LOW
+        deadline: p.deadline,
+        createdAt: p.createdAt,
+        owner: p.owner,
+        members: p.members,
+        epics: p.epics,
+        milestones: p.milestones,
+        _count: p._count,
+        metrics: {
+          computedProgress: realProgress, // Real task completion %
+          pointsVelocity: completionVelocity, // Real point completion %
+          totalStoryPoints: totalPoints,
+          completedStoryPoints: completedPoints,
+          urgentTaskCount: p.tasks.filter(t => t.priority === 'HIGH' && t.status !== 'DONE').length
+        }
+      };
+    });
+
+    return NextResponse.json({ success: true, data: formattedProjects });
   } catch (error) {
-    console.error('Get user projects API error:', error);
+    console.error('Get user god-tier projects API error:', error);
     if (error instanceof Error && error.message.includes('NEXT_REDIRECT')) {
         return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
-    return NextResponse.json({ success: false, error: 'Failed to fetch projects' }, { status: 500 });
+    return NextResponse.json({ success: false, error: 'Failed to fetch complex project structure' }, { status: 500 });
   }
 }
 
@@ -79,7 +119,6 @@ export async function POST(request: Request) {
     
     const validation = createProjectSchema.parse(body);
 
-    // Authorize user
     const authUser = await requireUser();
 
     // Ensure user has a Personal Workspace
@@ -105,22 +144,18 @@ export async function POST(request: Request) {
         deadline: validation.deadline,
         ownerId: authUser.id,
         workspaceId: workspace.id,
+        status: 'PLANNING', // Start in Planning logically
+        priority: 'MEDIUM' 
       },
       include: {
         owner: true,
-        members: {
-          include: {
-            user: true,
-          },
-        },
-        tasks: true,
-        notes: true,
+        _count: { select: { tasks: true, notes: true, epics: true, milestones: true } }
       },
     });
 
-    return NextResponse.json({ success: true, data: toProjectDTO(project as unknown as PrismaProjectResult) }, { status: 201 });
+    return NextResponse.json({ success: true, data: project }, { status: 201 });
   } catch (error) {
-    console.error('Create project API error:', error);
+    console.error('Create agile project API error:', error);
     if (error instanceof Error && error.message.includes('NEXT_REDIRECT')) {
         return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }

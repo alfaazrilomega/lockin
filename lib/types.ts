@@ -6,10 +6,35 @@ export enum TaskStatus {
   DONE = 'DONE',
 }
 
+export enum TaskPriority {
+  HIGH = 'HIGH',
+  MEDIUM = 'MEDIUM',
+  LOW = 'LOW',
+}
+
+export enum PersonalTaskStatus {
+  PENDING = 'PENDING',
+  IN_PROGRESS = 'IN_PROGRESS',
+  DONE = 'DONE',
+  CANCELLED = 'CANCELLED',
+}
+
 export enum PermissionLevel {
   VIEWER = 'VIEWER',
   EDITOR = 'EDITOR',
   LEADER = 'LEADER',
+}
+
+export enum NotificationType {
+  SHARE_RECEIVED = 'SHARE_RECEIVED',
+  TASK_ASSIGNED = 'TASK_ASSIGNED',
+  TASK_REVIEW = 'TASK_REVIEW',
+  TASK_APPROVED = 'TASK_APPROVED',
+  TASK_REVISION = 'TASK_REVISION',
+  WORKSPACE_INVITE = 'WORKSPACE_INVITE',
+  CHAT_MENTION = 'CHAT_MENTION',
+  AI_DIGEST = 'AI_DIGEST',
+  SYSTEM = 'SYSTEM',
 }
 
 // Role on a workspace: OWNER (creator) or MEMBER (invited)
@@ -30,15 +55,20 @@ export interface Project {
   description: string | null
   progress: number
   deadline: Date | null
+  status?: string
+  priority?: TaskPriority
   createdAt: Date
   updatedAt: Date
   ownerId: string
+  workspaceId?: string | null
   owner?: User
   members?: ProjectMember[]
   tasks?: Task[]
   notes?: Note[]
   _count?: {
     tasks: number
+    epics?: number
+    milestones?: number
   }
 }
 
@@ -97,19 +127,56 @@ export interface Task {
   title: string
   description: string | null
   status: TaskStatus
+  priority: TaskPriority
   deadline: Date | null
   proofUrl: string | null
   proofNotes: string | null
   feedback: string | null
-  projectId: string
+  projectId: string | null
   order: number
   workspaceId?: string
   assigneeId: string | null
+  epicId?: string | null
+  milestoneId?: string | null
+  storyPoints?: number | null
+  timeSpent?: number | null
+  parentId?: string | null
+  parent?: Task | null
+  subtasks?: Task[]
   project?: Project
   workspace?: Record<string, unknown> | null
   assignee?: User | null
   createdAt: Date
   updatedAt: Date
+}
+
+export interface PersonalTask {
+  id: string
+  title: string
+  description: string | null
+  status: PersonalTaskStatus
+  priority: TaskPriority
+  tags: string[] | null
+  dueDate: Date | null
+  isRecurring: boolean
+  recurPattern: string | null
+  completedAt: Date | null
+  order: number
+  userId: string
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface Notification {
+  id: string
+  type: NotificationType
+  title: string
+  body: string
+  isRead: boolean
+  actionUrl: string | null
+  metadata: Record<string, unknown> | null
+  userId: string
+  createdAt: Date
 }
 
 export interface Note {
@@ -122,6 +189,8 @@ export interface Note {
   meetingDate: Date | null
   authorId: string
   projectId: string | null
+  isPinned?: boolean
+  wordCount?: number | null
   author?: User
   project?: Project | null
   flashcardDecks?: FlashcardDeck[]
@@ -185,7 +254,8 @@ export interface CreateNoteForm {
   meetingDate?: Date
 }
 
-// Dashboard Types
+// ─── Dashboard Types ────────────────────────────────────────────────────────
+// Legacy flat type (kept for backward compatibility)
 export interface DashboardStats {
   totalProjects: number
   activeTasks: number
@@ -194,6 +264,38 @@ export interface DashboardStats {
   recentProjects: Project[]
   upcomingDeadlineTasks: Task[]
 }
+
+// Matches the actual /api/dashboard response shape
+export interface DashboardStatsV2 {
+  workload: {
+    totalOpenProjects: number
+    activeTaskCount: number
+    urgentTaskCount: number
+    personalTaskCount: number
+  }
+  velocity: {
+    completedLast7Days: number
+    storyPointsBurned: number
+    minutesSpentLogged: number
+  }
+  intelligence: {
+    swimlanes: Task[]
+    blockers: BlockerAlert[]
+    upcomingDeadlines: Task[]
+    recentProjects: Project[]
+    priorityFocus: PersonalTask[]
+  }
+}
+
+export interface BlockerAlert {
+  id: string
+  blockingTask: {
+    id: string
+    title: string
+    assignee: { name: string } | null
+  }
+}
+// ────────────────────────────────────────────────────────────────────────────
 
 export interface CalendarEvent {
   id: string
@@ -240,14 +342,17 @@ export interface PrismaTaskResult {
   title: string
   description: string | null
   status: TaskStatus
+  priority: TaskPriority
   deadline: Date | null
   proofUrl: string | null
   proofNotes: string | null
   feedback: string | null
-  projectId: string
+  projectId: string | null
   order: number
   workspaceId?: string
   assigneeId: string | null
+  storyPoints?: number | null
+  timeSpent?: number | null
   project?: Project
   workspace?: Record<string, unknown> | null
   assignee?: User | null

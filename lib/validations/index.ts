@@ -58,6 +58,30 @@ export const createTaskSchema = z.object({
     .uuid()
     .optional()
     .nullable(),
+  priority: z.enum(['HIGH', 'MEDIUM', 'LOW'])
+    .optional(),
+  storyPoints: z.number()
+    .int()
+    .min(0, 'Story points cannot be negative')
+    .optional()
+    .nullable(),
+  timeSpent: z.number()
+    .int()
+    .min(0, 'Time spent cannot be negative')
+    .optional()
+    .nullable(),
+  parentId: z.string()
+    .uuid()
+    .optional()
+    .nullable(),
+  epicId: z.string()
+    .uuid()
+    .optional()
+    .nullable(),
+  milestoneId: z.string()
+    .uuid()
+    .optional()
+    .nullable(),
 });
 
 export const updateTaskSchema = z.object({
@@ -80,6 +104,72 @@ export const updateTaskSchema = z.object({
     .uuid()
     .optional()
     .nullable(),
+  priority: z.enum(['HIGH', 'MEDIUM', 'LOW'])
+    .optional(),
+  storyPoints: z.number()
+    .int()
+    .min(0)
+    .optional()
+    .nullable(),
+  timeSpent: z.number()
+    .int()
+    .min(0)
+    .optional()
+    .nullable(),
+  parentId: z.string()
+    .uuid()
+    .optional()
+    .nullable(),
+  epicId: z.string()
+    .uuid()
+    .optional()
+    .nullable(),
+  milestoneId: z.string()
+    .uuid()
+    .optional()
+    .nullable(),
+});
+
+// Personal Task validation schemas
+export const createPersonalTaskSchema = z.object({
+  title: z.string()
+    .min(1, 'Task title is required')
+    .max(200, 'Task title must be less than 200 characters')
+    .trim(),
+  description: z.string()
+    .max(2000, 'Description must be less than 2000 characters')
+    .optional()
+    .nullable(),
+  status: z.enum(['PENDING', 'IN_PROGRESS', 'DONE', 'CANCELLED']),
+  priority: z.enum(['HIGH', 'MEDIUM', 'LOW']).default('MEDIUM'),
+  tags: z.array(z.string()).optional().default([]),
+  dueDate: z.union([z.string().datetime(), z.date()])
+    .optional()
+    .nullable()
+    .transform(val => val ? new Date(val) : null),
+  isRecurring: z.boolean().default(false),
+  recurPattern: z.string().optional().nullable(),
+});
+
+export const updatePersonalTaskSchema = z.object({
+  title: z.string()
+    .min(1, 'Task title is required')
+    .max(200, 'Task title must be less than 200 characters')
+    .trim()
+    .optional(),
+  description: z.string()
+    .max(2000, 'Description must be less than 2000 characters')
+    .optional()
+    .nullable(),
+  status: z.enum(['PENDING', 'IN_PROGRESS', 'DONE', 'CANCELLED']).optional(),
+  priority: z.enum(['HIGH', 'MEDIUM', 'LOW']).optional(),
+  tags: z.array(z.string()).optional(),
+  dueDate: z.union([z.string().datetime(), z.date()])
+    .optional()
+    .nullable()
+    .transform(val => val ? new Date(val) : null),
+  isRecurring: z.boolean().optional(),
+  recurPattern: z.string().optional().nullable(),
 });
 
 // Note validation schemas

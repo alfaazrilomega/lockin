@@ -1,11 +1,12 @@
 "use client"
 
-import { useState, useMemo, useRef } from "react"
+import { useState, useMemo, useRef, useCallback } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Textarea } from "@/components/ui/textarea"
 import { 
   FileText, 
   Music, 
@@ -17,7 +18,8 @@ import {
   Plus,
   RotateCcw,
   BookOpen,
-  Loader2
+  Loader2,
+  CheckCheck,
 } from "lucide-react"
 import Link from "next/link"
 import { formatDate } from "@/lib/utils"
@@ -30,6 +32,9 @@ interface NoteDetailsClientProps {
 
 export function NoteDetailsClient({ note: initialNote }: NoteDetailsClientProps) {
   const [note, setNote] = useState(initialNote)
+  const [editableContent, setEditableContent] = useState(initialNote.content ?? "")
+  const [isSaving, setIsSaving] = useState(false)
+  const [savedIndicator, setSavedIndicator] = useState(false)
   const [isSummarizing, setIsSummarizing] = useState(false)
   const [isGeneratingCards, setIsGeneratingCards] = useState(false)
   const [selectedDeck, setSelectedDeck] = useState<FlashcardDeck | null>(null)
@@ -43,7 +48,29 @@ export function NoteDetailsClient({ note: initialNote }: NoteDetailsClientProps)
   const streamRef = useRef<MediaStream | null>(null)
   const { toast } = useToast()
 
-  const aiSource = note.transcript ? "Transcript" : note.content ? "Content" : "None"
+  const handleSaveContent = useCallback(async (contentToSave: string) => {
+    if (contentToSave === note.content) return // no change
+    setIsSaving(true)
+    try {
+      const res = await fetch(`/api/notes/${note.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: contentToSave }),
+      })
+      const result = await res.json()
+      if (result.success) {
+        setNote(result.data)
+        setSavedIndicator(true)
+        setTimeout(() => setSavedIndicator(false), 2000)
+      }
+    } catch (err) {
+      console.error("Auto-save failed:", err)
+    } finally {
+      setIsSaving(false)
+    }
+  }, [note.id, note.content])
+
+  const aiSource = note.transcript ? "Transcript" : editableContent ? "Content" : "None"
 
   // Stable waveform bar heights — computed once on mount.
   const waveBarHeights = useMemo(
@@ -501,13 +528,24 @@ export function NoteDetailsClient({ note: initialNote }: NoteDetailsClientProps)
 
         <div className="space-y-8">
           <Card className="bg-background border-border shadow-sm">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Original Content</CardTitle>
+            <CardHeader className="pb-2 flex flex-row items-center justify-between">
+              <CardTitle className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Note Content</CardTitle>
+              {savedIndicator && (
+                <span className="flex items-center gap-1 text-xs text-green-500 animate-in fade-in">
+                  <CheckCheck className="h-3 w-3" />
+                  Saved
+                </span>
+              )}
+              {isSaving && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}
             </CardHeader>
             <CardContent>
-               <p className="text-sm text-foreground/80 leading-relaxed">
-                {note.content || "No manual content added."}
-              </p>
+              <Textarea
+                value={editableContent}
+                onChange={(e) => setEditableContent(e.target.value)}
+                onBlur={() => handleSaveContent(editableContent)}
+                placeholder="Start writing your note here..."
+                className="min-h-[200px] text-sm leading-relaxed resize-none border-0 shadow-none p-0 focus-visible:ring-0 bg-transparent text-foreground/80"
+              />
             </CardContent>
           </Card>
 

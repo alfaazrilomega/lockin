@@ -52,8 +52,10 @@ export async function GET(
           },
         },
         tasks: {
+          where: { parentId: null }, // Only fetch parent tasks for the board
           include: {
             assignee: true,
+            subtasks: true, // Fetch subtasks for the detail sheet
           },
           orderBy: {
             createdAt: 'desc',
@@ -117,7 +119,13 @@ export async function PUT(
             user: true,
           },
         },
-        tasks: true,
+        tasks: {
+          where: { parentId: null },
+          include: {
+            assignee: true,
+            subtasks: true,
+          }
+        },
         notes: true,
       },
     });
