@@ -1,0 +1,105 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Work {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  title       String
+  category    String
+  year        Int
+  description String?
+  coverImage  String
+  images      String[]
+  clientName  String?
+  isPublished Boolean  @default(false)
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Service {
+  id          String @id @default(cuid())
+  slug        String @unique
+  name        String
+  tagline     String
+  description String
+  coverImage  String?
+  order       Int    @default(0)
+}
+
+model TeamMember {
+  id       String  @id @default(cuid())
+  name     String
+  role     String
+  bio      String
+  photo    String
+  order    Int     @default(0)
+  isActive Boolean @default(true)
+}
+
+model BlogPost {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  title       String
+  excerpt     String
+  content     String
+  coverImage  String
+  category    String
+  publishedAt DateTime
+  isPublished Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Testimonial {
+  id          String  @id @default(cuid())
+  quote       String
+  authorName  String
+  authorRole  String?
+  company     String
+  isPublished Boolean @default(true)
+  order       Int     @default(0)
+}
+
+model PricingPlan {
+  id        String   @id @default(cuid())
+  name      String
+  tagline   String
+  features  String[]
+  ctaLabel  String   @default("KNOW MORE")
+  ctaUrl    String?
+  isPopular Boolean  @default(false)
+  order     Int      @default(0)
+}
+
+model Client {
+  id      String @id @default(cuid())
+  name    String
+  country String
+  logoUrl String?
+  order   Int    @default(0)
+}
+
+model ContactSubmission {
+  id          String   @id @default(cuid())
+  name        String
+  email       String
+  company     String?
+  projectType String?
+  message     String
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+}
+
+model NewsletterSubscriber {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+}

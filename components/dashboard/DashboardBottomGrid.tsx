@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { ChevronDown, ArrowUpRight } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
@@ -319,7 +320,6 @@ export function DashboardVisualBottom() {
                 ))}
               </div>
 
-              {/* Bar Groups - All 9 bars with compact 2px gaps */}
               <div className="flex h-[105px] items-end relative z-10 gap-[2px] ml-[44px] mb-2">
                 {/* Bar 1 Sep Hatched */}
                 <div className="relative w-[22px] flex flex-col justify-end group cursor-pointer transition-[height] duration-500 ease-in-out" style={{ height: `${currentBarData.heights[0]}%` }}>
@@ -329,18 +329,18 @@ export function DashboardVisualBottom() {
                   <div className="absolute inset-0 rounded-[7px] border border-[#e4e5e7]/80 bg-[#FAFAFA] overflow-hidden pointer-events-none z-0">
                     <div className="absolute inset-0 bg-[repeating-linear-gradient(45deg,rgba(0,0,0,0.03),rgba(0,0,0,0.03)_2px,transparent_2px,transparent_4px)]"></div>
                   </div>
-                  <img src="https://i.pravatar.cc/100?img=11" alt="avatar" className="relative w-full h-[22px] rounded-full object-cover shrink-0 z-10" />
+                  <Image src="https://i.pravatar.cc/100?img=11" alt="avatar" width={22} height={22} className="relative w-full h-[22px] rounded-full object-cover shrink-0 z-10" />
                 </div>
                 {/* Bar 2 Sep Solid */}
                 <div className="relative w-[22px] flex flex-col justify-end group cursor-pointer transition-[height] duration-500 ease-in-out" style={{ height: `${currentBarData.heights[1]}%` }}>
                   <div className="absolute inset-0 rounded-[7px] bg-[#eaeaec] pointer-events-none z-0"></div>
-                  <img src="https://i.pravatar.cc/100?img=12" alt="avatar" className="relative w-full h-[22px] rounded-full object-cover shrink-0 z-10" />
+                  <Image src="https://i.pravatar.cc/100?img=12" alt="avatar" width={22} height={22} className="relative w-full h-[22px] rounded-full object-cover shrink-0 z-10" />
                   <span className="absolute -bottom-[20px] left-1/2 -translate-x-1/2 text-[9px] font-[800] text-gray-400 group-hover:text-gray-800 transition-colors">Sep</span>
                 </div>
                 {/* Bar 3 Sep Solid */}
                 <div className="relative w-[22px] flex flex-col justify-end group cursor-pointer transition-[height] duration-500 ease-in-out" style={{ height: `${currentBarData.heights[2]}%` }}>
                   <div className="absolute inset-0 rounded-[7px] bg-[#eaeaec] pointer-events-none z-0"></div>
-                  <img src="https://i.pravatar.cc/100?img=13" alt="avatar" className="relative w-full h-[22px] rounded-full object-cover shrink-0 z-10" />
+                  <Image src="https://i.pravatar.cc/100?img=13" alt="avatar" width={22} height={22} className="relative w-full h-[22px] rounded-full object-cover shrink-0 z-10" />
                 </div>
                 {/* Bar 4 Oct Hatched */}
                 <div className="relative w-[22px] flex flex-col justify-end group cursor-pointer transition-[height] duration-500 ease-in-out" style={{ height: `${currentBarData.heights[3]}%` }}>
@@ -350,18 +350,18 @@ export function DashboardVisualBottom() {
                   <div className="absolute inset-0 rounded-[7px] border border-[#e4e5e7]/80 bg-[#FAFAFA] overflow-hidden pointer-events-none z-0">
                     <div className="absolute inset-0 bg-[repeating-linear-gradient(45deg,rgba(0,0,0,0.03),rgba(0,0,0,0.03)_2px,transparent_2px,transparent_4px)]"></div>
                   </div>
-                  <img src="https://i.pravatar.cc/100?img=14" alt="avatar" className="relative w-full h-[22px] rounded-full object-cover shrink-0 z-10" />
+                  <Image src="https://i.pravatar.cc/100?img=14" alt="avatar" width={22} height={22} className="relative w-full h-[22px] rounded-full object-cover shrink-0 z-10" />
                 </div>
                 {/* Bar 5 Oct Solid */}
                 <div className="relative w-[22px] flex flex-col justify-end group cursor-pointer transition-[height] duration-500 ease-in-out" style={{ height: `${currentBarData.heights[4]}%` }}>
                   <div className="absolute inset-0 rounded-[7px] bg-[#eaeaec] pointer-events-none z-0"></div>
-                  <img src="https://i.pravatar.cc/100?img=15" alt="avatar" className="relative w-full h-[22px] rounded-full object-cover shrink-0 z-10" />
+                  <Image src="https://i.pravatar.cc/100?img=15" alt="avatar" width={22} height={22} className="relative w-full h-[22px] rounded-full object-cover shrink-0 z-10" />
                   <span className="absolute -bottom-[20px] left-1/2 -translate-x-1/2 text-[9px] font-[800] text-gray-400 group-hover:text-gray-800 transition-colors">Oct</span>
                 </div>
                 {/* Bar 6 Oct Solid */}
                 <div className="relative w-[22px] flex flex-col justify-end group cursor-pointer transition-[height] duration-500 ease-in-out" style={{ height: `${currentBarData.heights[5]}%` }}>
                   <div className="absolute inset-0 rounded-[7px] bg-[#eaeaec] pointer-events-none z-0"></div>
-                  <img src="https://i.pravatar.cc/100?img=16" alt="avatar" className="relative w-full h-[22px] rounded-full object-cover shrink-0 z-10" />
+                  <Image src="https://i.pravatar.cc/100?img=16" alt="avatar" width={22} height={22} className="relative w-full h-[22px] rounded-full object-cover shrink-0 z-10" />
                 </div>
                 {/* Bar 7 Nov Hatched */}
                 <div className="relative w-[22px] flex flex-col justify-end group cursor-pointer transition-[height] duration-500 ease-in-out" style={{ height: `${currentBarData.heights[6]}%` }}>
@@ -371,18 +371,18 @@ export function DashboardVisualBottom() {
                   <div className="absolute inset-0 rounded-[7px] border border-[#e4e5e7]/80 bg-[#FAFAFA] overflow-hidden pointer-events-none z-0">
                     <div className="absolute inset-0 bg-[repeating-linear-gradient(45deg,rgba(0,0,0,0.03),rgba(0,0,0,0.03)_2px,transparent_2px,transparent_4px)]"></div>
                   </div>
-                  <img src="https://i.pravatar.cc/100?img=17" alt="avatar" className="relative w-full h-[22px] rounded-full object-cover shrink-0 z-10" />
+                  <Image src="https://i.pravatar.cc/100?img=17" alt="avatar" width={22} height={22} className="relative w-full h-[22px] rounded-full object-cover shrink-0 z-10" />
                 </div>
                 {/* Bar 8 Nov Solid */}
                 <div className="relative w-[22px] flex flex-col justify-end group cursor-pointer transition-[height] duration-500 ease-in-out" style={{ height: `${currentBarData.heights[7]}%` }}>
                   <div className="absolute inset-0 rounded-[7px] bg-[#eaeaec] pointer-events-none z-0"></div>
-                  <img src="https://i.pravatar.cc/100?img=18" alt="avatar" className="relative w-full h-[22px] rounded-full object-cover shrink-0 z-10" />
+                  <Image src="https://i.pravatar.cc/100?img=18" alt="avatar" width={22} height={22} className="relative w-full h-[22px] rounded-full object-cover shrink-0 z-10" />
                   <span className="absolute -bottom-[20px] left-1/2 -translate-x-1/2 text-[9px] font-[800] text-gray-400 group-hover:text-gray-800 transition-colors">Nov</span>
                 </div>
                 {/* Bar 9 Nov Solid */}
                 <div className="relative w-[22px] flex flex-col justify-end group cursor-pointer transition-[height] duration-500 ease-in-out" style={{ height: `${currentBarData.heights[8]}%` }}>
                   <div className="absolute inset-0 rounded-[7px] bg-[#eaeaec] pointer-events-none z-0"></div>
-                  <img src="https://i.pravatar.cc/100?img=19" alt="avatar" className="relative w-full h-[22px] rounded-full object-cover shrink-0 z-10" />
+                  <Image src="https://i.pravatar.cc/100?img=19" alt="avatar" width={22} height={22} className="relative w-full h-[22px] rounded-full object-cover shrink-0 z-10" />
                 </div>
               </div>
             </div>
@@ -608,13 +608,13 @@ export function DashboardVisualBottom() {
 
                         {/* Avatars on timeline overlay */}
                         <div className="absolute left-[18%] -top-3.5 w-5 h-5 rounded-full border-[1.5px] border-white overflow-hidden shadow-md z-20 hover:scale-125 hover:-translate-y-0.5 transition-transform cursor-pointer">
-                          <img src="https://i.pravatar.cc/100?img=17" className="w-full h-full object-cover" />
+                          <Image src="https://i.pravatar.cc/100?img=17" alt="avatar" width={20} height={20} className="w-full h-full object-cover" />
                         </div>
                         <div className="absolute left-[63%] -top-3.5 w-5 h-5 rounded-full border-[1.5px] border-white overflow-hidden shadow-md z-20 hover:scale-125 hover:-translate-y-0.5 transition-transform cursor-pointer">
-                          <img src="https://i.pravatar.cc/100?img=15" className="w-full h-full object-cover" />
+                          <Image src="https://i.pravatar.cc/100?img=15" alt="avatar" width={20} height={20} className="w-full h-full object-cover" />
                         </div>
                         <div className="absolute left-[88%] -top-3.5 w-5 h-5 rounded-full border-[1.5px] border-white overflow-hidden shadow-md z-20 hover:scale-125 hover:-translate-y-0.5 transition-transform cursor-pointer">
-                          <img src="https://i.pravatar.cc/100?img=19" className="w-full h-full object-cover" />
+                          <Image src="https://i.pravatar.cc/100?img=19" alt="avatar" width={20} height={20} className="w-full h-full object-cover" />
                         </div>
                       </div>
                     </div>
