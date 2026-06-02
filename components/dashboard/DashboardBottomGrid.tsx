@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { ChevronDown, ArrowUpRight } from 'lucide-react';
+import { ChevronDown, ArrowUpRight, TrendingUp, ArrowUp } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 // ─── SVG ICONS ─────────────────────────────────────────────────────────────
@@ -546,11 +546,117 @@ export function DashboardVisualBottom({ salesContributors, timeframe = 'Sep 1 �
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-bold text-gray-900 tracking-wide">Work with platforms</span>
                         <div className="flex items-center gap-2">
-                            <stop offset="0%" stopColor="#C52150" stopOpacity="0.4" />
-                            <stop offset="100%" stopColor="#C52150" stopOpacity="0" />
-                          </linearGradient>
-                        </defs>
-                      </svg>
+                          <div className="bg-[#C52150] rounded-full px-2.5 py-1 text-white text-[10px] font-bold flex items-center gap-1">
+                            <TrendingUp className="w-3 h-3" strokeWidth={3} /> 3
+                          </div>
+                          <div className="bg-[#C52150] rounded-full px-3 py-1 text-white text-xs font-bold tracking-tight">
+                            $<AnimatedCounter value={user.rev} />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        {/* Dribbble Main Stats Card */}
+                        <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-transparent hover:border-gray-100 flex flex-col justify-between row-span-2 group">
+                          <div className="flex items-center gap-2 mb-6">
+                            <div className="scale-125"><DribbbleLogo /></div>
+                            <span className="text-sm font-bold text-gray-900">Dribbble</span>
+                          </div>
+                          <div>
+                            <div className="flex items-end gap-2 mb-2">
+                              <span className="text-4xl font-black text-gray-900 tracking-tight leading-none">45.3%</span>
+                              <span className="text-sm font-bold text-gray-400 mb-1 tracking-tight">$94,964</span>
+                            </div>
+                            <div className="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden mt-4">
+                              <div className="bg-gray-900 h-full rounded-full group-hover:w-[48%] transition-all duration-700" style={{ width: '45.3%' }} />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Instagram Stats Card */}
+                        <div className="bg-transparent border border-gray-200/50 rounded-[1.5rem] p-5 flex flex-col justify-between relative overflow-hidden group cursor-pointer hover:bg-white/60 transition-colors shadow-sm hover:shadow-md">
+                          <div className="flex items-center gap-2">
+                            <InstagramLogo />
+                            <span className="text-xs font-bold text-gray-900">Instagram</span>
+                          </div>
+                          <div className="flex items-end gap-2 mt-4">
+                            <span className="text-2xl font-black text-gray-900 tracking-tight leading-none">28.1%</span>
+                            <span className="text-xs font-bold text-gray-400 mb-0.5 tracking-tight">$59k</span>
+                          </div>
+                        </div>
+
+                        {/* Google Stats Card */}
+                        <div className="bg-transparent border border-gray-200/50 rounded-[1.5rem] p-5 flex flex-col justify-between relative overflow-hidden group cursor-pointer hover:bg-white/60 transition-colors shadow-sm hover:shadow-md">
+                          <div className="flex items-center gap-2">
+                            <GoogleLogo />
+                            <span className="text-xs font-bold text-gray-900">Google</span>
+                          </div>
+                          <div className="flex flex-col mt-4 gap-2">
+                            <div className="flex items-end gap-2">
+                              <span className="text-2xl font-black text-gray-900 tracking-tight leading-none">14.1%</span>
+                              <span className="text-xs font-bold text-gray-400 mb-0.5 tracking-tight">$30k</span>
+                            </div>
+                            <div className="w-full bg-white h-2 rounded-full overflow-hidden shadow-inner">
+                              <div className="bg-[repeating-linear-gradient(45deg,#d1d5db,#d1d5db_2px,transparent_2px,transparent_4px)] w-full h-full opacity-50" />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Other Stats */}
+                        <div className="col-span-2 flex items-center justify-between p-4 bg-transparent border border-gray-200/50 rounded-xl mt-2 cursor-pointer hover:bg-white/80 transition-colors shadow-sm">
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center border border-gray-100 shadow-sm"><ChevronDown className="w-4 h-4 text-gray-400" /></div>
+                            <span className="text-xs font-bold text-gray-900">Other</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-black text-gray-900 tracking-tight">12.5%</span>
+                            <span className="text-xs font-bold text-gray-400">$26k</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Sales dynamic header */}
+                    <div className="mt-8 flex flex-col gap-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-bold text-gray-900 tracking-wide">Sales dynamic</span>
+                        <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm cursor-pointer hover:bg-gray-50 border border-gray-100">
+                          <ArrowUp className="w-4 h-4 text-gray-400 rotate-45" />
+                        </div>
+                      </div>
+                      
+                      {/* Generous padding for the chart */}
+                      <div className="w-full h-[180px] mt-2 relative">
+                        <svg className="w-full h-[130px] drop-shadow-xl absolute top-0" preserveAspectRatio="none" viewBox="0 0 100 100">
+                          <path d="M0 100 C 20 80, 30 100, 50 60 S 80 100, 100 80 L 100 100 Z" fill="url(#pinkGradLayer1)" />
+                          <path d="M0 100 C 10 90, 40 100, 60 70 S 90 90, 100 75 L 100 100 Z" fill="url(#pinkGradLayer2)" />
+                          
+                          <path d="M0 100 C 20 80, 30 100, 50 60 S 80 100, 100 80" fill="none" stroke="#C52150" strokeWidth="0.8" opacity="0.6" />
+                          <path d="M0 100 C 10 90, 40 100, 60 70 S 90 90, 100 75" fill="none" stroke="#C52150" strokeWidth="1.5" />
+                          
+                          <defs>
+                            <linearGradient id="pinkGradLayer1" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor="#C52150" stopOpacity="0.15" />
+                              <stop offset="100%" stopColor="#C52150" stopOpacity="0.01" />
+                            </linearGradient>
+                            <linearGradient id="pinkGradLayer2" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor="#C52150" stopOpacity="0.25" />
+                              <stop offset="100%" stopColor="#C52150" stopOpacity="0" />
+                            </linearGradient>
+                          </defs>
+                        </svg>
+
+                        {/* Chart Markers Overlay */}
+                        <div className="absolute inset-0 flex justify-between items-end px-4 pb-12 pointer-events-none">
+                          {['W 1', 'W 3', 'W 5', 'W 7', 'W 9', 'W 11'].map((label, i) => (
+                            <div key={i} className="flex flex-col items-center gap-3">
+                              <div className="text-xs font-bold text-gray-400">{label}</div>
+                              <div className="w-[1px] h-3 bg-gray-200" />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
 
                       {/* Bottom axis timeline & avatars */}
                       <div className="absolute bottom-[-6px] w-full h-1.5 bg-gray-200/60 rounded-full flex items-center">
@@ -580,7 +686,6 @@ export function DashboardVisualBottom({ salesContributors, timeframe = 'Sep 1 �
                       </div>
                     </div>
 
-                  </div>
                 </div>
               </div>
             </div>
