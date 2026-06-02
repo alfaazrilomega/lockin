@@ -64,7 +64,7 @@ export default function About() {
         <section>
           <h1 className="text-2xl md:text-3xl font-medium text-foreground leading-relaxed">
             <span className="block overflow-hidden pb-1">
-              <span className="reveal-text block text-muted">I'm a multidisciplinary designer</span>
+              <span className="reveal-text block text-muted">I&apos;m a multidisciplinary designer</span>
             </span>
             <span className="block overflow-hidden pb-1">
               <span className="reveal-text block text-foreground">currently building digital products</span>

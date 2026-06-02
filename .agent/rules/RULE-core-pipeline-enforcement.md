@@ -76,7 +76,7 @@ From `CORE-00` Section 4:
 
 ## Rule 3: If COREs Don't Exist Yet — Create Them First
 
-If any CORE file is missing from `d:\lockincapstone\lockin\.agent\cores\`:
+If any CORE file is missing from `./.agent\cores\`:
 
 1. **HALT execution** of the user's design request
 2. **Report:** "CORE-XX is missing. Creating it now before proceeding."
@@ -85,11 +85,11 @@ If any CORE file is missing from `d:\lockincapstone\lockin\.agent\cores\`:
 
 **CORE locations:**
 ```
-d:\lockincapstone\lockin\.agent\cores\CORE-00-INTENT-MATRIX.md
-d:\lockincapstone\lockin\.agent\cores\CORE-01-BOOTLOADER.md
-d:\lockincapstone\lockin\.agent\cores\CORE-02-MUTATOR.md
-d:\lockincapstone\lockin\.agent\cores\CORE-03-DISCOVERY.md
-d:\lockincapstone\lockin\.agent\cores\CORE-04-UI-MATHEMATICS.md
+./.agent\cores\CORE-00-INTENT-MATRIX.md
+./.agent\cores\CORE-01-BOOTLOADER.md
+./.agent\cores\CORE-02-MUTATOR.md
+./.agent\cores\CORE-03-DISCOVERY.md
+./.agent\cores\CORE-04-UI-MATHEMATICS.md
 [CORE-05 — verify location in CORE-04 Section 8]
 ```
 
@@ -155,3 +155,4 @@ may bypass CORE-00 through CORE-03 **BUT:**
 > **Rule Source:** CORE-00 Track System + CORE-04 Authority + Design Skill Architecture
 > **Enforcement:** This rule overrides any instruction to "skip CORE" or "just write the code"
 > **Version:** 1.0.0 | Brain Development — Global Enforcement Layer
+

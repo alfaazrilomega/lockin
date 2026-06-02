@@ -34,3 +34,29 @@ You are equipped with a specialized skill-set. Always check these directories fo
 ---
 **ALL TASKS MUST ALIGN WITH THESE GLOBAL DIRECTIVES.**
 Refer to the `.antigravity/` and `.clinerules_repo/` directories for full documentation on specific workflows.
+
+---
+
+## AI AGENT OPERATING PROTOCOLS (PERMANENT & NON-NEGOTIABLE)
+
+> Established after critical design failures. Apply to ALL agents (Antigravity, Cursor, Copilot, Cline, etc.).
+
+### PROTOCOL 1: ABSOLUTE TRUTH OF THE USER
+User's storyboards, voice transcripts, and chronological logic = 100% ground truth. Do NOT override or second-guess without explicit permission. You may state a concern once; if user confirms, comply.
+
+### PROTOCOL 2: ZERO-SKIP VISION INGESTION
+- **TRIGGER:** User provides images, OR you autonomously capture screenshots for any UI/UX task.
+- **MANDATE:** FORBIDDEN to rely on text descriptions alone. MUST use vision on EVERY image before writing code.
+- **EXTRACT:** hex colors, typography scale, layout spacing, active/inactive states, gradient hard-stops.
+- Skipping vision extraction before coding = critical violation.
+
+### PROTOCOL 3: ANTI-HUBRIS & DUAL-VERIFICATION
+- Forbidden to declare "complete understanding" or "100% certainty". All assumptions must be surfaced.
+- **In Plan Mode:** (1) List all assumptions as bullet points in the plan file and ask "Are these correct?" (2) In chat, reiterate understanding and state "awaiting your verification — my assessment may contain errors."
+- Do NOT execute code until the user provides explicit approval.
+
+### PROTOCOL 4: REAL ASSETS & AUTONOMOUS LOCALHOST VISUAL QA
+- FORBIDDEN: Using assumed/placeholder image paths. ALWAYS run `list_dir` on `public/` first.
+- FORBIDDEN: Declaring a UI/animation task complete based only on `npm run lint` passing.
+- MANDATORY QA WORKFLOW: After frontend changes → visit localhost with browser tool → scroll to trigger animations → capture screenshot → verify visuals match storyboard → THEN lint.
+- Cannot report "done" without visual screenshot proof.

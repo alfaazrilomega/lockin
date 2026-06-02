@@ -1,81 +1,94 @@
-# LockIn Dashboard Audit: Master Feature & Workflow Guide
+﻿# FEATURES.md — Project Feature Map (TEMPLATE)
 
-This document serves as the "Master Feature & Workflow Guide" for the LockIn productivity platform. It maps the interconnected modules—including Projects, Notes, Flashcards, and Task management—into a structured guide that explains the synergy, user journeys, and advanced technical capabilities of each feature.
+> **⚠️ TEMPLATE FILE — MUST BE REPLACED BY USER OR AI DURING SETUP**
+>
+> This file is a **placeholder template**. It is NOT pre-filled because every project is different.
+> The AI agent will guide you through populating this file during the `/setup` workflow.
 
 ---
 
-## 🏗️ 1. Platform Architecture: The Power-User Hierarchy
-LockIn is structured for high-performance scale, using a multi-layered hierarchy that ensures clarity even in the most complex workspaces.
+## What This File Is For
+
+`FEATURES.md` is the **living feature specification** for your project. It tells every AI agent working in this repository exactly what the product does, how its modules connect, and what workflows it supports.
+
+When populated, it acts as:
+- A **context anchor** so the AI never hallucinates features that don't exist
+- A **scope boundary** so the AI doesn't build outside your defined product
+- A **workflow map** so the AI understands how modules interact before touching code
+
+---
+
+## 📋 Instructions: How to Fill This File
+
+### Option A — Let the AI Fill It (Recommended)
+Run the `/setup` workflow and answer the consultation questions. The AI will generate this file for you based on your answers.
+
+### Option B — Fill It Manually
+Copy the structure below and replace all `[PLACEHOLDER]` values with your actual project details.
+
+---
+
+## Template Structure
+
+```markdown
+# [Your Project Name] — Master Feature & Workflow Guide
+
+## 1. Platform Architecture
 
 | Level | Component | Purpose |
-| :--- | :--- | :--- |
-| **0** | **Workspace** | The top-level container for all projects, files, and members. |
-| **1** | **Projects** | Primary mission containers (e.g., "Platform Redesign"). |
-| **2** | **Epics** | Strategic high-level themes within a project. |
-| **3** | **Milestones** | Key progress checkpoints that group specific tasks. |
-| **4** | **Tasks** | The atomic unit of work—highly configurable with story points and priorities. |
+| :---- | :-------- | :------ |
+| 0     | [Top-level container name] | [What it holds] |
+| 1     | [Second level] | [Purpose] |
+| 2     | [Third level] | [Purpose] |
 
 ---
 
-## 🚀 2. Core Feature Deep-Dive
+## 2. Core Features
 
-### 📂 Smart Project & Task Management
-The project management module is more than a list; it is a **gated quality-control engine**.
-- **Jira-Style Kanban**: A high-speed drag-and-drop interface optimized with standard stages: `To-Do`, `In-Progress`, `Review`, `Revision`, and `Done`.
-- **Proof-of-Work Gate**: Tasks cannot enter "Review" without a mandatory submission of Proof URLs or Notes, ensuring accountability.
-- **Revision Feedback Loop**: If a task is moved to "Revision," the system mandates leader feedback, creating a clear audit trail of requirements.
-- **Story Point Velocity**: Tracks effort values to help teams understand their delivery capacity.
+### [Feature Module Name]
+- [Key capability 1]
+- [Key capability 2]
+- [Key capability 3]
 
-### 📝 AI-Powered Notes & Wiki
-Notes in LockIn are designed for rapid knowledge capture and long-term retention.
-- **Hierarchical Wiki**: Notes support parent-child relationships, allowing you to build complex documentation structures.
-- **Groq-Powered Transcription**: Convert voice recordings to text instantly using the **Groq Whisper-large-v3** engine. 
-- **Automatic Metadata**: Captures meeting dates and links notes directly to specific Projects or Epics.
-
-### 🧠 Smart Flashcards (SRS System)
-LockIn transforms passive reading into active learning.
-- **AI Deck Generation**: Uses **OpenRouter (Minimax 2.5)** to analyze your notes or transcripts and instantly generate high-yield study cards.
-- **Spaced Repetition (SRS)**: Implements a specialized study algorithm (based on SM-2) that calculates `EaseFactor` and `Intervals`, ensuring you review cards exactly when you're about to forget them.
-
-### 🖼️ Vision-AI File Storage
-The Files module isn't just storage—it's an intelligent analyst.
-- **Multimodal Vision Analysis**: Upload an image (whiteboard, diagram, or handwritten doc), and **Gemini-2.5-Flash** will perform an OCR extraction and explain the contents.
-- **AI Document Summaries**: Every uploaded file is processed to create a professional summary of its purpose and key points.
-
-### 🗓️ Unified workspace scheduling
-- **Cross-Module Sync**: The calendar automatically synchronizes **Task Deadlines** and **Note Meeting Dates**.
-- **Visual Categorization**: Differentiates between `Meetings` (Notes), `Deadlines` (Tasks), and personal schedules with color-coded high-contrast badges.
+### [Feature Module Name]
+- [Key capability 1]
+- [Key capability 2]
 
 ---
 
-## ⚡ 3. The "God-Tier" Synergies (Workflows)
+## 3. Key Workflows (Module Synergies)
 
-The true power of LockIn lies in how these features communicate with each other.
-
-### A. The "Meeting-to-Action" Workflow
-1. **Record**: Capture a project meeting audio within a **Note**.
-2. **Transcribe**: Trigger the Groq AI to generate a full transcript.
-3. **Action**: Convert key transcript points into **Tasks** with story points in the project Kanban.
-4. **Schedule**: The meeting date and task deadlines automatically appear on the **Unified Calendar**.
-
-### B. The "Reference-to-Retention" Workflow
-1. **Upload**: Drop a textbook diagram or lecture slide into **Files**.
-2. **Vision Extraction**: AI extracts the text and concepts into a **Note**.
-3. **Generate**: Trigger "Generate Flashcards" from that Note.
-4. **Master**: Use the **SRS Review** system to memorize the concepts without manual data entry.
-
-### C. The "Vetted Delivery" Workflow
-1. **Development**: Complete a complex task in "In-Progress."
-2. **Submission**: Drag the task to "Review" and attach your work via the **Proof-of-Work Gate**.
-3. **QA**: The lead reviews, provides feedback, or moves it to "Done" via the project board metrics.
+### A. [Workflow Name]
+1. Step one description
+2. Step two description
+3. Step three description
 
 ---
 
-## 🛠️ Technical Specs (For Development Reference)
-- **Frontend**: Next.js 16 (App Router), Tailwind CSS, Shadcn UI.
-- **Backend/ORM**: Prisma with PostgreSQL.
-- **Real-time**: Supabase Auth & Storage.
-- **AI Engines**: 
-  - **Transcription**: Groq (Whisper-v3)
-  - **Generation**: OpenRouter (Minimax 2.5)
-  - **Vision/OCR**: Google Gemini-2.5-Flash
+## 4. Technical Specs (For AI Reference)
+- **Frontend**: [Framework, CSS library]
+- **Backend/ORM**: [ORM, Database]
+- **Auth/Storage**: [Service]
+- **AI/External APIs**: [List any]
+```
+
+---
+
+## ⚠️ AI Agent Instructions
+
+When you (the AI) encounter this file in its template state (i.e., contains `[PLACEHOLDER]` text or this instruction block), you MUST:
+
+1. **DO NOT treat placeholder content as real project features.**
+2. **HALT and notify the user:** "Your `FEATURES.md` is still a template. Should I generate it for you based on your project, or would you like to fill it manually?"
+3. **If the user provides project context**, generate the file content following the template structure above, then ask for confirmation before saving.
+4. **After saving**, remove this instruction block and keep only the populated content.
+
+---
+
+## Related Files (Also Template — Check These Too)
+
+| File / Folder | Status | Action Required |
+| :------------ | :----- | :-------------- |
+| `.agent/ERD/` | Template folder | Add your database schema diagrams or ERD markdown files here |
+| `.agent/project-source/` | Template folder | Add project brief, PRD, or any reference docs here |
+| `FEATURES.md` | **This file** | Replace with your actual feature map |

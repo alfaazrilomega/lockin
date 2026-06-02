@@ -1,0 +1,236 @@
+{
+  "name": "Phase 4 — Publish",
+  "nodes": [
+    {
+      "id": "webhook-publish",
+      "name": "Webhook — Receive Validated Data",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [250, 350],
+      "parameters": {
+        "path": "publish-video",
+        "responseMode": "onReceived",
+        "httpMethod": "POST"
+      }
+    },
+    {
+      "id": "gemini-seo-writer",
+      "name": "Gemini 3.5 Flash — SEO Copywriter",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [500, 250],
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "key", "value": "={{ $env.GEMINI_API_KEY }}" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": {
+          "contents": [
+            {
+              "parts": [
+                {
+                  "text": "={{ 'Kamu adalah SEO Copywriter ahli untuk YouTube Indonesia.\\n\\nDATA VIDEO:\\n- Judul ide: ' + $json.body.script_title + '\\n- Genre: ' + $json.body.validation.primary_genre + '\\n- Tags: ' + JSON.stringify($json.body.tags) + '\\n\\nBuat metadata YouTube yang optimal. BALAS HANYA dengan JSON (tanpa markdown):\\n{\\n  \"youtube_title\": \"judul max 60 karakter, mengandung kata power, untuk Indonesia\",\\n  \"youtube_description\": \"deskripsi 1000+ karakter dengan:\\n- Paragraf intro menarik\\n- Apa yang akan penonton pelajari/dapatkan\\n- Timestamp chapters:\\n  00:00 Intro\\n  00:30 [section 1]\\n  02:00 [section 2]\\n  04:00 [section 3]\\n  06:00 [section 4]\\n  08:00 Outro\\n- 3 link sosmed placeholder\\n- 15 hashtag relevan Indonesia\\n- Credit Pexels jika ada\",\\n  \"youtube_tags\": [\"tag1\", \"tag2\", \"tag3\"],\\n  \"youtube_chapters\": [\\n    { \"time\": \"00:00\", \"title\": \"Intro\" }\\n  ]\\n}' }
+              ]
+            }
+          ],
+          "generationConfig": {
+            "temperature": 0.6,
+            "maxOutputTokens": 4096,
+            "responseMimeType": "application/json"
+          }
+        }
+      }
+    },
+    {
+      "id": "imagen-thumbnail",
+      "name": "Imagen — Generate Thumbnail",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [500, 500],
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-001:predict",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "key", "value": "={{ $env.GEMINI_API_KEY }}" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": {
+          "instances": [
+            {
+              "prompt": "={{ $json.body.validation.thumbnail_prompt + ', YouTube thumbnail style, 16:9 aspect ratio, vibrant colors, eye-catching, no text, professional quality, high contrast' }}"
+            }
+          ],
+          "parameters": {
+            "sampleCount": 1,
+            "aspectRatio": "16:9",
+            "outputMimeType": "image/jpeg"
+          }
+        }
+      }
+    },
+    {
+      "id": "parse-seo-thumbnail",
+      "name": "Parse SEO + Thumbnail",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [750, 350],
+      "parameters": {
+        "jsCode": "const seoRaw = $('Gemini 3.5 Flash — SEO Copywriter').first().json;\nconst thumbRaw = $('Imagen — Generate Thumbnail').first().json;\nconst jobData = $('Webhook — Receive Validated Data').first().json.body;\n\nconst seoText = seoRaw.candidates[0].content.parts[0].text;\nconst seo = JSON.parse(seoText);\n\nconst thumbnailBase64 = thumbRaw?.predictions?.[0]?.bytesBase64Encoded || '';\n\nreturn [{\n  json: {\n    ...jobData,\n    seo,\n    thumbnail_base64: thumbnailBase64,\n    youtube_title: seo.youtube_title,\n    youtube_description: seo.youtube_description,\n    youtube_tags: seo.youtube_tags,\n    status: 'ready_to_publish'\n  }\n}];"
+      }
+    },
+    {
+      "id": "upload-thumbnail-r2",
+      "name": "Upload Thumbnail to R2",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1000, 350],
+      "parameters": {
+        "method": "PUT",
+        "url": "={{ $env.CLOUDFLARE_R2_ENDPOINT }}/{{ $env.CLOUDFLARE_R2_BUCKET_NAME }}/{{ $json.job_id }}/thumbnail.jpg",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "image/jpeg" }
+          ]
+        },
+        "sendBody": true,
+        "body": "={{ Buffer.from($json.thumbnail_base64, 'base64') }}"
+      }
+    },
+    {
+      "id": "youtube-upload",
+      "name": "YouTube — Upload Video",
+      "type": "n8n-nodes-base.youTube",
+      "typeVersion": 1,
+      "position": [1250, 350],
+      "parameters": {
+        "operation": "upload",
+        "title": "={{ $json.youtube_title }}",
+        "description": "={{ $json.youtube_description }}",
+        "categoryId": "={{ $json.validation.youtube_category_id || '23' }}",
+        "options": {
+          "tags": "={{ $json.youtube_tags }}",
+          "privacyStatus": "public",
+          "videoFileUrl": "={{ $json.video_url }}"
+        }
+      },
+      "credentials": {
+        "youTubeOAuth2Api": {
+          "id": "youtube-oauth",
+          "name": "YouTube OAuth2"
+        }
+      }
+    },
+    {
+      "id": "set-thumbnail",
+      "name": "YouTube — Set Thumbnail",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1500, 350],
+      "parameters": {
+        "method": "POST",
+        "url": "=https://www.googleapis.com/upload/youtube/v3/thumbnails/set?videoId={{ $('YouTube — Upload Video').item.json.id }}&uploadType=media",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "image/jpeg" }
+          ]
+        },
+        "sendBody": true,
+        "body": "={{ Buffer.from($('Parse SEO + Thumbnail').item.json.thumbnail_base64, 'base64') }}"
+      }
+    },
+    {
+      "id": "update-published-supabase",
+      "name": "Update Supabase — Published",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1750, 350],
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/pipeline_jobs?job_id=eq.{{ $json.job_id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": {
+          "status": "published",
+          "youtube_video_id": "={{ $('YouTube — Upload Video').item.json.id }}",
+          "youtube_url": "=https://youtube.com/watch?v={{ $('YouTube — Upload Video').item.json.id }}",
+          "thumbnail_url": "={{ $env.CLOUDFLARE_R2_PUBLIC_URL }}/{{ $json.job_id }}/thumbnail.jpg",
+          "published_at": "={{ new Date().toISOString() }}"
+        }
+      }
+    },
+    {
+      "id": "ping-supabase",
+      "name": "Daily Ping — Keep Supabase Alive",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [250, 600],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 6 * * *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "supabase-health-check",
+      "name": "Supabase Health Check",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [500, 600],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/pipeline_jobs?select=count&limit=1",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" }
+          ]
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook — Receive Validated Data": {
+      "main": [[
+        { "node": "Gemini 3.5 Flash — SEO Copywriter", "type": "main", "index": 0 },
+        { "node": "Imagen — Generate Thumbnail", "type": "main", "index": 0 }
+      ]]
+    },
+    "Gemini 3.5 Flash — SEO Copywriter": { "main": [[{ "node": "Parse SEO + Thumbnail", "type": "main", "index": 0 }]] },
+    "Imagen — Generate Thumbnail": { "main": [[{ "node": "Parse SEO + Thumbnail", "type": "main", "index": 1 }]] },
+    "Parse SEO + Thumbnail": { "main": [[{ "node": "Upload Thumbnail to R2", "type": "main", "index": 0 }]] },
+    "Upload Thumbnail to R2": { "main": [[{ "node": "YouTube — Upload Video", "type": "main", "index": 0 }]] },
+    "YouTube — Upload Video": { "main": [[{ "node": "YouTube — Set Thumbnail", "type": "main", "index": 0 }]] },
+    "YouTube — Set Thumbnail": { "main": [[{ "node": "Update Supabase — Published", "type": "main", "index": 0 }]] },
+    "Daily Ping — Keep Supabase Alive": { "main": [[{ "node": "Supabase Health Check", "type": "main", "index": 0 }]] }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Jakarta"
+  }
+}

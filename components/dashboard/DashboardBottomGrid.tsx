@@ -153,18 +153,18 @@ export function DashboardVisualBottom({ salesContributors, timeframe = 'Sep 1 �
   platforms = platforms.sort((a, b) => sortOrder === 'desc' ? b.val - a.val : a.val - b.val);
 
   return (
-    <div className="grid grid-cols-1 xl:grid-cols-12 gap-3 auto-rows-min mt-4 w-full font-satoshi">
+    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-12 gap-6 auto-rows-min mt-8 w-full font-satoshi">
 
       {/* ───────────────────────────────────────────────────────────── */}
       {/* LEFT COLUMN (5/12) */}
       {/* ───────────────────────────────────────────────────────────── */}
-      <div className="xl:col-span-5 flex flex-col gap-3">
+      <div className="xl:col-span-5 flex flex-col gap-6">
 
         {/* TOP ROW: Two Cards */}
-        <div className="grid grid-cols-2 gap-3 h-[250px]">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 min-h-[300px]">
 
           {/* Card 1: Platform List */}
-          <div className="bg-[#f2f4f7] rounded-[24px] p-[10px] flex flex-col justify-between shadow-sm border border-black/5">
+          <div className="bg-white rounded-[2rem] p-6 flex flex-col justify-between shadow-[0_8px_30px_rgba(0,0,0,0.04)] border border-gray-50">
             <div className="flex items-center justify-between px-2 pt-1 pb-1">
               <div 
                 className="flex items-center gap-0.5 cursor-pointer hover:opacity-70 transition-opacity"
@@ -177,41 +177,41 @@ export function DashboardVisualBottom({ salesContributors, timeframe = 'Sep 1 �
                 />
               </div>
               <button 
-                className="flex items-center gap-1.5 px-3 py-[5px] bg-white border border-gray-100 rounded-full hover:bg-gray-50 transition-all shadow-[0_1px_2px_rgba(0,0,0,0.03)] text-gray-700 active:scale-95"
+                className="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-full hover:bg-gray-100 transition-colors text-gray-700"
                 onClick={() => setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc')}
               >
-                <span className="text-[11px] font-[800] text-gray-600 tracking-wide">Filters</span>
+                <span className="text-xs font-bold text-gray-600 tracking-wide">Filters</span>
                 <FunnelIcon />
               </button>
             </div>
 
-            <div className="flex flex-col gap-1.5 mt-1">
+            <div className="flex flex-col gap-2 mt-4">
               {/* List Item Component Pattern */}
               {platforms.map(platform => (
-                <div key={platform.id} className="bg-white rounded-[14px] px-3.5 py-[11px] flex items-center shadow-[0_1px_2px_rgba(0,0,0,0.02)] cursor-pointer hover:-translate-y-[1px] transition-transform">
+                <div key={platform.id} className="bg-gray-50 rounded-2xl p-4 flex items-center hover:bg-gray-100 cursor-pointer transition-colors">
                   {platform.scale ? <div className={`scale-[${platform.scale}]`}><platform.Component /></div> : <platform.Component />}
-                  <span className="text-[12px] font-[800] text-gray-500 ml-2.5">{platform.name}</span>
-                  <span className="text-[13px] font-[900] text-gray-900 ml-auto tracking-tight">${Math.round(platform.val).toLocaleString('en-US')}</span>
-                  <span className="text-[10px] font-[800] text-gray-400 ml-3 w-6 text-right">{platform.pct}</span>
+                  <span className="text-sm font-bold text-gray-600 ml-3">{platform.name}</span>
+                  <span className="text-sm font-black text-gray-900 ml-auto tracking-tight">${Math.round(platform.val).toLocaleString('en-US')}</span>
+                  <span className="text-xs font-bold text-gray-400 ml-4 w-8 text-right">{platform.pct}</span>
                 </div>
               ))}
             </div>
           </div>
 
           {/* Card 2: Deals amount by referrer category */}
-          <div className="bg-[#f2f4f7] rounded-[24px] p-[10px] flex flex-col justify-between shadow-sm border border-black/5">
+          <div className="bg-white rounded-[2rem] p-6 flex flex-col justify-between shadow-[0_8px_30px_rgba(0,0,0,0.04)] border border-gray-50">
             <div className="flex items-center justify-between px-2 pt-1">
-              <div className="flex items-center gap-0.5 cursor-pointer hover:opacity-70 transition-opacity">
+              <div className="flex items-center gap-2 cursor-pointer hover:opacity-70 transition-opacity">
                 <BarChartDescIcon />
-                <ChevronDown className="w-[14px] h-[14px] text-gray-400 ml-0.5" strokeWidth={3} />
+                <ChevronDown className="w-4 h-4 text-gray-400" strokeWidth={3} />
               </div>
-              <button className="flex items-center gap-1.5 px-3 py-[5px] bg-white border border-gray-100 rounded-full hover:bg-gray-50 transition-all shadow-[0_1px_2px_rgba(0,0,0,0.03)] text-gray-700 active:scale-95">
-                <span className="text-[11px] font-[800] text-gray-600 tracking-wide">Filters</span>
+              <button className="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-full hover:bg-gray-100 transition-colors text-gray-700">
+                <span className="text-xs font-bold text-gray-600 tracking-wide">Filters</span>
                 <FunnelIcon />
               </button>
             </div>
 
-            <div className="flex-1 flex items-end justify-between gap-1.5 mt-4 mb-[22px] px-2 h-[120px]">
+            <div className="flex-1 flex items-end justify-between gap-3 mt-8 mb-6 h-[140px]">
 
               {/* 1. Behance hatched */}
               <div className="w-full h-[55%] rounded-[10px] relative bg-transparent overflow-hidden border-[1px] border-white group cursor-pointer hover:-translate-y-1 transition-transform">
@@ -241,13 +241,13 @@ export function DashboardVisualBottom({ salesContributors, timeframe = 'Sep 1 �
               </div>
             </div>
 
-            <div className="flex flex-col text-[13px] leading-[1.2] px-2 mb-1 cursor-pointer group">
-              <span className="font-[800] text-gray-400">Deals amount</span>
+            <div className="flex flex-col text-sm leading-snug px-2 cursor-pointer group mt-auto">
+              <span className="font-bold text-gray-400">Deals amount</span>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <span className="font-[800] text-gray-800 flex items-center group-hover:opacity-80 transition-opacity tracking-tight">
+                  <span className="font-black text-gray-800 flex items-center group-hover:opacity-80 transition-opacity tracking-tight">
                     {referrerCategory}
-                    <ChevronDown className="w-3.5 h-3.5 ml-1 text-gray-500" strokeWidth={3} />
+                    <ChevronDown className="w-4 h-4 ml-2 text-gray-500" strokeWidth={3} />
                   </span>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start">
@@ -260,29 +260,29 @@ export function DashboardVisualBottom({ salesContributors, timeframe = 'Sep 1 �
         </div>
 
         {/* BOTTOM CARD: Platform value (Image 1 100% replica) */}
-        <div className="bg-[#f2f4f7] rounded-[24px] p-2 flex flex-col gap-2 relative overflow-hidden shadow-sm border border-black/5 min-h-[224px]">
+        <div className="bg-white rounded-[2rem] p-6 flex flex-col gap-4 relative overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.04)] border border-gray-50 min-h-[300px]">
 
-          <div className="flex items-center justify-between px-2 pt-1 relative z-20">
-            <div className="flex items-center gap-2.5">
-              <div className="w-[34px] h-[34px] rounded-full border-[1.5px] border-[#C52150] flex items-center justify-center bg-transparent group cursor-pointer bg-white">
-                <div className="scale-[1.1]">
+          <div className="flex items-center justify-between relative z-20">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-full flex items-center justify-center bg-gray-50 group cursor-pointer">
+                <div className="scale-125">
                   {activePlatform === 'Dribbble' && <DribbbleLogo />}
                   {activePlatform === 'Instagram' && <InstagramLogo />}
                   {activePlatform === 'Behance' && <BehanceLogo />}
                   {activePlatform === 'Google' && <GoogleLogo />}
                 </div>
               </div>
-              <div className="flex flex-col leading-[1.1]">
-                <span className="text-[11px] font-[800] text-gray-500">Platform value</span>
+              <div className="flex flex-col">
+                <span className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Platform value</span>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <span className="text-[13.5px] font-[900] text-gray-900 flex items-center cursor-pointer hover:opacity-70 transition-opacity tracking-tight">
-                      {activePlatform} <ChevronDown className="w-[14px] h-[14px] ml-0.5 text-gray-500" strokeWidth={3} />
+                    <span className="text-lg font-black text-gray-900 flex items-center cursor-pointer hover:opacity-70 transition-opacity tracking-tight">
+                      {activePlatform} <ChevronDown className="w-5 h-5 ml-1 text-gray-400" strokeWidth={3} />
                     </span>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start">
+                  <DropdownMenuContent align="start" className="rounded-xl shadow-lg border-gray-100">
                     {platforms.map(p => (
-                      <DropdownMenuItem key={p.id} onClick={() => setActivePlatform(p.name)}>
+                      <DropdownMenuItem className="font-medium cursor-pointer" key={p.id} onClick={() => setActivePlatform(p.name)}>
                         {p.name}
                       </DropdownMenuItem>
                     ))}
@@ -292,18 +292,17 @@ export function DashboardVisualBottom({ salesContributors, timeframe = 'Sep 1 �
             </div>
 
             {/* Interactive Tabs grouped in a pill */}
-            <div className="flex items-center bg-[#e4e5e7]/80 rounded-full p-[3px] border border-gray-200/50">
+            <div className="flex items-center bg-gray-50 rounded-full p-1 border border-gray-100">
               {['Revenue', 'Leads', 'W/L'].map((tab) => {
                 const isActive = activeTab === tab;
                 return (
                   <button
                     key={tab}
-                    onClick={() => setActiveTab(tab as 'Revenue' | 'Leads' | 'W/L')}
-                    className={`px-3 py-[5px] rounded-full text-[11px] font-[800] transition-colors duration-200 ${isActive ? 'bg-[#1a1a1a] text-white shadow-sm' : 'bg-transparent text-gray-600 hover:text-gray-900'
-                      }`}
-                  >
-                    {tab}
-                  </button>
+                    className={`text-xs font-bold px-4 py-2 rounded-full transition-all ${
+                      isActive ? 'bg-gray-900 text-white shadow-md' : 'text-gray-500 hover:text-gray-800'
+                    }`}
+                    onClick={() => setActiveTab(tab as any)}
+                  >{tab}</button>
                 )
               })}
             </div>
@@ -458,15 +457,15 @@ export function DashboardVisualBottom({ salesContributors, timeframe = 'Sep 1 �
       {/* ───────────────────────────────────────────────────────────── */}
       {/* RIGHT COLUMN (7/12) - Leaderboard + Accordion */}
       {/* ───────────────────────────────────────────────────────────── */}
-      <div className="xl:col-span-7 bg-white rounded-[24px] border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] p-4 flex flex-col gap-2">
+      <div className="xl:col-span-7 bg-white rounded-[2rem] border border-gray-50 shadow-[0_8px_30px_rgba(0,0,0,0.04)] p-8 flex flex-col gap-4">
 
         {/* Header Row */}
-        <div className="flex items-center text-[11px] font-[900] text-gray-400 px-3 pl-[48px] pb-1 uppercase tracking-widest leading-none">
+        <div className="flex items-center text-[10px] font-bold text-gray-400 px-6 pl-16 pb-4 uppercase tracking-[0.1em] leading-none border-b border-gray-50">
           <div className="flex-1 min-w-[120px]">Sales</div>
-          <div className="w-[90px]">Revenue</div>
-          <div className="w-[70px]">Leads</div>
-          <div className="w-[60px]">KPI</div>
-          <div className="w-[90px]">W/L</div>
+          <div className="w-[100px]">Revenue</div>
+          <div className="w-[80px]">Leads</div>
+          <div className="w-[70px]">KPI</div>
+          <div className="w-[100px]">W/L</div>
         </div>
 
         {/* Dynamic Accordion List */}
@@ -476,7 +475,7 @@ export function DashboardVisualBottom({ salesContributors, timeframe = 'Sep 1 �
           return (
             <div
               key={user.id}
-              className={`flex flex-col w-full rounded-[20px] relative transition-colors duration-300 ${isExpanded ? '' : 'hover:bg-gray-50/80 cursor-pointer'
+              className={`flex flex-col w-full rounded-[1.5rem] relative transition-all duration-300 ${isExpanded ? '' : 'hover:bg-gray-50 cursor-pointer border border-transparent hover:border-gray-100'
                 }`}
               style={isExpanded ? {
                 background: 'linear-gradient(to bottom right, rgba(255, 240, 245, 0.4) 0%, rgba(255, 228, 235, 0.9) 100%)'
@@ -486,170 +485,67 @@ export function DashboardVisualBottom({ salesContributors, timeframe = 'Sep 1 �
               {/* Row Header (Clickable state toggle) */}
               <div
                 onClick={() => setExpandedId(isExpanded ? null : user.id)}
-                className="flex items-center w-full px-3 py-3 cursor-pointer z-10"
+                className={`flex items-center w-full px-6 py-5 cursor-pointer z-10 transition-all ${isExpanded ? 'pt-6 pb-4' : ''}`}
               >
-                <div className="flex-1 min-w-[120px] flex items-center gap-3">
-                  <Avatar className="w-[30px] h-[30px] rounded-full border border-gray-200 bg-white">
+                <div className="flex-1 min-w-[120px] flex items-center gap-4">
+                  <Avatar className="w-10 h-10 rounded-full border ring-2 ring-white shadow-sm bg-white">
                     <AvatarImage src={`https://i.pravatar.cc/150?img=${user.imgId}`} />
-                    <AvatarFallback>{user.avatarKey.toUpperCase()}</AvatarFallback>
+                    <AvatarFallback className="text-[10px] font-bold bg-gray-900 text-white">{user.avatarKey.toUpperCase()}</AvatarFallback>
                   </Avatar>
-                  <span className="text-[13px] font-[900] text-gray-900 tracking-tight">{user.name}</span>
+                  <span className="text-sm font-bold text-gray-900 tracking-tight">{user.name}</span>
                 </div>
-                <div className="w-[90px] text-[13px] font-[900] text-gray-900 flex items-baseline tracking-tight">
-                  ${<AnimatedCounter value={user.rev} />}
+                <div className="w-[100px] text-sm font-black text-gray-900 flex items-baseline tracking-tight">
+                  $<AnimatedCounter value={user.rev} />
                 </div>
-                <div className="w-[70px] flex items-center gap-1.5">
-                  <span className="min-w-[24px] h-[24px] rounded-full bg-gray-900 text-white flex items-center justify-center text-[10.5px] font-[900] px-1.5 shadow-sm">{user.leadsBlack}</span>
-                  <span className="text-[12px] font-[900] text-gray-400">{user.leadsGrey}</span>
+                <div className="w-[80px] flex items-center gap-2">
+                  <span className="min-w-[28px] h-[28px] rounded-full bg-gray-900 text-white flex items-center justify-center text-xs font-bold px-1.5 shadow-sm">{user.leadsBlack}</span>
+                  <span className="text-sm font-bold text-gray-400">{user.leadsGrey}</span>
                 </div>
-                <div className="w-[60px] text-[13px] font-[900] text-gray-700">{user.kpi}</div>
-                <div className="w-[90px] flex items-center gap-2.5">
-                  <span className="text-[12px] font-[900] text-gray-700 w-8">{user.winPct}</span>
-                  <span className="w-[20px] h-[20px] rounded-full bg-gray-900 text-white flex items-center justify-center text-[9px] font-[900] shadow-sm">{user.wlBlack}</span>
-                  <span className="text-[12px] font-[900] text-gray-400">{user.wlGrey}</span>
+                <div className="w-[70px] text-sm font-bold text-gray-700">{user.kpi}</div>
+                <div className="w-[100px] flex items-center gap-3">
+                  <span className="text-sm font-bold text-gray-700 w-8">{user.winPct}</span>
+                  <span className="w-6 h-6 rounded-full bg-gray-900 text-white flex items-center justify-center text-[10px] font-bold shadow-sm">{user.wlBlack}</span>
+                  <span className="text-sm font-bold text-gray-400">{user.wlGrey}</span>
                 </div>
 
                 {/* Arrow indicator (Image 4 format for Details/Expand) */}
                 {isExpanded ? (
-                  <div className="absolute right-4 w-[24px] h-[24px] rounded-full flex items-center justify-center transition-all duration-300 shadow-sm bg-[#C52150] text-white">
-                    <ChevronDown className="w-4 h-4 transition-transform duration-500 ease-[cubic-bezier(0.2,0.8,0.2,1)] rotate-180" strokeWidth={3} />
+                  <div className="absolute right-6 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 shadow-sm bg-[#C52150] text-white">
+                    <ChevronDown className="w-5 h-5 transition-transform duration-500 ease-[cubic-bezier(0.2,0.8,0.2,1)] rotate-180" strokeWidth={3} />
                   </div>
                 ) : (
-                  <div className="absolute right-4 px-4 py-1.5 rounded-full bg-black text-white text-[10px] font-bold shadow-sm hover:scale-105 transition-transform active:scale-95">
+                  <div className="absolute right-6 px-4 py-2 rounded-full bg-gray-900 text-white text-[11px] font-bold shadow-sm hover:scale-105 transition-transform active:scale-95">
                     Details
                   </div>
                 )}
               </div>
 
-              {/* CSS Grid Animated Expansion Panel */}
+              {/* Expanded Accordion Body */}
               <div
-                className={`grid transition-[grid-template-rows,opacity] duration-500 ease-[cubic-bezier(0.2,0.8,0.2,1)] ${isExpanded ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+                className={`overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] ${isExpanded ? 'max-h-[800px] opacity-100' : 'max-h-0 opacity-0'
                   }`}
               >
-                <div className="overflow-hidden">
-                  <div className="flex flex-col mt-0 px-3 pb-3 gap-3 min-h-[0px]">
+                <div className="px-6 pb-6 pt-2">
+                  <div className="flex flex-col gap-6">
 
-                    {/* Badges */}
-                    <div className="flex gap-2">
-                      <div className="bg-white/80 backdrop-blur rounded-full px-3 py-1 shadow-sm border border-white text-[11px] font-[800] text-gray-700 cursor-pointer hover:bg-white transition-colors hover:scale-105 active:scale-95 transform">Top sales 💪</div>
-                      <div className="bg-white/80 backdrop-blur rounded-full px-3 py-1 shadow-sm border border-white text-[11px] font-[800] text-gray-700 cursor-pointer hover:bg-white transition-colors hover:scale-105 active:scale-95 transform">Sales streak 🔥</div>
-                      <div className="bg-white/80 backdrop-blur rounded-full px-3 py-1 shadow-sm border border-white text-[11px] font-[800] text-gray-700 cursor-pointer hover:bg-white transition-colors hover:scale-105 active:scale-95 transform">Top review 👍</div>
-                    </div>
-
-                    {/* Work with platforms header */}
-                    <div className="flex items-end justify-between mt-2">
-                      <div className="text-[12px] font-[900] text-gray-900 tracking-tight">Work with platforms</div>
-                      <div className="flex items-center gap-1.5 cursor-pointer hover:-translate-y-[1px] transition-transform rounded-full">
-                        <div className="bg-[#C52150] text-white rounded-full px-2 py-[2px] text-[10px] font-[900] flex items-center gap-0.5 shadow-sm">
-                          <ArrowUpRight className="w-[12px] h-[12px]" strokeWidth={3} /> 3
-                        </div>
-                        <div className="bg-[#C52150] text-white rounded-full px-2.5 py-[2px] text-[10.5px] font-[900] shadow-sm">
-                          $<AnimatedCounter value={user.rev} />
-                        </div>
+                    {/* Chips Row */}
+                    <div className="flex items-center gap-2">
+                      <div className="bg-white rounded-full px-4 py-2 flex items-center gap-1.5 shadow-sm text-sm font-bold text-gray-700 cursor-pointer border border-transparent hover:border-gray-200 transition-colors">
+                        Top sales <span className="text-base">✌️</span>
+                      </div>
+                      <div className="bg-white rounded-full px-4 py-2 flex items-center gap-1.5 shadow-sm text-sm font-bold text-gray-700 cursor-pointer border border-transparent hover:border-gray-200 transition-colors">
+                        Sales streak <span className="text-base">🔥</span>
+                      </div>
+                      <div className="bg-white rounded-full px-4 py-2 flex items-center gap-1.5 shadow-sm text-sm font-bold text-gray-700 cursor-pointer border border-transparent hover:border-gray-200 transition-colors">
+                        Top review <span className="text-base">🤙</span>
                       </div>
                     </div>
 
-                    {/* Custom Work With Platforms layout */}
-                    <div className="flex gap-2.5 h-[120px]">
-                      {/* Left huge dribbble block */}
-                      <div className="w-[50%] bg-white rounded-[16px] shadow-[0_1px_4px_rgba(0,0,0,0.03)] p-3.5 flex flex-col justify-between border border-transparent hover:border-pink-100 transition-colors group cursor-default">
+                    {/* Platform Stats Grid */}
+                    <div className="flex flex-col gap-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-bold text-gray-900 tracking-wide">Work with platforms</span>
                         <div className="flex items-center gap-2">
-                          <div className="group-hover:rotate-12 transition-transform duration-500 scale-[1.1] "><DribbbleLogo /></div>
-                          <span className="text-[12px] font-[900] text-gray-800 ml-1">Dribbble</span>
-                        </div>
-                        <div className="flex items-baseline gap-2">
-                          <span className="text-[26px] font-[900] tracking-tighter text-gray-900">45.3%</span>
-                          <span className="text-[13px] font-[800] text-gray-400">$<AnimatedCounter value={Math.round(user.rev * 0.453)} /></span>
-                        </div>
-                      </div>
-
-                      {/* Right stacked blocks */}
-                      <div className="w-[50%] flex flex-col gap-2">
-                        <div className="flex gap-2 flex-1">
-                          {/* IG block */}
-                          <div className="flex-1 bg-white rounded-[14px] shadow-[0_1px_4px_rgba(0,0,0,0.03)] p-2.5 flex flex-col justify-between group hover:-translate-y-[2px] transition-transform cursor-pointer">
-                            <div className="flex items-center gap-1.5">
-                              <div className="scale-[0.8] origin-left group-hover:scale-[0.9] transition-transform"><InstagramLogo /></div>
-                              <span className="text-[10px] font-[900] text-gray-800">Instagram</span>
-                            </div>
-                            <div className="flex items-baseline gap-1">
-                              <span className="text-[13px] font-[900] text-gray-900 tracking-tight">28.1%</span>
-                              <span className="text-[9px] font-bold text-gray-400">${Math.round(user.rev * 0.281 / 1000)}k</span>
-                            </div>
-                          </div>
-                          {/* Google block - hatched right */}
-                          <div className="flex-1 bg-white rounded-[14px] shadow-[0_1px_4px_rgba(0,0,0,0.03)] p-2.5 flex flex-col justify-between relative overflow-hidden group hover:-translate-y-[2px] transition-transform cursor-pointer">
-                            <div className="absolute top-0 right-0 bottom-0 w-1/3 opacity-5 bg-[repeating-linear-gradient(-45deg,transparent,transparent_2px,#000_2px,#000_4px)]"></div>
-                            <div className="flex items-center gap-1.5 relative z-10">
-                              <div className="scale-[0.8] origin-left group-hover:scale-[0.9] transition-transform"><GoogleLogo /></div>
-                              <span className="text-[10px] font-[900] text-gray-800">Google</span>
-                            </div>
-                            <div className="flex items-baseline gap-1 inline-flex relative z-10 bg-white pr-1">
-                              <span className="text-[13px] font-[900] text-gray-900 tracking-tight">14.1%</span>
-                              <span className="text-[9px] font-bold text-gray-400">${Math.round(user.rev * 0.141 / 1000)}k</span>
-                            </div>
-                          </div>
-                        </div>
-                        {/* Other block */}
-                        <div className="w-full bg-white rounded-[12px] shadow-[0_1px_4px_rgba(0,0,0,0.03)] px-2.5 py-[6px] flex items-center justify-between group hover:-translate-y-[1px] transition-transform cursor-pointer">
-                          <div className="flex items-center gap-1.5">
-                            <div className="w-[18px] h-[18px] rounded-[5px] border-[1.5px] border-gray-800 flex items-center justify-center group-hover:bg-gray-50 transition-colors">
-                              <ChevronDown className="w-3 h-3 text-gray-800" strokeWidth={3} />
-                            </div>
-                            <span className="text-[10.5px] font-[900] text-gray-800 ml-1">Other</span>
-                          </div>
-                          <div className="flex items-baseline gap-1.5">
-                            <span className="text-[12px] font-[900] text-gray-900">12.5%</span>
-                            <span className="text-[10px] font-bold text-gray-400">${Math.round(user.rev * 0.125 / 1000)}k</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Sales dynamic header */}
-                    <div className="flex gap-2 items-center mt-3 group cursor-pointer w-full text-left">
-                      <span className="text-[12px] font-[900] text-gray-900 tracking-tight group-hover:underline decoration-gray-300 underline-offset-4 cursor-pointer">Sales dynamic</span>
-                      <div className="ml-auto w-4 h-4 rounded-full border border-gray-300 flex items-center justify-center group-hover:border-gray-500 transition-colors cursor-pointer shadow-sm">
-                        <ArrowUpRight className="w-[10px] h-[10px] text-gray-500 group-hover:text-gray-900" strokeWidth={2.5} />
-                      </div>
-                    </div>
-
-                    {/* Sales dynamic custom SVG graph area */}
-                    <div className="w-full h-[110px] relative mt-1 group cursor-crosshair">
-
-                      {/* Fake X-axis labels */}
-                      <div className="absolute top-0 w-full flex justify-between text-[9px] font-bold text-gray-400 px-5">
-                        <span className="hover:text-gray-700 transition-colors tracking-wider">W 1</span>
-                        <span className="hover:text-gray-700 transition-colors tracking-wider">W 3</span>
-                        <span className="hover:text-gray-700 transition-colors tracking-wider">W 5</span>
-                        <span className="hover:text-gray-700 transition-colors tracking-wider">W 7</span>
-                        <span className="hover:text-gray-700 transition-colors tracking-wider">W 9</span>
-                        <span className="hover:text-gray-700 transition-colors tracking-wider">W 11</span>
-                      </div>
-
-                      {/* Vertical guidelines */}
-                      <div className="absolute inset-0 px-5 flex justify-between pt-5 pointer-events-none">
-                        <div className="w-px h-full bg-gradient-to-b from-gray-200/80 to-transparent"></div>
-                        <div className="w-px h-full bg-gradient-to-b from-gray-200/80 to-transparent"></div>
-                        <div className="w-px h-full bg-gradient-to-b from-gray-200/80 to-transparent"></div>
-                        <div className="w-px h-full bg-gradient-to-b from-gray-200/80 to-transparent"></div>
-                        <div className="w-px h-full bg-gradient-to-b from-gray-200/80 to-transparent"></div>
-                        <div className="w-px h-full bg-gradient-to-b from-gray-200/80 to-transparent"></div>
-                      </div>
-
-                      {/* The curves */}
-                      <svg className="absolute inset-0 w-full h-[90px] top-4 pointer-events-none" preserveAspectRatio="none" viewBox="0 0 100 100">
-                        {/* Secondary curve */}
-                        <path className="draw-path" d="M0,80 C10,75 15,85 25,80 C35,75 40,65 50,75 C60,85 70,80 80,85 C90,90 95,75 100,70" fill="none" stroke="#FFB6C1" strokeWidth="2.5" />
-
-                        {/* Primary curve  */}
-                        <path className="draw-path" d="M0,75 C5,70 10,75 15,65 20,55 25,60 30,50 35,40 40,60 50,70 60,80 70,60 80,75 90,90 95,65 100,50" fill="none" stroke="#C52150" strokeWidth="3" />
-
-                        {/* Fill */}
-                        <path className="fade-fill" d="M0,75 C5,70 10,75 15,65 20,55 25,60 30,50 35,40 40,60 50,70 60,80 70,60 80,75 90,90 95,65 100,50 L100,100 M0,100 Z" fill="url(#salesFade)" />
-
-                        <defs>
-                          <linearGradient id="salesFade" x1="0" y1="0" x2="0" y2="1">
                             <stop offset="0%" stopColor="#C52150" stopOpacity="0.4" />
                             <stop offset="100%" stopColor="#C52150" stopOpacity="0" />
                           </linearGradient>

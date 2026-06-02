@@ -1,0 +1,193 @@
+{
+  "name": "Phase 1 — Research",
+  "nodes": [
+    {
+      "id": "trigger-schedule",
+      "name": "Daily Trigger (8AM WIB)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [250, 300],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 1 * * *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "google-trends",
+      "name": "Google Trends — Top Topics",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [500, 200],
+      "parameters": {
+        "method": "GET",
+        "url": "https://trends.google.com/trends/hottrends/visualize/internal/data",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "youtube-trending",
+      "name": "YouTube — Trending Videos",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [500, 350],
+      "parameters": {
+        "method": "GET",
+        "url": "https://www.googleapis.com/youtube/v3/videos",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "part", "value": "snippet,statistics" },
+            { "name": "chart", "value": "mostPopular" },
+            { "name": "regionCode", "value": "ID" },
+            { "name": "maxResults", "value": "10" },
+            { "name": "key", "value": "={{ $env.YOUTUBE_DATA_API_KEY }}" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "reddit-hot",
+      "name": "Reddit — Hot Posts",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [500, 500],
+      "parameters": {
+        "method": "GET",
+        "url": "https://www.reddit.com/r/indonesia+funny+comedy+memes/hot.json?limit=10",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "User-Agent", "value": "YTAutomationBot/1.0" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "merge-research",
+      "name": "Merge All Research Data",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2.1,
+      "position": [750, 350],
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll"
+      }
+    },
+    {
+      "id": "gemini-research-agent",
+      "name": "Gemini 3.5 Flash — Research Analyst",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1000, 350],
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "key", "value": "={{ $env.GEMINI_API_KEY }}" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": {
+          "contents": [
+            {
+              "parts": [
+                {
+                  "text": "={{ 'Kamu adalah AI Research Analyst untuk channel YouTube Comedy+Education di Indonesia.\\n\\nDATA TRENDS HARI INI:\\n' + JSON.stringify($json) + '\\n\\nTUGAS: Analisis semua data di atas. Pilih TOP 1 ide video yang:\\n1. Punya potensi viral tinggi di Indonesia\\n2. Cocok untuk konten comedy yang sedikit edukatif (hybrid)\\n3. Mudah dibuat dengan AI (tidak perlu shooting real)\\n4. Trending hari ini\\n\\nBALAS HANYA dengan JSON ini (tanpa markdown):\\n{\\n  \"title_idea\": \"judul video yang menarik\",\\n  \"hook_angle\": \"kalimat pembuka 0-5 detik yang bikin penasaran\",\\n  \"target_emotion\": \"ketawa/penasaran/kaget\",\\n  \"content_outline\": [\"poin 1\", \"poin 2\", \"poin 3\", \"poin 4\", \"poin 5\"],\\n  \"estimated_duration_minutes\": 8,\\n  \"primary_genre\": \"Comedy\",\\n  \"secondary_genre\": \"Education\",\\n  \"tags\": [\"tag1\", \"tag2\", \"tag3\", \"tag4\", \"tag5\"],\\n  \"trend_source\": \"google_trends/youtube/reddit\",\\n  \"confidence_score\": 85\\n}' }
+              ]
+            }
+          ],
+          "generationConfig": {
+            "temperature": 0.7,
+            "maxOutputTokens": 2048,
+            "responseMimeType": "application/json"
+          }
+        }
+      }
+    },
+    {
+      "id": "parse-gemini-research",
+      "name": "Parse Research Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1250, 350],
+      "parameters": {
+        "jsCode": "const raw = $input.first().json;\nconst text = raw.candidates[0].content.parts[0].text;\nconst result = JSON.parse(text);\nreturn [{\n  json: {\n    ...result,\n    created_at: new Date().toISOString(),\n    status: 'research_complete'\n  }\n}];"
+      }
+    },
+    {
+      "id": "save-research-supabase",
+      "name": "Save to Supabase — research_results",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1500, 350],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/research_results",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "Prefer", "value": "return=representation" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={{ $json }}"
+      }
+    },
+    {
+      "id": "trigger-create-phase",
+      "name": "Trigger Phase 2 — Create",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1750, 350],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.WEBHOOK_URL }}webhook/create-video",
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={{ $json }}"
+      }
+    }
+  ],
+  "connections": {
+    "Daily Trigger (8AM WIB)": {
+      "main": [[{ "node": "Google Trends — Top Topics", "type": "main", "index": 0 }, { "node": "YouTube — Trending Videos", "type": "main", "index": 0 }, { "node": "Reddit — Hot Posts", "type": "main", "index": 0 }]]
+    },
+    "Google Trends — Top Topics": { "main": [[{ "node": "Merge All Research Data", "type": "main", "index": 0 }]] },
+    "YouTube — Trending Videos": { "main": [[{ "node": "Merge All Research Data", "type": "main", "index": 1 }]] },
+    "Reddit — Hot Posts": { "main": [[{ "node": "Merge All Research Data", "type": "main", "index": 2 }]] },
+    "Merge All Research Data": { "main": [[{ "node": "Gemini 3.5 Flash — Research Analyst", "type": "main", "index": 0 }]] },
+    "Gemini 3.5 Flash — Research Analyst": { "main": [[{ "node": "Parse Research Result", "type": "main", "index": 0 }]] },
+    "Parse Research Result": { "main": [[{ "node": "Save to Supabase — research_results", "type": "main", "index": 0 }]] },
+    "Save to Supabase — research_results": { "main": [[{ "node": "Trigger Phase 2 — Create", "type": "main", "index": 0 }]] }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Jakarta"
+  }
+}

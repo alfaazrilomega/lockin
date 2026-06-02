@@ -192,4 +192,5 @@ Located in: `.agent/skills/` (individual .md files)
 > Every feature addition that introduces a new `.md` file MUST include an update to this index.
 >
 > **Version:** 1.1.0 | Updated 2026-04-29 — Removed project-specific references, made globally portable
-> **Location:** `d:\lockincapstone\lockin\.agent\MASTER-INDEX.md`
+> **Location:** `./.agent\MASTER-INDEX.md`
+

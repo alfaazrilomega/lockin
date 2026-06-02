@@ -25,19 +25,20 @@ model User {
   receivedShares       SharedResource[]  @relation("ReceivedShares")
 
   // Phase 1: Foundation
-  profile        UserProfile?
-  notifications  Notification[]
+  profile       UserProfile?
+  notifications Notification[]
   // Phase 2: Core Features
-  personalTasks  PersonalTask[]
-  noteTags       NoteTag[]
-  attachments    Attachment[]
+  personalTasks PersonalTask[]
+  noteTags      NoteTag[]
+  attachments   Attachment[]
   // Phase 3: Collaboration
-  chatMessages   ChatMessage[]
-  presence       UserPresence?
-  taskComments   TaskComment[]
+  chatMessages  ChatMessage[]
+  presence      UserPresence?
+  taskComments  TaskComment[]
 
   // Phase 0.5: Enterprise Additions
-  activityLogs   WorkspaceActivity[] @relation("ActivityActor")
+  activityLogs     WorkspaceActivity[] @relation("ActivityActor")
+  salesContributor SalesContributor?
 
   @@map("users")
 }
@@ -64,7 +65,7 @@ model Project {
   ownerId String @map("owner_id")
   owner   User   @relation("ProjectOwner", fields: [ownerId], references: [id], onDelete: Cascade)
 
-  workspaceId String? @map("workspace_id")
+  workspaceId String?    @map("workspace_id")
   workspace   Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
   members    ProjectMember[]
@@ -89,8 +90,8 @@ model ProjectMember {
   permission PermissionLevel @default(EDITOR)
   joinedAt   DateTime        @default(now()) @map("joined_at")
 
-  projectId  String @map("project_id")
-  userId     String @map("user_id")
+  projectId String @map("project_id")
+  userId    String @map("user_id")
 
   project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -100,16 +101,16 @@ model ProjectMember {
 }
 
 model Workspace {
-  id          String   @id @default(uuid())
+  id          String  @id @default(uuid())
   name        String
-  slug        String   @unique
+  slug        String  @unique
   description String?
-  
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
 
-  ownerId     String   @map("owner_id")
-  owner       User     @relation("OwnedWorkspaces", fields: [ownerId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  ownerId String @map("owner_id")
+  owner   User   @relation("OwnedWorkspaces", fields: [ownerId], references: [id], onDelete: Cascade)
 
   members      WorkspaceMember[]
   projects     Project[]
@@ -122,15 +123,15 @@ model Workspace {
 }
 
 model WorkspaceMember {
-  id          String          @id @default(uuid())
-  permission  PermissionLevel @default(VIEWER)
-  joinedAt    DateTime        @default(now()) @map("joined_at")
+  id         String          @id @default(uuid())
+  permission PermissionLevel @default(VIEWER)
+  joinedAt   DateTime        @default(now()) @map("joined_at")
 
   workspaceId String @map("workspace_id")
   userId      String @map("user_id")
 
-  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([workspaceId, userId])
   @@map("workspace_members")
@@ -139,9 +140,9 @@ model WorkspaceMember {
 enum TaskStatus {
   TODO
   IN_PROGRESS
-  REVIEW      // Member upload bukti, pindah ke status ini
-  REVISION    // Leader tolak, minta revisi
-  DONE        // Leader approve
+  REVIEW // Member upload bukti, pindah ke status ini
+  REVISION // Leader tolak, minta revisi
+  DONE // Leader approve
 }
 
 model Task {
@@ -152,42 +153,42 @@ model Task {
   priority    TaskPriority @default(MEDIUM)
   order       Float        @default(0)
   deadline    DateTime?
-  
+
   // Complexity & Tracking
-  storyPoints Int?         @map("story_points")
-  timeSpent   Int?         @map("time_spent") // stored in minutes
+  storyPoints Int? @map("story_points")
+  timeSpent   Int? @map("time_spent") // stored in minutes
 
   // Proof of Work System
-  proofUrl    String?    @map("proof_url")
-  proofNotes  String?    @db.Text @map("proof_notes")
-  feedback    String?    @db.Text
+  proofUrl   String? @map("proof_url")
+  proofNotes String? @map("proof_notes") @db.Text
+  feedback   String? @db.Text
 
   // Task Hierarchy (Subtasks)
-  parentId    String?    @map("parent_id")
-  parent      Task?      @relation("Subtasks", fields: [parentId], references: [id], onDelete: Cascade)
-  subtasks    Task[]     @relation("Subtasks")
+  parentId String? @map("parent_id")
+  parent   Task?   @relation("Subtasks", fields: [parentId], references: [id], onDelete: Cascade)
+  subtasks Task[]  @relation("Subtasks")
 
   // Dependency System
-  blocking    TaskDependency[] @relation("BlockingTasks")
-  blockedBy   TaskDependency[] @relation("BlockedByTasks")
+  blocking  TaskDependency[] @relation("BlockingTasks")
+  blockedBy TaskDependency[] @relation("BlockedByTasks")
 
   // Groupings / Swimlanes
-  epicId      String?    @map("epic_id")
-  epic        Epic?      @relation(fields: [epicId], references: [id], onDelete: SetNull)
-  
+  epicId String? @map("epic_id")
+  epic   Epic?   @relation(fields: [epicId], references: [id], onDelete: SetNull)
+
   milestoneId String?    @map("milestone_id")
   milestone   Milestone? @relation(fields: [milestoneId], references: [id], onDelete: SetNull)
 
   // Context & Assignment
-  projectId   String?    @map("project_id")
-  workspaceId String     @map("workspace_id")
-  assigneeId  String?    @map("assignee_id")
+  projectId   String? @map("project_id")
+  workspaceId String  @map("workspace_id")
+  assigneeId  String? @map("assignee_id")
 
-  project     Project?   @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  workspace   Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  assignee    User?      @relation("AssignedTasks", fields: [assigneeId], references: [id], onDelete: SetNull)
+  project   Project?  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  assignee  User?     @relation("AssignedTasks", fields: [assigneeId], references: [id], onDelete: SetNull)
 
-  comments    TaskComment[]
+  comments TaskComment[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -213,23 +214,23 @@ model TaskComment {
 }
 
 model Note {
-  id           String    @id @default(uuid())
-  title        String
-  content      String?   @db.Text
-  audioUrl     String?   @map("audio_url")
-  transcript   String?   @db.Text
-  summary      String?   @db.Text
-  meetingDate  DateTime? @map("meeting_date")
-  wordCount    Int?      @map("word_count")
-  isPinned     Boolean   @default(false) @map("is_pinned")
+  id          String    @id @default(uuid())
+  title       String
+  content     String?   @db.Text
+  audioUrl    String?   @map("audio_url")
+  transcript  String?   @db.Text
+  summary     String?   @db.Text
+  meetingDate DateTime? @map("meeting_date")
+  wordCount   Int?      @map("word_count")
+  isPinned    Boolean   @default(false) @map("is_pinned")
 
   // Hierarchical Wiki Structure
-  parentId    String?    @map("parent_id")
-  parent      Note?      @relation("NoteHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
-  subpages    Note[]     @relation("NoteHierarchy")
+  parentId String? @map("parent_id")
+  parent   Note?   @relation("NoteHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  subpages Note[]  @relation("NoteHierarchy")
 
-  folderId    String?      @map("folder_id")
-  folder      NoteFolder?  @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  folderId String?     @map("folder_id")
+  folder   NoteFolder? @relation(fields: [folderId], references: [id], onDelete: SetNull)
 
   authorId  String  @map("author_id")
   projectId String? @map("project_id")
@@ -238,7 +239,7 @@ model Note {
   project Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   flashcardDecks FlashcardDeck[]
-  shares         SharedResource[] @relation("SharedNotes")
+  shares         SharedResource[]    @relation("SharedNotes")
   tags           NoteTagAssignment[]
   attachments    Attachment[]
 
@@ -253,7 +254,7 @@ model FlashcardDeck {
   title       String
   description String?
 
-  authorId String @map("author_id")
+  authorId String  @map("author_id")
   noteId   String? @map("note_id")
 
   author User  @relation(fields: [authorId], references: [id], onDelete: Cascade)
@@ -268,16 +269,16 @@ model FlashcardDeck {
 }
 
 model Flashcard {
-  id         String   @id @default(uuid())
-  front      String   @db.Text
-  back       String   @db.Text
+  id    String @id @default(uuid())
+  front String @db.Text
+  back  String @db.Text
 
-  nextReview DateTime @default(now()) @map("next_review")
-  interval   Int      @default(0)
-  easeFactor Float    @default(2.5) @map("ease_factor")
-  repetitions Int     @default(0)
+  nextReview  DateTime @default(now()) @map("next_review")
+  interval    Int      @default(0)
+  easeFactor  Float    @default(2.5) @map("ease_factor")
+  repetitions Int      @default(0)
 
-  deckId String @map("deck_id")
+  deckId String        @map("deck_id")
   deck   FlashcardDeck @relation(fields: [deckId], references: [id], onDelete: Cascade)
 
   @@map("flashcards")
@@ -301,25 +302,25 @@ enum SharePermission {
 }
 
 model SharedResource {
-  id          String          @id @default(uuid())
-  itemType    ShareItemType   @map("item_type")
-  
-  senderId    String          @map("sender_id")
-  receiverId  String          @map("receiver_id")
-  
-  status      ShareStatus     @default(PENDING)
-  permission  SharePermission @default(VIEW)
+  id       String        @id @default(uuid())
+  itemType ShareItemType @map("item_type")
 
-  projectId   String?         @map("project_id")
-  noteId      String?         @map("note_id")
+  senderId   String @map("sender_id")
+  receiverId String @map("receiver_id")
 
-  createdAt   DateTime        @default(now()) @map("created_at")
-  updatedAt   DateTime        @updatedAt @map("updated_at")
+  status     ShareStatus     @default(PENDING)
+  permission SharePermission @default(VIEW)
 
-  sender      User            @relation("SentShares", fields: [senderId], references: [id], onDelete: Cascade)
-  receiver    User            @relation("ReceivedShares", fields: [receiverId], references: [id], onDelete: Cascade)
-  project     Project?        @relation("SharedProjects", fields: [projectId], references: [id], onDelete: Cascade)
-  note        Note?           @relation("SharedNotes", fields: [noteId], references: [id], onDelete: Cascade)
+  projectId String? @map("project_id")
+  noteId    String? @map("note_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  sender   User     @relation("SentShares", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver User     @relation("ReceivedShares", fields: [receiverId], references: [id], onDelete: Cascade)
+  project  Project? @relation("SharedProjects", fields: [projectId], references: [id], onDelete: Cascade)
+  note     Note?    @relation("SharedNotes", fields: [noteId], references: [id], onDelete: Cascade)
 
   @@map("shared_resources")
 }
@@ -329,78 +330,78 @@ model SharedResource {
 // ─────────────────────────────────────────────────────────
 
 model Epic {
-  id          String   @id @default(uuid())
+  id          String  @id @default(uuid())
   title       String
-  description String?  @db.Text
-  
-  projectId   String   @map("project_id")
-  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  
-  tasks       Task[]
-  
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  description String? @db.Text
+
+  projectId String  @map("project_id")
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  tasks Task[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("epics")
 }
 
 model Milestone {
-  id          String    @id @default(uuid())
-  title       String
-  dueDate     DateTime? @map("due_date")
-  
-  projectId   String    @map("project_id")
-  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  
-  tasks       Task[]
-  
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
+  id      String    @id @default(uuid())
+  title   String
+  dueDate DateTime? @map("due_date")
+
+  projectId String  @map("project_id")
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  tasks Task[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("milestones")
 }
 
 model TaskDependency {
-  id            String @id @default(uuid())
-  blockingId    String @map("blocking_id")
-  blockedById   String @map("blocked_by_id")
+  id          String @id @default(uuid())
+  blockingId  String @map("blocking_id")
+  blockedById String @map("blocked_by_id")
 
-  blockingTask  Task   @relation("BlockingTasks", fields: [blockingId], references: [id], onDelete: Cascade)
-  blockedByTask Task   @relation("BlockedByTasks", fields: [blockedById], references: [id], onDelete: Cascade)
+  blockingTask  Task @relation("BlockingTasks", fields: [blockingId], references: [id], onDelete: Cascade)
+  blockedByTask Task @relation("BlockedByTasks", fields: [blockedById], references: [id], onDelete: Cascade)
 
   @@unique([blockingId, blockedById])
   @@map("task_dependencies")
 }
 
 model NoteFolder {
-  id          String    @id @default(uuid())
-  name        String
-  
+  id   String @id @default(uuid())
+  name String
+
   workspaceId String    @map("workspace_id")
   workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  
-  notes       Note[]
-  
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  notes Note[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("note_folders")
 }
 
 model WorkspaceActivity {
-  id          String   @id @default(uuid())
-  action      String   // e.g., "created_task", "completed_project"
-  entityType  String   @map("entity_type") // e.g., "TASK", "PROJECT"
-  entityId    String   @map("entity_id")
-  metadata    Json?    // Stores snapshot diffs or specific action details
-  
-  workspaceId String   @map("workspace_id")
-  actorId     String   @map("actor_id")
+  id         String @id @default(uuid())
+  action     String // e.g., "created_task", "completed_project"
+  entityType String @map("entity_type") // e.g., "TASK", "PROJECT"
+  entityId   String @map("entity_id")
+  metadata   Json? // Stores snapshot diffs or specific action details
 
-  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  actor       User      @relation("ActivityActor", fields: [actorId], references: [id], onDelete: Cascade)
+  workspaceId String @map("workspace_id")
+  actorId     String @map("actor_id")
 
-  createdAt   DateTime @default(now()) @map("created_at")
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  actor     User      @relation("ActivityActor", fields: [actorId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
 
   @@index([workspaceId, createdAt])
   @@map("workspace_activities")
@@ -500,8 +501,8 @@ model NoteTag {
   name  String
   color String @default("#2383E2")
 
-  userId String @map("user_id")
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String              @map("user_id")
+  user   User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   notes  NoteTagAssignment[]
 
   @@unique([userId, name])
@@ -527,15 +528,15 @@ enum ProcessingStatus {
 }
 
 model Attachment {
-  id               String          @id @default(uuid())
-  fileName         String          @map("file_name")
-  fileType         String          @map("file_type")
-  fileSize         Int             @map("file_size")
-  storageUrl       String          @map("storage_url")
-  publicUrl        String?         @map("public_url")
+  id               String           @id @default(uuid())
+  fileName         String           @map("file_name")
+  fileType         String           @map("file_type")
+  fileSize         Int              @map("file_size")
+  storageUrl       String           @map("storage_url")
+  publicUrl        String?          @map("public_url")
   processingStatus ProcessingStatus @default(PENDING) @map("processing_status")
-  extractedText    String?         @db.Text @map("extracted_text")
-  aiSummary        String?         @db.Text @map("ai_summary")
+  extractedText    String?          @map("extracted_text") @db.Text
+  aiSummary        String?          @map("ai_summary") @db.Text
 
   noteId     String? @map("note_id")
   uploaderId String  @map("uploader_id")
@@ -573,7 +574,7 @@ model ChatRoom {
   workspace   Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
   messages  ChatMessage[]
-  createdAt DateTime     @default(now()) @map("created_at")
+  createdAt DateTime      @default(now()) @map("created_at")
 
   @@map("chat_rooms")
 }
@@ -607,4 +608,52 @@ model UserPresence {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("user_presence")
+}
+
+// ─────────────────────────────────────────────────────────
+// PHASE 4: Dashboard & Sales (New)
+// ─────────────────────────────────────────────────────────
+
+model SalesContributor {
+  id     String @id @default(uuid())
+  userId String @unique @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  revenue    Float  @default(0)
+  leadsBlack Int    @default(0)
+  leadsGrey  Int    @default(0)
+  kpi        Float  @default(0)
+  winPct     String @default("0%")
+  wlBlack    Int    @default(0)
+  wlGrey     Int    @default(0)
+
+  platformMetrics PlatformMetric[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("sales_contributors")
+}
+
+model PlatformMetric {
+  id            String           @id @default(uuid())
+  contributorId String           @map("contributor_id")
+  contributor   SalesContributor @relation(fields: [contributorId], references: [id], onDelete: Cascade)
+
+  platformName String // e.g., "Dribbble", "Instagram"
+  percentage   Float  @default(0)
+  revenue      Float  @default(0)
+
+  @@map("platform_metrics")
+}
+
+model DashboardDeal {
+  id               String @id @default(uuid())
+  referrerCategory String // e.g., "Dribbble", "Google"
+  amount           Int    @default(0)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("dashboard_deals")
 }

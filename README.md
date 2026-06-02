@@ -1,133 +1,109 @@
-# 🚀 LockIn: All-in-One Productivity & Adaptive Learning Workspace
+# AI Agent Brain Fullstack Architecture 🧠
 
-[![Next.js](https://img.shields.io/badge/Next.js-16+-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4-38B2AC?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com/)
-[![Supabase](https://img.shields.io/badge/Supabase-Database-3ECF8E?style=for-the-badge&logo=supabase)](https://supabase.com/)
-[![Prisma](https://img.shields.io/badge/Prisma-ORM-2D3748?style=for-the-badge&logo=prisma)](https://www.prisma.io/)
-[![Dicoding](https://img.shields.io/badge/Capstone-Dicoding_CC26--PS118-gray?style=for-the-badge)](#)
+[![Stars](https://img.shields.io/github/stars/alfaazrilomega/ai-agent-brain-fullstack-architecture?style=flat)](https://github.com/alfaazrilomega/ai-agent-brain-fullstack-architecture/stargazers)
+[![Forks](https://img.shields.io/github/forks/alfaazrilomega/ai-agent-brain-fullstack-architecture?style=flat)](https://github.com/alfaazrilomega/ai-agent-brain-fullstack-architecture/network/members)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+![Next.js](https://img.shields.io/badge/-Next.js-000000?logo=next.js&logoColor=white)
+![TypeScript](https://img.shields.io/badge/-TypeScript-3178C6?logo=typescript&logoColor=white)
+![Tailwind](https://img.shields.io/badge/-Tailwind_CSS-38B2AC?logo=tailwind-css&logoColor=white)
+![GSAP](https://img.shields.io/badge/-GSAP-88CE02?logo=greensock&logoColor=white)
 
-> **LockIn** adalah platform produktivitas web yang menggabungkan penjadwalan, kolaborasi tim, dan pencatatan berbasis *Speech-to-Text* dengan kecerdasan buatan. Aplikasi ini dirancang untuk memecahkan masalah fragmentasi informasi dengan mengintegrasikan seluruh alur kerja produktivitas (pencatatan, penjadwalan, dan pembelajaran adaptif) ke dalam satu ruang kerja digital yang premium.
+> **Empathetic** | **Awwwards-Level Design** | **Hallucination Prevention** | **Universal IDE Support**
 
 ---
 
-## 🛠️ Petunjuk Setup Environment
+**The cognitive architecture system for AI agent harnesses. Upgrade your AI into a strict, empathetic, and hyper-competent Senior Fullstack Engineer.**
 
-Ikuti langkah-langkah di bawah ini untuk menyiapkan lingkungan pengembangan lokal Anda:
+Not just prompts. A complete system: bootloaders, intent matrices, spatial design instincts, autonomous initialization, and cross-IDE compatibility. Works across **Claude Code**, **Cursor**, **Roo**, **Windsurf**, **Trae**, and other AI agent harnesses.
 
-### 1. Prasyarat
-- Node.js versi 20.x atau lebih baru.
-- Akun [Supabase](https://supabase.com/) untuk database dan autentikasi.
-- API Key dari [OpenRouter](https://openrouter.ai/) atau Google Gemini.
+---
 
-### 2. Konfigurasi Variabel Lingkungan
-Salin file `.env.example` menjadi `.env`:
-```bash
-cp .env.example .env
+## 🚀 Capabilities Showcase
+
+| Superpower | What It Does |
+|-------|-------------------|
+| **Hallucination Prevention** | Uses a rigid `CORE` bootloader system. Forces the AI to trace exact DOM/code states before writing anything. |
+| **Awwwards-Level Design** | Strips the AI of "flat" MVP tendencies. Enforces advanced spatial physics, 3D GSAP animations, and strict Grid Matrices (`INSTINCT-013`). |
+| **Dynamic Council Assembly** | Dynamically recruits "specialist personas" (UX Architect, Security Reviewer) based on your prompt keywords. |
+| **Autonomous Setup** | Provides a `/setup` workflow that automatically ingests your ERD, PRD, and codebase rules. |
+
+---
+
+## 📦 What's Inside
+
+This repo acts as the "nervous system" for your IDE, distributed across environment dotfiles and a centralized `.agent` core.
+
+```text
+ai-agent-brain-fullstack-architecture/
+|-- .agent/           # The centralized Brain Engine
+|   |-- cores/          # Foundational reasoning engine (Do not delete)
+|   |   |-- CORE-00-INTENT-MATRIX.md
+|   |   |-- CORE-01-BOOTLOADER.md
+|   |-- skills/         # Expertise modules and technical instincts
+|   |   |-- fullstack-brain/
+|   |       |-- INSTINCT-013-awwwards-spatial-context.md
+|   |       |-- INSTINCT-014-pinned-scroll-blur-text-animations.md
+|   |-- workflows/      # Step-by-step autonomous guides
+|   |   |-- setup.md    # Initialization script
+|   |-- ERD/            # Dynamic storage for database schemas
+|   |-- project-source/ # Dynamic storage for architecture outlines
+|   |-- rules/          # Custom project constraints
+|
+|-- IDE Integrations/ # Universal compatibility plugins
+|   |-- .claude/        # Claude Code integration
+|   |-- .roo/           # Roo integration
+|   |-- .trae/          # Trae integration
+|   |-- .windsurf/      # Windsurf integration
+|   |-- .cursorrules    # Cursor IDE rules
 ```
-Isi variabel-variabel di dalam `.env` dengan kredensial Anda (Database URL, Supabase Keys, API AI, dll.).
 
-### 3. Instalasi Dependensi
+---
+
+## 🚀 Quick Start
+
+Get up and running in your new or existing project:
+
+### Step 1: Clone the Brain
+Clone this repository into the root folder of your workspace.
 ```bash
-npm install
+git clone https://github.com/alfaazrilomega/ai-agent-brain-fullstack-architecture.git .
 ```
 
-### 4. Konfigurasi Database (Prisma)
-Jalankan perintah berikut untuk menghasilkan client Prisma dan menyinkronkan skema ke database Anda:
-```bash
-npx prisma generate
-npx prisma db push
-```
+### Step 2: Initialize (Option A: Autonomous - Recommended)
+Open your preferred AI Assistant chat window and type:
+> *"/setup"* or *"Hello, please run the `/setup` workflow."*
+
+**The AI will:**
+1. Present the existing default template (Awwwards-Level Fullstack).
+2. Ask if you wish to proceed or purge for a custom build.
+3. Guide you through a consultation to generate your new ERD, PRD, and custom rules.
+4. Warn you of conflicts and safely manage the directory.
+
+### Step 3: Manual Setup (Option B)
+If you prefer total manual control before the AI takes over:
+1. Navigate to `.agent/ERD/` and delete existing files. Create an `erd.md` defining your database schema.
+2. Navigate to `.agent/project-source/` and outline your architecture.
+3. Open `.agent/rules/` and add any specific markdown rules you want the AI to follow.
+> ⚠️ **CRITICAL WARNING:** Do NOT delete or modify the files inside `.agent/cores/`. Altering the Bootloaders will break the AI's cognitive pipeline.
 
 ---
 
-## 🤖 Cara Menjalankan Aplikasi
+## 🧠 Key Concepts
 
-### Mode Pengembangan (Development)
-Jalankan server pengembangan lokal:
-```bash
-npm run dev
-```
-Akses aplikasi melalui browser di [http://localhost:3001](http://localhost:3001).
+### The Core Engine
+The `cores/` directory houses the foundational logic. The AI is forced to read the **Intent Matrix** and **Bootloader** to drop assumptions and ensure it fully understands the context before executing code.
 
-### Mode Produksi (Build & Start)
-Untuk menjalankan aplikasi dalam lingkungan produksi:
-```bash
-npm run build
-npm run start
-```
+### Instincts
+Found in `skills/`, these dictate specific behaviors. For example, `INSTINCT-013` enforces high-end spatial aesthetics and cinematic scroll animations, banning mediocre analogies and flat designs.
+
+### Workflows
+Found in `workflows/`, these are executable step-by-step guides. The primary workflow is `/setup`, which bridges the gap between raw AI potential and project-specific alignment.
 
 ---
 
-## 🧠 Model Machine Learning (ML)
-LockIn mengadopsi arsitektur **Hybrid Cloud AI**. Aplikasi ini tidak memerlukan pengunduhan bobot model (weights) lokal yang besar, melainkan berinteraksi dengan model state-of-the-art melalui API:
+## 🌐 Cross-Platform Support
 
-- **Cognitive Engine:** Menggunakan API **OpenRouter** (dengan model seperti `openrouter/free`) untuk proses perangkuman rapat dan pembuatan kartu belajar (*flashcard*) secara otomatis.
-- **Transkripsi:** Menggunakan **Groq AI (Whisper-large-v3)** untuk mengubah rekaman suara menjadi teks secara *real-time* dengan performa tinggi dan latensi rendah.
+This brain system natively supports the 2026 AI ecosystem. Whether you use terminal-based CLI tools or full IDEs, the dotfiles (`.claude/`, `.roo/`, `.cursorrules`, etc.) ensure the AI adopts this cognitive architecture seamlessly.
 
 ---
-
-## 🦾 Ekosistem AI Agent (Submission Metadata)
-Proyek ini dibangun menggunakan metodologi **Agent-First Development**. Seluruh proses pengembangan diarahkan oleh orkestrator kecerdasan buatan yang menyimpan context dan logikanya di dalam repositori ini.
-
-Folder metadata berikut disertakan sesuai dengan persyaratan penugasan:
-- **`.agent/` & `.agents/`**: Berisi "Skills" dan internal rules yang melatih asisten AI (Antigravity) untuk memahami domain proyek.
-- **`everything-claude-code/`**: Matriks logika ECC untuk otomasi workflow developer.
-- **`.antigravity-agents.md`**: Master Reference yang mendikte persona dan protokol operasional seluruh sub-agent AI.
-- **`.cursorrules`**: File jembatan untuk memastikan inspektur atau asisten AI lainnya dapat langsung memuat seluruh konteks proyek secara instan.
-
----
-
-## ✨ Fitur Utama
-1. **🗓️ Kalender Terpusat:** Sinkronisasi tenggat waktu proyek, jadwal meeting, dan review flashcard.
-2. **📝 Smart Notes & AI Transcript:** Editor rich-text terintegrasi dengan perekam suara dan transkripsi **Groq Whisper**.
-3. **📊 Manajemen Proyek:** Pelacak progress proyek real-time dengan status indikator visual.
-4. **🧠 Flashcard Interaktif:** Sistem pembelajaran adaptif menggunakan algoritma *Spaced Repetition*.
-
----
-
-## 🛠️ Stack Teknologi
-- **Frontend:** Next.js 16 (App Router), TypeScript, Tailwind CSS, Shadcn UI.
-- **Backend:** Supabase (Database, Auth, Storage).
-- **ORM:** Prisma.
-- **AI Integrations:** **Groq API** (Transcription), **OpenRouter API** (LLM).
-- **Performance:** GPU-Accelerated CSS (Zero Framer Motion/WebGL policy).
-
----
-
-## 🛠️ Arsitektur Teknologi & Tech Stack
-
-Proyek ini dibangun dengan penekanan ekstrim pada **Performa, Zero-Latency, dan DX (Developer Experience)**.
-
-### Core Stack
-
-- **Frontend:** Next.js 16 (App Router), TypeScript, Tailwind CSS, Shadcn UI.
-- **Backend & Database:** Supabase (PostgreSQL, Auth, Storage).
-- **ORM:** Prisma Client.
-- **AI Aggregator:** OpenRouter API (`minimax/minimax-m2.5:free` & `Groq Whisper-large-v3`).
-- **Micro-Libraries:** React Big Calendar, Slate.js, Lenis (Khusus Landing Page).
-
-### ⚡ Filosofi Performa (Wajib Dibaca oleh Tim Dev)
-
-Untuk menjaga skor _Interaction to Next Paint_ (INP) tetap sempurna di bawah 200ms, tim sepakat menerapkan aturan berikut:
-
-1. **NO Heavy JS Animations:** Dilarang menggunakan Framer Motion, WebGL, atau 3D Canvas di dalam Dashboard.
-2. **GPU Acceleration Only:** Animasi _modal/popover_ HANYA boleh menggunakan CSS `transform` dan `opacity` (via `tailwindcss-animate`).
-3. **Instant Navigation:** Mengandalkan _View Transitions API_ dan _Speculation Rules API_ untuk perpindahan antar halaman tanpa _loading screen_.
-
----
-
-## 🤖 Panduan Multi-Agent AI (Skills Directory)
-
-Proyek ini mengadopsi alur kerja **AI-Assisted Development**. Jika Anda menggunakan Cursor, Copilot, atau Claude, AI diwajibkan untuk membaca direktori `skills/` sebelum menulis kode.
-
-**Struktur `skills/` yang tersedia:**
-
-- `planning-mode.md` - Arsitektur & Edge Cases.
-- `shadcn-ui.md` & `react-components.md` - Standar UI dan Next.js Server Components.
-- `theme-factory.md` - Panduan CSS Variable (Notion-like Theme).
-- `enhance-prompt.md` - Standar prompt API LLM.
-
-(Note: Baca file `RULES.md` dan `design-system.md` untuk aturan main selengkapnya).
-
----
+*Built for the future of Autonomous Agentic Coding.*

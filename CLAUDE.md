@@ -239,3 +239,61 @@ See `tsconfig.json` for full config.
 - Shadcn UI: https://ui.shadcn.com
 - Prisma v7: https://prisma.io/docs
 - Supabase Auth: https://supabase.com/docs/guides/auth
+
+---
+
+## AI AGENT OPERATING PROTOCOLS (PERMANENT & NON-NEGOTIABLE)
+
+> These protocols were established after critical design and implementation failures.
+> They MUST be followed without exception by every AI agent operating in this workspace.
+
+### PROTOCOL 1: THE ABSOLUTE TRUTH OF THE USER
+- The user's chronological descriptions, storyboards, voice transcripts, and logic are treated as **100% accurate ground truth**.
+- You are **strictly prohibited** from overriding, second-guessing, or unilaterally "improving upon" the user's explicitly stated mechanics without first obtaining explicit written permission.
+- If you disagree with an approach, you may **state your concern once**. If the user confirms their intent, you comply immediately.
+
+### PROTOCOL 2: ZERO-SKIP VISION INGESTION (NO EXCEPTIONS)
+**THE TRIGGER:** Any time images/screenshots are provided by the user, OR any time you autonomously capture DOM/browser screenshots for any UI, UX, frontend, or data task.
+
+**THE MANDATE:** You are **FORBIDDEN** from relying solely on text descriptions when images are present. You **MUST** actively use your vision capabilities to analyze **EVERY SINGLE** provided image **before** writing any code or plan.
+
+**EXTRACTION CHECKLIST** — before writing code, you must document from each image:
+- [ ] Exact hex color codes for all significant UI colors (background, text, active/inactive states, all gradient stops)
+- [ ] Typography scale (approximate font-size, weight, letter-spacing)
+- [ ] Layout grid, spacing, and margin relationships
+- [ ] Component state differences (visible vs. hidden, active vs. inactive)
+- [ ] Gradient direction, hard/soft color stops, and any blending modes
+
+Failure to perform this extraction **before** coding is a critical protocol violation.
+
+### PROTOCOL 3: THE ANTI-HUBRIS MANDATE & DUAL-VERIFICATION
+You are **strictly forbidden** from declaring you "completely understand" or are "100% certain" about any task. AI is inherently ambiguous and prone to errors. All assumptions must be explicitly surfaced and cross-examined.
+
+**When operating in Plan Mode**, you MUST verify your assumptions TWICE before executing:
+
+**Verification Layer 1 — Inside the Plan File:**
+- List your comprehension of the task in explicit bullet points: `"- I understand that I will do X."`
+- Conclude the section by explicitly asking: **"Are these points correct?"**
+
+**Verification Layer 2 — In the Conversational Response:**
+- Briefly reiterate your core understanding.
+- Ask: **"Does this align perfectly with your intent?"**
+- State: **"I am awaiting your verification before I execute, because my AI assessment may contain errors."**
+
+**You may ONLY begin executing code after the user has provided explicit approval.**
+
+### PROTOCOL 4: REAL ASSETS & AUTONOMOUS LOCALHOST VISUAL QA
+**Established after repeated "blind coding" failures where lint passed but visuals were broken.**
+
+1. **NO FAKE ASSETS**: Strictly forbidden from using placeholder URLs or assumed image paths. You MUST verify the actual filenames in `public/` or `src/assets/` using `list_dir` before writing any `src` attribute. If an image doesn't exist at that path, the layout fails visually even if lint passes.
+
+2. **MANDATORY LOCALHOST VISUAL QA**: A passing linter does NOT mean GSAP physics work. You are forbidden from reporting completion of any UI/animation task based solely on `npm run lint`.
+
+3. **THE QA WORKFLOW** (must be followed after every frontend/animation change):
+   - Ensure the local dev server is running
+   - Use autonomous browser/screenshot tools to visit `http://localhost:3000` (or the active port)
+   - Visually inspect the rendered DOM — scroll to trigger GSAP animations
+   - Verify with vision tools that images load and animations match the storyboard
+   - Only AFTER visual confirmation passes may you run the linter and report back
+
+4. **REPORTING**: You may NOT say "done" or "fixed" until you have attached a screenshot or visual proof that the specific mechanics are working on screen.

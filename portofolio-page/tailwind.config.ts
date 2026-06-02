@@ -9,13 +9,16 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: "#0d0d0d",
-        foreground: "#f4f4f4",
+        background: "#000000",
+        foreground: "#FFFFFF",
         muted: "#888888",
-        border: "#222222",
+        border: "rgba(255, 255, 255, 0.15)",
+        accent: "#6366f1",
       },
       fontFamily: {
         sans: ["var(--font-inter)", "sans-serif"],
+        display: ["var(--font-inter-tight)", "sans-serif"],
+        mono: ["var(--font-mono)", "monospace"],
       },
       letterSpacing: {
         tightest: '-0.04em',

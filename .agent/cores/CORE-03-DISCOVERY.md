@@ -104,5 +104,6 @@ Before transitioning to the next Core, you MUST invoke the validation loop:
 
 ## 9. Transition & Track Routing
 Once the PRD is aligned and the capabilities are 100% secured (verified by the Dual Checkers), route based on the Track locked in Core 00:
-- **If TRACK A (Fullstack/UI):** You MUST proceed to **CORE 04 (`d:\lockincapstone\lockin\.agent\cores\CORE-04-UI-MATHEMATICS.md`)**.
-- **If TRACK B (Backend) or TRACK C (Micro-Edit):** You are explicitly forbidden from entering Core 04. Proceed directly to **CORE 05 (`d:\lockincapstone\lockin\.antigravity-agents.md` MASTER PLANNING PROTOCOL)**.
+- **If TRACK A (Fullstack/UI):** You MUST proceed to **CORE 04 (`./.agent\cores\CORE-04-UI-MATHEMATICS.md`)**.
+- **If TRACK B (Backend) or TRACK C (Micro-Edit):** You are explicitly forbidden from entering Core 04. Proceed directly to **CORE 05 (`./.antigravity-agents.md` MASTER PLANNING PROTOCOL)**.
+

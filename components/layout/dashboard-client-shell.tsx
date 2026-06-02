@@ -14,7 +14,7 @@ export function DashboardClientShell({ currentUser, children }: DashboardClientS
   const [isMobileOpen, setIsMobileOpen] = useState(false)
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-[#F5F5F3] text-foreground font-satoshi relative">
+    <div className="flex h-screen w-full overflow-hidden bg-background text-foreground font-satoshi relative">
       
       {/* 1. Mobile overlay (Darkened backdrop-blur to catch clicks) */}
       {isMobileOpen && (
@@ -27,7 +27,7 @@ export function DashboardClientShell({ currentUser, children }: DashboardClientS
       {/* 2. Sidebar (Fixed Drawer on Mobile, Static column on Desktop) */}
       <aside className={`
         fixed inset-y-0 left-0 z-50
-        w-20 bg-white border-r border-gray-100
+        w-20 bg-card border-r border-border
         flex flex-col shadow-[2px_0_24px_rgba(0,0,0,0.02)] md:shadow-none
         transform transition-transform duration-300 ease-in-out
         md:translate-x-0

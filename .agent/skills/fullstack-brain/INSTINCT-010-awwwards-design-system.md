@@ -11,7 +11,7 @@ model: sonnet
 > ⚠️ **AUTHORITY NOTE:**
 > This instinct is a **companion and quick-activator**.
 > The COMPLETE mathematical design system lives at:
-> `d:\lockincapstone\lockin\.agent\cores\CORE-04-UI-MATHEMATICS.md`
+> `./.agent\cores\CORE-04-UI-MATHEMATICS.md`
 > 
 > For full Atomic Component Breakdown, Design Token Architecture, Typography Scale,
 > Cubic Bézier Animation Laws, and the Dual Validation Checkers → **Read CORE-04 first.**
@@ -88,3 +88,4 @@ Activate when the user asks for:
 > **Severity if Skipped:** 🟡 Medium — Output works but looks cheap/generic
 > **Applies To:** Frontend tasks requesting premium or Awwwards-level design
 > **Version:** 2.0.0 | Refactored as CORE-04 Companion (2025-04-29)
+

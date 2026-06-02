@@ -153,4 +153,5 @@ Council Changes: [e.g., '+ skill-forge-agent' / None]
 
 Any Core performing a Baton Check must read BOTH the original `[CONTEXT BATON]` AND all `[BATON UPDATE]` blocks. The combined picture is the live state.
 
-Once the baton is output and visible in the conversation, you may proceed to **CORE 01 (`d:\lockincapstone\lockin\.agent\cores\CORE-01-BOOTLOADER.md`)**.
+Once the baton is output and visible in the conversation, you may proceed to **CORE 01 (`./.agent\cores\CORE-01-BOOTLOADER.md`)**.
+

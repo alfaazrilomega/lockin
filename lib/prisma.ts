@@ -1,5 +1,7 @@
 import { PrismaClient } from '@prisma/client'
 import { PrismaPg } from '@prisma/adapter-pg'
+// Force Next.js to reload this file
+
 import { Pool } from 'pg'
 
 /**

@@ -31,7 +31,7 @@ If the user says "build this app" but DOES NOT provide an ERD, database schema, 
 - **CRITICAL:** Never lock the user into a backend or tech stack without their explicit "Yes".
 
 ## 3. Dynamic Project Source Injection
-If the user does NOT provide context to fill the `D:\lockincapstone\lockin\.agent\project-source` directory, you must act dynamically:
+If the user does NOT provide context to fill the `./.agent\project-source` directory, you must act dynamically:
 - Autonomously THINK about what the project needs based on the user's ultimate goal.
 - Erase or completely ignore any irrelevant default placeholders in that directory.
 - Dynamically generate and map the correct project source architecture (e.g., domain logic, flows, and structural rules) that the user *should* have provided.
@@ -47,4 +47,5 @@ Before transitioning to Core 03, you MUST invoke the validation loop:
 2. **The Result-Checker (`code-reviewer`):** Verify that the user has explicitly approved the stack proposal. If not, halt.
 
 ## 6. Transition
-Once the context is mutated, the ERD/Stack is established, AND the user explicitly approves it (verified by the Dual Checkers), you may proceed to **CORE 03 (`d:\lockincapstone\lockin\.agent\cores\CORE-03-DISCOVERY.md`)**.
+Once the context is mutated, the ERD/Stack is established, AND the user explicitly approves it (verified by the Dual Checkers), you may proceed to **CORE 03 (`./.agent\cores\CORE-03-DISCOVERY.md`)**.
+

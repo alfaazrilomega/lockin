@@ -470,7 +470,7 @@ Once all items are checked:
 - [ ] Both Dual Validators passed (Section 7)
 - [ ] User has explicitly confirmed the Atomic Breakdown
 
-→ Proceed to **CORE 05** (`d:\lockincapstone\lockin\.antigravity-agents.md`) for code execution.
+→ Proceed to **CORE 05** (`./.antigravity-agents.md`) for code execution.
 
 ---
 
@@ -479,3 +479,4 @@ Once all items are checked:
 > **Source Key:** φ-Layout · Riz Ratio (2:3:5) · W3C Tokens · LayCoder · MDPI Architecture
 > **Authority Chain:** INSTINCT-010 → SKILL-design-intelligence-cognition → THIS FILE → CORE 05
 > **Critical Fix v3.2:** φ-law now SUSPENDED in Pixel-Perfect mode (deadlock prevention)
+

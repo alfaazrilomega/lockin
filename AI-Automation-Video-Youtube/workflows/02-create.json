@@ -1,0 +1,230 @@
+{
+  "name": "Phase 2 — Create",
+  "nodes": [
+    {
+      "id": "webhook-create",
+      "name": "Webhook — Receive Research Data",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [250, 350],
+      "parameters": {
+        "path": "create-video",
+        "responseMode": "onReceived",
+        "httpMethod": "POST"
+      }
+    },
+    {
+      "id": "gemini-scriptwriter",
+      "name": "Gemini 3.5 Flash — Script Writer",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [500, 350],
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "key", "value": "={{ $env.GEMINI_API_KEY }}" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": {
+          "contents": [
+            {
+              "parts": [
+                {
+                  "text": "={{ 'Kamu adalah Script Writer profesional untuk channel YouTube Comedy+Education Indonesia.\\n\\nDATA VIDEO:\\n' + JSON.stringify($json.body) + '\\n\\nTUGAS: Buat script video YouTube LENGKAP dengan struktur berikut.\\nBahasa: Indonesia yang natural, santai, dan lucu tapi tetap informatif.\\nDurasi target: 8-10 menit.\\n\\nBALAS HANYA dengan JSON ini (tanpa markdown):\\n{\\n  \"title\": \"judul final yang SEO-friendly\",\\n  \"hook_script\": \"script 30 detik pertama yang LANGSUNG menarik perhatian\",\\n  \"sections\": [\\n    {\\n      \"section_title\": \"Intro\",\\n      \"duration_seconds\": 30,\\n      \"narration\": \"teks narasi lengkap yang akan di-TTS\",\\n      \"visual_prompt\": \"deskripsi visual untuk Veo video generation\"\\n    }\\n  ],\\n  \"outro_script\": \"CTA penutup 20 detik: subscribe, like, komen\",\\n  \"full_narration\": \"SEMUA teks narasi disambung menjadi satu string untuk TTS\",\\n  \"veo_main_prompt\": \"prompt utama untuk Veo generate video background 8 menit, comedy style, gaya animasi atau visual yang menarik\",\\n  \"total_estimated_duration_seconds\": 480\\n}' }
+              ]
+            }
+          ],
+          "generationConfig": {
+            "temperature": 0.8,
+            "maxOutputTokens": 8192,
+            "responseMimeType": "application/json"
+          }
+        }
+      }
+    },
+    {
+      "id": "parse-script",
+      "name": "Parse Script JSON",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [750, 350],
+      "parameters": {
+        "jsCode": "const raw = $input.first().json;\nconst text = raw.candidates[0].content.parts[0].text;\nconst script = JSON.parse(text);\nconst researchData = $('Webhook — Receive Research Data').first().json.body;\nreturn [{\n  json: {\n    ...researchData,\n    script,\n    job_id: `job_${Date.now()}`,\n    status: 'script_ready'\n  }\n}];"
+      }
+    },
+    {
+      "id": "kokoro-tts",
+      "name": "Kokoro TTS — Generate Voiceover",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1000, 250],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.KOKORO_API_URL }}/v1/audio/speech",
+        "sendBody": true,
+        "contentType": "json",
+        "body": {
+          "model": "kokoro",
+          "input": "={{ $json.script.full_narration }}",
+          "voice": "={{ $env.KOKORO_VOICE }}",
+          "speed": 1.0,
+          "response_format": "mp3"
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "veo-generate-video",
+      "name": "Veo — Generate Video",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1000, 450],
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/veo-3.0-generate-preview:generateVideo",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "key", "value": "={{ $env.GEMINI_API_KEY }}" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": {
+          "prompt": {
+            "text": "={{ $json.script.veo_main_prompt + ' Style: vibrant, engaging, Indonesian comedy style, no text overlays, suitable for YouTube background.' }}"
+          },
+          "videoGenerationConfig": {
+            "durationSeconds": 8,
+            "aspectRatio": "16:9",
+            "numberOfVideos": 1
+          }
+        }
+      }
+    },
+    {
+      "id": "wait-veo",
+      "name": "Wait — Veo Processing (60s)",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [1250, 450],
+      "parameters": {
+        "amount": 60,
+        "unit": "seconds"
+      }
+    },
+    {
+      "id": "fetch-veo-result",
+      "name": "Fetch Veo Result",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1500, 450],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $('Veo — Generate Video').item.json.name }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-goog-api-key", "value": "={{ $env.GEMINI_API_KEY }}" }
+          ]
+        }
+      }
+    },
+    {
+      "id": "upload-to-r2",
+      "name": "Upload Assets to Cloudflare R2",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1750, 350],
+      "parameters": {
+        "method": "PUT",
+        "url": "={{ $env.CLOUDFLARE_R2_ENDPOINT }}/{{ $env.CLOUDFLARE_R2_BUCKET_NAME }}/{{ $json.job_id }}/audio.mp3",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type", "value": "audio/mpeg" }
+          ]
+        },
+        "sendBody": true,
+        "body": "={{ $('Kokoro TTS — Generate Voiceover').item.binary.data }}"
+      }
+    },
+    {
+      "id": "save-create-supabase",
+      "name": "Save to Supabase — pipeline_jobs",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [2000, 350],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/pipeline_jobs",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "apikey", "value": "={{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Authorization", "value": "=Bearer {{ $env.SUPABASE_SERVICE_ROLE_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" },
+            { "name": "Prefer", "value": "return=representation" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": {
+          "job_id": "={{ $json.job_id }}",
+          "title_idea": "={{ $json.title_idea }}",
+          "script_title": "={{ $json.script.title }}",
+          "primary_genre": "={{ $json.primary_genre }}",
+          "audio_url": "={{ $env.CLOUDFLARE_R2_PUBLIC_URL }}/{{ $json.job_id }}/audio.mp3",
+          "video_url": "={{ $('Fetch Veo Result').item.json.response?.videos?.[0]?.uri }}",
+          "status": "created",
+          "created_at": "={{ new Date().toISOString() }}"
+        }
+      }
+    },
+    {
+      "id": "trigger-validate",
+      "name": "Trigger Phase 3 — Validate",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [2250, 350],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.WEBHOOK_URL }}webhook/validate-video",
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={{ $('Save to Supabase — pipeline_jobs').item.json }}"
+      }
+    }
+  ],
+  "connections": {
+    "Webhook — Receive Research Data": { "main": [[{ "node": "Gemini 3.5 Flash — Script Writer", "type": "main", "index": 0 }]] },
+    "Gemini 3.5 Flash — Script Writer": { "main": [[{ "node": "Parse Script JSON", "type": "main", "index": 0 }]] },
+    "Parse Script JSON": {
+      "main": [[
+        { "node": "Kokoro TTS — Generate Voiceover", "type": "main", "index": 0 },
+        { "node": "Veo — Generate Video", "type": "main", "index": 0 }
+      ]]
+    },
+    "Veo — Generate Video": { "main": [[{ "node": "Wait — Veo Processing (60s)", "type": "main", "index": 0 }]] },
+    "Wait — Veo Processing (60s)": { "main": [[{ "node": "Fetch Veo Result", "type": "main", "index": 0 }]] },
+    "Kokoro TTS — Generate Voiceover": { "main": [[{ "node": "Upload Assets to Cloudflare R2", "type": "main", "index": 0 }]] },
+    "Fetch Veo Result": { "main": [[{ "node": "Upload Assets to Cloudflare R2", "type": "main", "index": 1 }]] },
+    "Upload Assets to Cloudflare R2": { "main": [[{ "node": "Save to Supabase — pipeline_jobs", "type": "main", "index": 0 }]] },
+    "Save to Supabase — pipeline_jobs": { "main": [[{ "node": "Trigger Phase 3 — Validate", "type": "main", "index": 0 }]] }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Jakarta"
+  }
+}
