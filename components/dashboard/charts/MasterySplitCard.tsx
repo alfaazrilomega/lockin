@@ -25,7 +25,7 @@ const CustomTooltip = ({ active, payload }: any) => {
     return (
       <div style={{ backgroundColor: '#111827', borderRadius: 10, padding: '6px 10px', fontSize: 11, color: '#fff' }}>
         <p style={{ fontWeight: 700 }}>{payload[0].name}</p>
-        <p style={{ color: payload[0].payload.color }}>${payload[0].value.toLocaleString()} · {payload[0].payload.percentage}%</p>
+        <p style={{ color: payload[0].payload.color }}>${payload[0].value.toLocaleString('en-US')} · {payload[0].payload.percentage}%</p>
       </div>
     );
   }
@@ -92,7 +92,7 @@ export function MasterySplitCard({ data }: { data: WorkWithPlatformsProps }) {
                 </div>
                 <div className="flex flex-col min-w-0">
                   <span className="text-[10px] font-semibold text-gray-700 truncate">{p.name}</span>
-                  <span className="text-[9px] text-gray-400">${p.value.toLocaleString()}</span>
+                  <span className="text-[9px] text-gray-400">${p.value.toLocaleString('en-US')}</span>
                 </div>
               </div>
               <span className="text-[10px] font-bold text-gray-600 shrink-0 ml-2">{p.percentage}%</span>

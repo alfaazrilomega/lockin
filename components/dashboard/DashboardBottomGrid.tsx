@@ -82,35 +82,58 @@ function AnimatedCounter({ value, prefix = "", suffix = "" }: { value: number, p
     window.requestAnimationFrame(step);
   }, [value]);
 
-  return <span>{prefix}{displayValue.toLocaleString()}{suffix}</span>;
+  return <span>{prefix}{displayValue.toLocaleString('en-US')}{suffix}</span>;
 }
 
 
-// ─── MOCK DATA STATE ────────────────────────────────────────────────────────
-const contributors = [
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+
+// ─── MOCK DATA STATE (Fallback if no DB data) ────────────────────────────────────────────────────────
+const mockContributors = [
   { id: '1', name: 'Armin A.', avatarKey: 'a', imgId: '11', rev: 209633, leadsBlack: 41, leadsGrey: 118, kpi: 0.84, winPct: '31%', wlBlack: 12, wlGrey: 29 },
   { id: '2', name: 'Mikasa A.', avatarKey: 'm', imgId: '15', rev: 156841, leadsBlack: 54, leadsGrey: 103, kpi: 0.89, winPct: '39%', wlBlack: 21, wlGrey: 33 },
   { id: '3', name: 'Eren Y.', avatarKey: 'e', imgId: '19', rev: 117115, leadsBlack: 22, leadsGrey: 84, kpi: 0.79, winPct: '32%', wlBlack: 7, wlGrey: 15 }
 ];
 
-export function DashboardVisualBottom() {
+export function DashboardVisualBottom({ salesContributors, timeframe = 'Sep 1 — Nov 30, 2023' }: { salesContributors?: any[], timeframe?: string }) {
   const [activeTab, setActiveTab] = useState<'Revenue' | 'Leads' | 'W/L'>('Revenue');
   const [expandedId, setExpandedId] = useState<string | null>('2');
+  const [activePlatform, setActivePlatform] = useState('Dribbble');
+  const [referrerCategory, setReferrerCategory] = useState('Deals amount by referrer category');
+  const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
+
+  const scalar = timeframe === 'Last 7 Days' ? 0.25 : timeframe === 'Year to Date' ? 4 : 1;
+  
+  const contributors = salesContributors && salesContributors.length > 0 
+    ? salesContributors.map((sc, i) => ({
+        id: sc.id,
+        name: sc.user?.name || 'User',
+        avatarKey: (sc.user?.name || 'User')[0].toLowerCase(),
+        imgId: (11 + i * 4).toString(),
+        rev: Math.round(sc.revenue * scalar),
+        leadsBlack: Math.round(sc.leadsBlack * scalar),
+        leadsGrey: Math.round(sc.leadsGrey * scalar),
+        kpi: sc.kpi,
+        winPct: sc.winPct,
+        wlBlack: Math.round(sc.wlBlack * scalar),
+        wlGrey: Math.round(sc.wlGrey * scalar)
+      }))
+    : mockContributors;
 
   const activeMetrics: Record<'Revenue' | 'Leads' | 'W/L', { val: number, prefix: string, suffix?: string }> = {
-    Revenue: { val: 18552, prefix: "$" },
-    Leads: { val: 373, prefix: "" },
+    Revenue: { val: Math.round(18552 * scalar), prefix: "$" },
+    Leads: { val: Math.round(373 * scalar), prefix: "" },
     'W/L': { val: 16, prefix: "", suffix: "%" }
   };
 
   const barDataMap = {
     'Revenue': {
       heights: [55, 40, 20, 90, 60, 45, 75, 50, 65],
-      prices: ['$6,901', '$11,035', '$9,288']
+      prices: [`$${Math.round(6901 * scalar).toLocaleString('en-US')}`, `$${Math.round(11035 * scalar).toLocaleString('en-US')}`, `$${Math.round(9288 * scalar).toLocaleString('en-US')}`]
     },
     'Leads': {
       heights: [40, 60, 30, 70, 90, 55, 60, 45, 80],
-      prices: ['120', '140', '113']
+      prices: [Math.round(120 * scalar).toString(), Math.round(140 * scalar).toString(), Math.round(113 * scalar).toString()]
     },
     'W/L': {
       heights: [30, 45, 60, 50, 40, 70, 90, 80, 55],
@@ -119,6 +142,15 @@ export function DashboardVisualBottom() {
   };
 
   const currentBarData = barDataMap[activeTab];
+
+  let platforms = [
+    { id: 'dribbble', name: 'Dribbble', Component: DribbbleLogo, val: 227459 * scalar, pct: '43%' },
+    { id: 'instagram', name: 'Instagram', Component: InstagramLogo, val: 142823 * scalar, pct: '27%' },
+    { id: 'behance', name: 'Behance', Component: BehanceLogo, val: 89935 * scalar, pct: '11%', scale: 0.95 },
+    { id: 'google', name: 'Google', Component: GoogleLogo, val: 37028 * scalar, pct: '7%' },
+  ];
+
+  platforms = platforms.sort((a, b) => sortOrder === 'desc' ? b.val - a.val : a.val - b.val);
 
   return (
     <div className="grid grid-cols-1 xl:grid-cols-12 gap-3 auto-rows-min mt-4 w-full font-satoshi">
@@ -134,11 +166,20 @@ export function DashboardVisualBottom() {
           {/* Card 1: Platform List */}
           <div className="bg-[#f2f4f7] rounded-[24px] p-[10px] flex flex-col justify-between shadow-sm border border-black/5">
             <div className="flex items-center justify-between px-2 pt-1 pb-1">
-              <div className="flex items-center gap-0.5 cursor-pointer hover:opacity-70 transition-opacity">
+              <div 
+                className="flex items-center gap-0.5 cursor-pointer hover:opacity-70 transition-opacity"
+                onClick={() => setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc')}
+              >
                 <MenuListIcon />
-                <ChevronDown className="w-[14px] h-[14px] text-gray-400 ml-0.5" strokeWidth={3} />
+                <ChevronDown 
+                  className={`w-[14px] h-[14px] text-gray-400 ml-0.5 transition-transform ${sortOrder === 'asc' ? 'rotate-180' : ''}`} 
+                  strokeWidth={3} 
+                />
               </div>
-              <button className="flex items-center gap-1.5 px-3 py-[5px] bg-white border border-gray-100 rounded-full hover:bg-gray-50 transition-all shadow-[0_1px_2px_rgba(0,0,0,0.03)] text-gray-700 active:scale-95">
+              <button 
+                className="flex items-center gap-1.5 px-3 py-[5px] bg-white border border-gray-100 rounded-full hover:bg-gray-50 transition-all shadow-[0_1px_2px_rgba(0,0,0,0.03)] text-gray-700 active:scale-95"
+                onClick={() => setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc')}
+              >
                 <span className="text-[11px] font-[800] text-gray-600 tracking-wide">Filters</span>
                 <FunnelIcon />
               </button>
@@ -146,30 +187,14 @@ export function DashboardVisualBottom() {
 
             <div className="flex flex-col gap-1.5 mt-1">
               {/* List Item Component Pattern */}
-              <div className="bg-white rounded-[14px] px-3.5 py-[11px] flex items-center shadow-[0_1px_2px_rgba(0,0,0,0.02)] cursor-pointer hover:-translate-y-[1px] transition-transform">
-                <DribbbleLogo />
-                <span className="text-[12px] font-[800] text-gray-500 ml-2.5">Dribbble</span>
-                <span className="text-[13px] font-[900] text-gray-900 ml-auto tracking-tight">$227,459</span>
-                <span className="text-[10px] font-[800] text-gray-400 ml-3 w-6 text-right">43%</span>
-              </div>
-              <div className="bg-white rounded-[14px] px-3.5 py-[11px] flex items-center shadow-[0_1px_2px_rgba(0,0,0,0.02)] cursor-pointer hover:-translate-y-[1px] transition-transform">
-                <InstagramLogo />
-                <span className="text-[12px] font-[800] text-gray-500 ml-2.5">Instagram</span>
-                <span className="text-[13px] font-[900] text-gray-900 ml-auto tracking-tight">$142,823</span>
-                <span className="text-[10px] font-[800] text-gray-400 ml-3 w-6 text-right">27%</span>
-              </div>
-              <div className="bg-white rounded-[14px] px-3.5 py-[11px] flex items-center shadow-[0_1px_2px_rgba(0,0,0,0.02)] cursor-pointer hover:-translate-y-[1px] transition-transform">
-                <div className="scale-[0.95]"><BehanceLogo /></div>
-                <span className="text-[12px] font-[800] text-gray-500 ml-2.5">Behance</span>
-                <span className="text-[13px] font-[900] text-gray-900 ml-auto tracking-tight">$89,935</span>
-                <span className="text-[10px] font-[800] text-gray-400 ml-3 w-6 text-right">11%</span>
-              </div>
-              <div className="bg-white rounded-[14px] px-3.5 py-[11px] flex items-center shadow-[0_1px_2px_rgba(0,0,0,0.02)] cursor-pointer hover:-translate-y-[1px] transition-transform">
-                <GoogleLogo />
-                <span className="text-[12px] font-[800] text-gray-500 ml-2.5">Google</span>
-                <span className="text-[13px] font-[900] text-gray-900 ml-auto tracking-tight">$37,028</span>
-                <span className="text-[10px] font-[800] text-gray-400 ml-3 w-6 text-right">7%</span>
-              </div>
+              {platforms.map(platform => (
+                <div key={platform.id} className="bg-white rounded-[14px] px-3.5 py-[11px] flex items-center shadow-[0_1px_2px_rgba(0,0,0,0.02)] cursor-pointer hover:-translate-y-[1px] transition-transform">
+                  {platform.scale ? <div className={`scale-[${platform.scale}]`}><platform.Component /></div> : <platform.Component />}
+                  <span className="text-[12px] font-[800] text-gray-500 ml-2.5">{platform.name}</span>
+                  <span className="text-[13px] font-[900] text-gray-900 ml-auto tracking-tight">${Math.round(platform.val).toLocaleString('en-US')}</span>
+                  <span className="text-[10px] font-[800] text-gray-400 ml-3 w-6 text-right">{platform.pct}</span>
+                </div>
+              ))}
             </div>
           </div>
 
@@ -218,10 +243,18 @@ export function DashboardVisualBottom() {
 
             <div className="flex flex-col text-[13px] leading-[1.2] px-2 mb-1 cursor-pointer group">
               <span className="font-[800] text-gray-400">Deals amount</span>
-              <span className="font-[800] text-gray-800 flex items-center group-hover:opacity-80 transition-opacity tracking-tight">
-                by referrer category
-                <ChevronDown className="w-3.5 h-3.5 ml-1 text-gray-500" strokeWidth={3} />
-              </span>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <span className="font-[800] text-gray-800 flex items-center group-hover:opacity-80 transition-opacity tracking-tight">
+                    {referrerCategory}
+                    <ChevronDown className="w-3.5 h-3.5 ml-1 text-gray-500" strokeWidth={3} />
+                  </span>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                  <DropdownMenuItem onClick={() => setReferrerCategory('Deals amount by referrer category')}>by referrer category</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setReferrerCategory('Deals amount by timeframe')}>by timeframe</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </div>
@@ -232,13 +265,29 @@ export function DashboardVisualBottom() {
           <div className="flex items-center justify-between px-2 pt-1 relative z-20">
             <div className="flex items-center gap-2.5">
               <div className="w-[34px] h-[34px] rounded-full border-[1.5px] border-[#C52150] flex items-center justify-center bg-transparent group cursor-pointer bg-white">
-                <div className="scale-[1.1] "><DribbbleLogo /></div>
+                <div className="scale-[1.1]">
+                  {activePlatform === 'Dribbble' && <DribbbleLogo />}
+                  {activePlatform === 'Instagram' && <InstagramLogo />}
+                  {activePlatform === 'Behance' && <BehanceLogo />}
+                  {activePlatform === 'Google' && <GoogleLogo />}
+                </div>
               </div>
               <div className="flex flex-col leading-[1.1]">
                 <span className="text-[11px] font-[800] text-gray-500">Platform value</span>
-                <span className="text-[13.5px] font-[900] text-gray-900 flex items-center cursor-pointer hover:opacity-70 transition-opacity tracking-tight">
-                  Dribbble <ChevronDown className="w-[14px] h-[14px] ml-0.5 text-gray-500" strokeWidth={3} />
-                </span>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <span className="text-[13.5px] font-[900] text-gray-900 flex items-center cursor-pointer hover:opacity-70 transition-opacity tracking-tight">
+                      {activePlatform} <ChevronDown className="w-[14px] h-[14px] ml-0.5 text-gray-500" strokeWidth={3} />
+                    </span>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start">
+                    {platforms.map(p => (
+                      <DropdownMenuItem key={p.id} onClick={() => setActivePlatform(p.name)}>
+                        {p.name}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
 
@@ -278,7 +327,9 @@ export function DashboardVisualBottom() {
               <div className="flex flex-col gap-[9px] z-10 text-white w-full h-full justify-center pl-[2px]">
 
                 <div className="flex flex-col leading-tight gap-0 mt-1">
-                  <span className="text-[10px] font-[600] text-[#ff8ba8]">Revenue</span>
+                  <span className="text-[10px] font-[600] text-[#ff8ba8]">
+                    {activeTab === 'W/L' ? 'Win/lose' : activeTab}
+                  </span>
                   <span className="text-[15px] font-[900] tracking-tight text-white mb-0.5">
                     <AnimatedCounter
                       value={activeMetrics[activeTab].val}
@@ -288,21 +339,35 @@ export function DashboardVisualBottom() {
                   </span>
                 </div>
 
-                <div className="flex flex-col leading-tight gap-0">
-                  <span className="text-[10px] font-[600] text-[#ff8ba8]">{activeTab === 'Leads' ? 'Conversion' : 'Leads'}</span>
-                  <span className="text-[14px] font-[900] tracking-tight flex items-baseline gap-1.5 text-white">
-                    <AnimatedCounter value={373} />
-                    <span className="text-[9.5px] font-[600] text-[#ff8ba8]">97/276</span>
-                  </span>
-                </div>
+                {activeTab !== 'Revenue' && (
+                  <div className="flex flex-col leading-tight gap-0">
+                    <span className="text-[10px] font-[600] text-[#ff8ba8]">Revenue</span>
+                    <span className="text-[14px] font-[900] tracking-tight flex items-baseline gap-1.5 text-white">
+                      <AnimatedCounter value={18552} prefix="$" />
+                      <span className="text-[9.5px] font-[600] text-[#ff8ba8]">avg</span>
+                    </span>
+                  </div>
+                )}
 
-                <div className="flex flex-col leading-tight gap-0">
-                  <span className="text-[10px] font-[600] text-[#ff8ba8]">Win/lose</span>
-                  <span className="text-[14px] font-[900] tracking-tight flex items-baseline gap-1.5 text-white">
-                    <AnimatedCounter value={activeMetrics['W/L'].val} suffix="%" /> 
-                    <span className="text-[9.5px] font-[600] text-[#ff8ba8]">51/318</span>
-                  </span>
-                </div>
+                {activeTab !== 'Leads' && (
+                  <div className="flex flex-col leading-tight gap-0">
+                    <span className="text-[10px] font-[600] text-[#ff8ba8]">Leads</span>
+                    <span className="text-[14px] font-[900] tracking-tight flex items-baseline gap-1.5 text-white">
+                      <AnimatedCounter value={373} />
+                      <span className="text-[9.5px] font-[600] text-[#ff8ba8]">97/276</span>
+                    </span>
+                  </div>
+                )}
+
+                {activeTab !== 'W/L' && (
+                  <div className="flex flex-col leading-tight gap-0">
+                    <span className="text-[10px] font-[600] text-[#ff8ba8]">Win/lose</span>
+                    <span className="text-[14px] font-[900] tracking-tight flex items-baseline gap-1.5 text-white">
+                      <AnimatedCounter value={16} suffix="%" /> 
+                      <span className="text-[9.5px] font-[600] text-[#ff8ba8]">51/318</span>
+                    </span>
+                  </div>
+                )}
 
               </div>
             </div>
@@ -315,7 +380,7 @@ export function DashboardVisualBottom() {
                 {[14500, 11000, 7500, 4000].map((val, i) => (
                   <div key={i} className="flex items-center w-full relative">
                     <div className="w-full border-t border-dashed border-gray-100"></div>
-                    <span className="absolute right-[-38px] text-[10px] font-[800] text-gray-300">${val.toLocaleString()}</span>
+                    <span className="absolute right-[-38px] text-[10px] font-[800] text-gray-300">${val.toLocaleString('en-US')}</span>
                   </div>
                 ))}
               </div>
@@ -479,7 +544,7 @@ export function DashboardVisualBottom() {
                           <ArrowUpRight className="w-[12px] h-[12px]" strokeWidth={3} /> 3
                         </div>
                         <div className="bg-[#C52150] text-white rounded-full px-2.5 py-[2px] text-[10.5px] font-[900] shadow-sm">
-                          $<AnimatedCounter value={156841} />
+                          $<AnimatedCounter value={user.rev} />
                         </div>
                       </div>
                     </div>
@@ -494,7 +559,7 @@ export function DashboardVisualBottom() {
                         </div>
                         <div className="flex items-baseline gap-2">
                           <span className="text-[26px] font-[900] tracking-tighter text-gray-900">45.3%</span>
-                          <span className="text-[13px] font-[800] text-gray-400">$<AnimatedCounter value={71048} /></span>
+                          <span className="text-[13px] font-[800] text-gray-400">$<AnimatedCounter value={Math.round(user.rev * 0.453)} /></span>
                         </div>
                       </div>
 
@@ -509,7 +574,7 @@ export function DashboardVisualBottom() {
                             </div>
                             <div className="flex items-baseline gap-1">
                               <span className="text-[13px] font-[900] text-gray-900 tracking-tight">28.1%</span>
-                              <span className="text-[9px] font-bold text-gray-400">$44k</span>
+                              <span className="text-[9px] font-bold text-gray-400">${Math.round(user.rev * 0.281 / 1000)}k</span>
                             </div>
                           </div>
                           {/* Google block - hatched right */}
@@ -521,7 +586,7 @@ export function DashboardVisualBottom() {
                             </div>
                             <div className="flex items-baseline gap-1 inline-flex relative z-10 bg-white pr-1">
                               <span className="text-[13px] font-[900] text-gray-900 tracking-tight">14.1%</span>
-                              <span className="text-[9px] font-bold text-gray-400">$22k</span>
+                              <span className="text-[9px] font-bold text-gray-400">${Math.round(user.rev * 0.141 / 1000)}k</span>
                             </div>
                           </div>
                         </div>
@@ -534,8 +599,8 @@ export function DashboardVisualBottom() {
                             <span className="text-[10.5px] font-[900] text-gray-800 ml-1">Other</span>
                           </div>
                           <div className="flex items-baseline gap-1.5">
-                            <span className="text-[12px] font-[900] text-gray-900">7.1%</span>
-                            <span className="text-[10px] font-bold text-gray-400">$11k</span>
+                            <span className="text-[12px] font-[900] text-gray-900">12.5%</span>
+                            <span className="text-[10px] font-bold text-gray-400">${Math.round(user.rev * 0.125 / 1000)}k</span>
                           </div>
                         </div>
                       </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import { BentoCard } from './BentoCard';
 import { DashboardMockData } from '@/lib/mockData';
 import {
@@ -9,9 +9,79 @@ import {
 } from 'lucide-react';
 import { DashboardVisualBottom } from './DashboardBottomGrid';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { useToast } from '@/components/ui/use-toast';
 
-export function DashboardDribbbleClient() {
-  const { hero, heroContributions, topCards } = DashboardMockData;
+import { type User as AppUser } from "@/lib/types";
+
+export function DashboardDribbbleClient({ currentUser, salesContributors = [] }: { currentUser?: AppUser, salesContributors?: any[] }) {
+  const { toast } = useToast();
+
+  const [timeframe, setTimeframe] = useState('Sep 1 — Nov 30, 2023');
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+
+  // Dynamic timeframe scalar (simulates filtering aggregated data)
+  const scalar = timeframe === 'Last 7 Days' ? 0.25 : timeframe === 'Year to Date' ? 4 : 1;
+
+  const totalPointsBurned = Math.round(salesContributors.reduce((acc, c) => acc + (c.revenue || 0), 0) * scalar * 2.5);
+  const totalRevenue = Math.round(salesContributors.reduce((acc, c) => acc + (c.revenue || 0), 0) * scalar);
+  
+  const hero = {
+    totalPointsBurned: totalPointsBurned.toLocaleString('en-US'),
+    growthPercent: '12.5%',
+    diffValue: Math.round(totalRevenue * 0.125).toLocaleString('en-US'),
+    dateRange: timeframe,
+  };
+
+  const bestContributor = salesContributors.length > 0 
+    ? [...salesContributors].sort((a, b) => b.revenue - a.revenue)[0] 
+    : { user: { name: 'None' }, revenue: 0 };
+
+  const topCards = {
+    contributor: {
+      title: 'Top contributor',
+      value: `$${Math.round((bestContributor.revenue || 0) * scalar).toLocaleString('en-US')}`,
+      name: bestContributor.user?.name || 'Unknown',
+      avatar: `https://i.pravatar.cc/150?u=${bestContributor.id}`,
+    },
+    epic: {
+      title: 'Top epic project',
+      points: Math.round(totalPointsBurned * 0.4).toLocaleString('en-US'),
+      epicName: 'Project Phoenix',
+    },
+    kpis: {
+      tasks: { label: 'Tasks', val: Math.round(384 * scalar), diff: '24' },
+      points: { label: 'Points burned', val: totalPointsBurned.toLocaleString('en-US'), diff: Math.round(totalPointsBurned * 0.07).toLocaleString('en-US') },
+      onTimeRate: { label: 'On-time rate', val: '94%', diff: '1.2%' }
+    }
+  };
+
+  const heroContributions = salesContributors.slice(0, 3).map((sc, i) => {
+    const rev = Math.round((sc.revenue || 0) * scalar);
+    return {
+      percentage: Math.round((rev / (totalRevenue * scalar)) * 100) || 33,
+      color: i === 0 ? '#10B981' : i === 1 ? '#3B82F6' : '#F59E0B',
+      avatarUrl: `https://i.pravatar.cc/150?img=${i + 11}`,
+      name: sc.user?.name || 'Unknown',
+      value: rev
+    };
+  });
+
+  const handleDownload = (format: 'PDF' | 'CSV') => {
+    toast({ title: "Downloading", description: `Exporting dashboard data as ${format}...` });
+  };
 
   return (
     <div className="flex flex-col gap-4 animate-fade-in pb-10">
@@ -19,36 +89,54 @@ export function DashboardDribbbleClient() {
       {/* ─── ROW 0: Member Chips + Action Icons ──────────────────────────────── */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          {heroContributions.map((c, i) => (
+          {salesContributors.map((c, i) => (
             <div
-              key={i}
+              key={c.id}
               className="flex items-center gap-1.5 bg-white border border-gray-100 rounded-full pl-1 pr-3 py-1 shadow-sm"
             >
               <Avatar className="w-5 h-5 shrink-0">
-                <AvatarImage src={c.avatar} alt={c.name} />
+                <AvatarImage src={`https://i.pravatar.cc/150?img=${11 + i * 4}`} alt={c.user?.name} />
                 <AvatarFallback
-                  className="text-[9px] font-bold text-white"
-                  style={{ backgroundColor: c.color }}
+                  className="text-[9px] font-bold text-white bg-gray-900"
                 >
-                  {c.name[0]}
+                  {(c.user?.name || 'U')[0]}
                 </AvatarFallback>
               </Avatar>
-              <span className="text-[11px] font-medium text-gray-600">{c.name}</span>
+              <span className="text-[11px] font-medium text-gray-600">{c.user?.name}</span>
             </div>
           ))}
-          <button className="w-7 h-7 rounded-full bg-gray-900 flex items-center justify-center hover:bg-gray-800 transition-colors shadow-sm">
+          <button 
+            onClick={() => setIsAddModalOpen(true)}
+            className="w-7 h-7 rounded-full bg-gray-900 flex items-center justify-center hover:bg-gray-800 transition-colors shadow-sm"
+          >
             <Plus className="w-3.5 h-3.5 text-white" />
           </button>
         </div>
 
         <div className="flex items-center gap-1">
-          <button className="p-2 rounded-xl hover:bg-white hover:shadow-sm text-gray-400 transition-all">
+          <button 
+            onClick={() => toast({ title: "Settings", description: "Opening dashboard widgets panel..." })}
+            className="p-2 rounded-xl hover:bg-white hover:shadow-sm text-gray-400 transition-all"
+          >
             <SlidersHorizontal className="w-4 h-4" />
           </button>
-          <button className="p-2 rounded-xl hover:bg-white hover:shadow-sm text-gray-400 transition-all">
-            <Download className="w-4 h-4" />
-          </button>
-          <button className="p-2 rounded-xl hover:bg-white hover:shadow-sm text-gray-400 transition-all">
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="p-2 rounded-xl hover:bg-white hover:shadow-sm text-gray-400 transition-all">
+                <Download className="w-4 h-4" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => handleDownload('CSV')}>Export as CSV</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleDownload('PDF')}>Export as PDF</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <button 
+            onClick={() => toast({ title: "Share", description: "Social media sharing coming soon!" })}
+            className="p-2 rounded-xl hover:bg-white hover:shadow-sm text-gray-400 transition-all opacity-50 cursor-not-allowed"
+          >
             <Share2 className="w-4 h-4" />
           </button>
         </div>
@@ -57,7 +145,7 @@ export function DashboardDribbbleClient() {
       {/* ─── ROW 1: Title + Timeframe ─────────────────────────────────────────── */}
       <div className="flex items-center justify-between gap-4">
         <h1 className="text-[2rem] md:text-[2.25rem] font-black text-gray-200 tracking-tight leading-none">
-          Good Morning, Azril.
+          Good Morning, {currentUser?.name?.split(' ')[0] || 'User'}.
         </h1>
         <div className="flex items-center gap-2 shrink-0">
           <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-full px-3 py-2 shadow-sm cursor-pointer hover:bg-gray-50 transition-colors">
@@ -66,10 +154,20 @@ export function DashboardDribbbleClient() {
             </div>
             <span className="text-[11px] font-medium text-gray-600">Timeframe</span>
           </div>
-          <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-full px-3 py-2 shadow-sm cursor-pointer hover:bg-gray-50 transition-colors">
-            <span className="text-[11px] font-medium text-gray-600">Sep 1 — Nov 30, 2023</span>
-            <span className="text-[10px] text-gray-400 ml-1 shrink-0">&#8964;</span>
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-full px-3 py-2 shadow-sm cursor-pointer hover:bg-gray-50 transition-colors">
+                <span className="text-[11px] font-medium text-gray-600">{timeframe}</span>
+                <span className="text-[10px] text-gray-400 ml-1 shrink-0">&#8964;</span>
+              </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => setTimeframe('Last 7 Days')}>Last 7 Days</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setTimeframe('Last 30 Days')}>Last 30 Days</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setTimeframe('Year to Date')}>Year to Date</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setTimeframe('Sep 1 — Nov 30, 2023')}>Sep 1 — Nov 30, 2023</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
@@ -196,7 +294,7 @@ export function DashboardDribbbleClient() {
               {/* LEFT: avatar + dollar */}
               <div className="flex items-center gap-2 min-w-0">
                 <Avatar className="w-7 h-7 shrink-0 ring-2 ring-white shadow-sm">
-                  <AvatarImage src={c.avatar} alt={c.name} />
+                  <AvatarImage src={c.avatarUrl} alt={c.name} />
                   <AvatarFallback
                     className="text-[9px] font-bold text-white"
                     style={{ backgroundColor: c.color }}
@@ -205,7 +303,7 @@ export function DashboardDribbbleClient() {
                   </AvatarFallback>
                 </Avatar>
                 <span className="text-sm font-bold text-gray-900 truncate">
-                  ${c.points.toLocaleString()}
+                  ${c.value.toLocaleString('en-US')}
                 </span>
               </div>
 
@@ -226,7 +324,56 @@ export function DashboardDribbbleClient() {
       </div>
 
       {/* ─── EXACT TARGET VISUAL PARITY ──────────────────────────────────── */}
-      <DashboardVisualBottom />
+      <DashboardVisualBottom salesContributors={salesContributors} timeframe={timeframe} />
+
+      {/* Add Member Modal */}
+      <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Add Team Member</DialogTitle>
+            <DialogDescription>
+              Associate an existing user or add a new Contributor/Sales Member to the dashboard.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-4 py-4">
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-medium">Filter by Role</label>
+              <select className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
+                <option value="all">All Roles</option>
+                <option value="owner">Owner</option>
+                <option value="member">Member</option>
+              </select>
+            </div>
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-medium">Select User</label>
+              <select className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
+                <option value="">Select a user...</option>
+                {/* Mocked list for UI representation */}
+                <option value="user1">John Doe (Owner)</option>
+                <option value="user2">Jane Smith (Member)</option>
+                <option value="user3">Mike Johnson (Member)</option>
+              </select>
+            </div>
+          </div>
+          <div className="flex justify-end gap-2">
+            <button 
+              onClick={() => setIsAddModalOpen(false)}
+              className="px-4 py-2 bg-gray-100 text-gray-900 rounded-md hover:bg-gray-200 text-sm font-medium"
+            >
+              Cancel
+            </button>
+            <button 
+              onClick={() => {
+                toast({ title: "Success", description: "Member added successfully!" });
+                setIsAddModalOpen(false);
+              }}
+              className="px-4 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800 text-sm font-medium"
+            >
+              Add Member
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
