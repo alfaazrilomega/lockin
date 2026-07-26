@@ -1,8 +1,29 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react';
-import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
+import type { DropResult } from '@hello-pangea/dnd';
 import { TaskStatus, TaskPriority, type Task } from '@/lib/types';
+
+// Safe client-only dnd components initialization for Next 16 Turbopack SSR
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let DragDropContext: any = () => null;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let Droppable: any = () => null;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let Draggable: any = () => null;
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let TaskDetailSheet: any = () => null;
+
+if (typeof window !== 'undefined') {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const dnd = require('@hello-pangea/dnd');
+  DragDropContext = dnd.DragDropContext;
+  Droppable = dnd.Droppable;
+  Draggable = dnd.Draggable;
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  TaskDetailSheet = require('./TaskDetailSheet').TaskDetailSheet;
+}
 import axios from 'axios';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -10,7 +31,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
 import { AlertTriangle, Clock, User2, LayoutGrid, Plus, X, Loader2, Upload } from 'lucide-react';
-import { TaskDetailSheet } from './TaskDetailSheet';
 import {
   Dialog,
   DialogContent,
@@ -555,7 +575,7 @@ export function KanbanBoard({ initialTasks, projectId, workspaceId }: KanbanBoar
 
                 {/* Droppable list */}
                 <Droppable droppableId={column.id}>
-                  {(provided, snapshot) => (
+                  {(provided: any, snapshot: any) => (
                     <div
                       {...provided.droppableProps}
                       ref={provided.innerRef}
@@ -564,7 +584,7 @@ export function KanbanBoard({ initialTasks, projectId, workspaceId }: KanbanBoar
                       <div className="flex flex-col gap-3 min-h-[120px] flex-1">
                         {columnTasks.map((task, index) => (
                           <Draggable key={task.id} draggableId={task.id} index={index}>
-                            {(provided, snapshot) => (
+                            {(provided: any, snapshot: any) => (
                               <div
                                 ref={provided.innerRef}
                                 {...provided.draggableProps}
@@ -628,7 +648,7 @@ export function KanbanBoard({ initialTasks, projectId, workspaceId }: KanbanBoar
       <TaskDetailSheet
         task={selectedTask}
         isOpen={isSheetOpen}
-        onOpenChange={(open) => {
+        onOpenChange={(open: boolean) => {
           setIsSheetOpen(open);
           if (!open) setTimeout(() => setSelectedTask(null), 300);
         }}

@@ -4,7 +4,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Plus, Briefcase, Users, ArrowRight, LayoutDashboard } from 'lucide-react';
 import Link from 'next/link';
-import { KanbanBoard } from '@/components/kanban/KanbanBoard';
+import { KanbanBoardWrapper } from '@/components/kanban/KanbanBoardWrapper';
+
+
+export const dynamic = 'force-dynamic';
 
 export const metadata = {
   title: 'Workspaces | LockIn',
@@ -125,7 +128,7 @@ export default async function WorkspacesPage() {
           </p>
         </div>
         {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-        <KanbanBoard initialTasks={globalTasks as any} workspaceId="global" />
+        <KanbanBoardWrapper initialTasks={globalTasks as any} workspaceId="global" />
       </div>
 
     </div>

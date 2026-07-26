@@ -1,13 +1,17 @@
 "use client";
 
-import React, { useState } from 'react';
-import { BentoCard } from './BentoCard';
-import { DashboardMockData } from '@/lib/mockData';
+import React, { useState, useEffect, useRef } from 'react';
+import dynamic from 'next/dynamic';
+
+const DashboardVisualBottom = dynamic(
+  () => import('./DashboardBottomGrid').then((mod) => mod.DashboardVisualBottom),
+  { ssr: false }
+);
 import {
-  ArrowUp, ArrowDown, MoreHorizontal, Plus,
-  SlidersHorizontal, Download, Share2, Star, ChevronDown
+  ArrowUp, ArrowDown, Plus, SlidersHorizontal,
+  Download, Share2, ChevronDown, TrendingUp,
+  Users, CheckSquare, Clock, Zap
 } from 'lucide-react';
-import { DashboardVisualBottom } from './DashboardBottomGrid';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
@@ -23,329 +27,526 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useToast } from '@/components/ui/use-toast';
-
 import { type User as AppUser } from "@/lib/types";
 
-export function DashboardDribbbleClient({ currentUser, salesContributors = [] }: { currentUser?: AppUser, salesContributors?: any[] }) {
-  const { toast } = useToast();
+export interface SalesContributor {
+  id: string | number;
+  revenue?: number;
+  role?: string;
+  user?: {
+    name?: string;
+  };
+}
 
+// ── Animated Number Counter ──────────────────────────────────────────────────
+export function AnimatedNumber({
+  value,
+  prefix = "",
+  suffix = "",
+  duration = 1000
+}: {
+  value: number;
+  prefix?: string;
+  suffix?: string;
+  duration?: number;
+}) {
+  const [displayValue, setDisplayValue] = useState(0);
+
+  useEffect(() => {
+    let startTimestamp: number | null = null;
+    let animationFrameId: number;
+
+    const step = (timestamp: number) => {
+      if (!startTimestamp) startTimestamp = timestamp;
+      const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+      // Easing: easeOutQuad
+      const easedProgress = progress * (2 - progress);
+      setDisplayValue(Math.floor(easedProgress * value));
+
+      if (progress < 1) {
+        animationFrameId = window.requestAnimationFrame(step);
+      }
+    };
+
+    animationFrameId = window.requestAnimationFrame(step);
+
+    return () => {
+      if (animationFrameId) {
+        window.cancelAnimationFrame(animationFrameId);
+      }
+    };
+  }, [value, duration]);
+
+  return <span>{prefix}{displayValue.toLocaleString()}{suffix}</span>;
+}
+
+// ── Greeting helper ──────────────────────────────────────────────────────────
+function getGreeting() {
+  const h = new Date().getHours();
+  if (h < 12) return 'Good morning';
+  if (h < 17) return 'Good afternoon';
+  return 'Good evening';
+}
+
+// ── KPI Card ─────────────────────────────────────────────────────────────────
+interface KpiCardProps {
+  icon: React.ReactNode;
+  label: string;
+  value: React.ReactNode;
+  delta: string;
+  deltaPositive: boolean;
+  accent?: boolean;
+}
+
+function KpiCard({ icon, label, value, delta, deltaPositive, accent }: KpiCardProps) {
+  return (
+    <div
+      className={`
+        relative flex flex-col gap-3 p-6 rounded-3xl border transition-all duration-300
+        hover:-translate-y-1 hover:shadow-lg cursor-default group
+        ${accent
+          ? 'bg-[#FF4B72] border-[#FF4B72] text-white shadow-[0_8px_30px_rgba(255,75,114,0.3)]'
+          : 'bg-white border-[#E9E9E7] text-[#37352F] shadow-[0_4px_20px_rgba(0,0,0,0.03)]'
+        }
+      `}
+    >
+      {/* Icon + label row */}
+      <div className="flex items-center justify-between">
+        <div className={`w-10 h-10 rounded-2xl flex items-center justify-center
+          ${accent ? 'bg-white/20 text-white' : 'bg-[#F7F7F5] text-[#787774]'}`}>
+          {icon}
+        </div>
+        <span className={`text-[11px] font-bold uppercase tracking-[0.08em]
+          ${accent ? 'text-white/80' : 'text-[#787774]'}`}>
+          {label}
+        </span>
+      </div>
+
+      {/* Value */}
+      <div className={`text-4xl font-black tracking-tight leading-none font-outfit mt-2
+        ${accent ? 'text-white' : 'text-[#111111]'}`}>
+        {value}
+      </div>
+
+      {/* Delta */}
+      <div className={`flex items-center gap-1.5 text-sm font-semibold mt-1
+        ${accent 
+          ? 'text-white' 
+          : deltaPositive ? 'text-emerald-500' : 'text-[#FF4B72]'
+        }`}>
+        {deltaPositive
+          ? <ArrowUp className="w-4 h-4" strokeWidth={3} />
+          : <ArrowDown className="w-4 h-4" strokeWidth={3} />
+        }
+        {delta}
+      </div>
+    </div>
+  );
+}
+
+// ── Preloader Completion Hook ────────────────────────────────────────────────
+export function usePreloaderFinished() {
+  const [finished, setFinished] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const win = window as Window & { __preloaderDone?: boolean };
+    if (win.__preloaderDone) {
+      queueMicrotask(() => setFinished(true));
+      return;
+    }
+
+    const handlePreloaderDone = () => {
+      setFinished(true);
+    };
+
+    window.addEventListener('preloaderDone', handlePreloaderDone);
+
+    const fallbackTimer = setTimeout(() => {
+      setFinished(true);
+    }, 6000);
+
+    return () => {
+      window.removeEventListener('preloaderDone', handlePreloaderDone);
+      clearTimeout(fallbackTimer);
+    };
+  }, []);
+
+  return finished;
+}
+
+// ── Entrance Animation Hook ──────────────────────────────────────────────────
+export function useEntranceAnimation(ref: React.RefObject<HTMLElement | null>, preloaderFinished: boolean) {
+  const [hasAnimated, setHasAnimated] = useState(false);
+
+  useEffect(() => {
+    if (hasAnimated || !preloaderFinished || !ref.current) return;
+
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        setHasAnimated(true);
+        observer.disconnect();
+      }
+    }, {
+      threshold: 0.1,
+      rootMargin: '0px 0px -45px 0px'
+    });
+
+    observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, [ref, preloaderFinished, hasAnimated]);
+
+  return hasAnimated;
+}
+
+// ── Main Component ────────────────────────────────────────────────────────────
+export function DashboardDribbbleClient({
+  currentUser,
+  salesContributors = []
+}: {
+  currentUser?: AppUser;
+  salesContributors?: SalesContributor[];
+}) {
+  const { toast } = useToast();
   const [timeframe, setTimeframe] = useState('Sep 1 — Nov 30, 2023');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const preloaderFinished = usePreloaderFinished();
 
-  // Dynamic timeframe scalar (simulates filtering aggregated data)
-  const scalar = timeframe === 'Last 7 Days' ? 0.25 : timeframe === 'Year to Date' ? 4 : 1;
+  const kpiRef = useRef<HTMLDivElement>(null);
+  const distributionRef = useRef<HTMLDivElement>(null);
 
-  const totalPointsBurned = Math.round(salesContributors.reduce((acc, c) => acc + (c.revenue || 0), 0) * scalar * 2.5);
-  const totalRevenue = Math.round(salesContributors.reduce((acc, c) => acc + (c.revenue || 0), 0) * scalar);
-  
-  const hero = {
-    totalPointsBurned: totalPointsBurned.toLocaleString('en-US'),
-    growthPercent: '12.5%',
-    diffValue: Math.round(totalRevenue * 0.125).toLocaleString('en-US'),
-    dateRange: timeframe,
-  };
+  const kpiAnimated = useEntranceAnimation(kpiRef, preloaderFinished);
+  const distributionAnimated = useEntranceAnimation(distributionRef, preloaderFinished);
 
-  const bestContributor = salesContributors.length > 0 
-    ? [...salesContributors].sort((a, b) => b.revenue - a.revenue)[0] 
-    : { user: { name: 'None' }, revenue: 0 };
+  // Scalar based on timeframe selection
+  const scalar =
+    timeframe === 'Last 7 Days' ? 0.25
+    : timeframe === 'Year to Date' ? 4
+    : 1;
 
-  const topCards = {
-    contributor: {
-      title: 'Top contributor',
-      value: `$${Math.round((bestContributor.revenue || 0) * scalar).toLocaleString('en-US')}`,
-      name: bestContributor.user?.name || 'Unknown',
-      avatar: `https://i.pravatar.cc/150?u=${bestContributor.id}`,
-    },
-    epic: {
-      title: 'Top epic project',
-      points: Math.round(totalPointsBurned * 0.4).toLocaleString('en-US'),
-      epicName: 'Project Phoenix',
-    },
-    kpis: {
-      tasks: { label: 'Tasks', val: Math.round(384 * scalar), diff: '24' },
-      points: { label: 'Points burned', val: totalPointsBurned.toLocaleString('en-US'), diff: Math.round(totalPointsBurned * 0.07).toLocaleString('en-US') },
-      onTimeRate: { label: 'On-time rate', val: '94%', diff: '1.2%' }
-    }
-  };
+  // Derived metrics
+  const totalRevenue = Math.round(
+    salesContributors.reduce((acc, c) => acc + (c.revenue || 0), 0) * scalar
+  );
+  const totalPointsBurned = Math.round(totalRevenue * 2.5);
+  const totalTasks = Math.round(384 * scalar);
+  const onTimeRate = 94;
 
-  const heroContributions = salesContributors.slice(0, 3).map((sc, i) => {
-    const rev = Math.round((sc.revenue || 0) * scalar);
-    return {
-      percentage: Math.round((rev / (totalRevenue * scalar)) * 100) || 33,
-      color: i === 0 ? '#10B981' : i === 1 ? '#3B82F6' : '#F59E0B',
-      avatarUrl: `https://i.pravatar.cc/150?img=${i + 11}`,
-      name: sc.user?.name || 'Unknown',
-      value: rev
-    };
-  });
+  const firstName = currentUser?.name?.split(' ')[0] || 'User';
 
   const handleDownload = (format: 'PDF' | 'CSV') => {
-    toast({ title: "Downloading", description: `Exporting dashboard data as ${format}...` });
+    toast({ title: 'Downloading', description: `Exporting as ${format}…` });
   };
 
   return (
-    <div className="flex flex-col gap-4 animate-fade-in pb-10">
+    <div className="flex flex-col gap-8 pb-16 animate-fade-in font-satoshi">
 
-      {/* ─── ROW 0: Header & Actions ──────────────────────────────── */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mt-2">
+      {/* ── ROW 0: Top bar ─────────────────────────────────────────────────── */}
+      <div className="flex items-center justify-between gap-4 pt-2">
+        {/* Team avatars + add */}
         <div className="flex items-center gap-3">
-          <div className="flex items-center -space-x-2">
+          <div className="flex items-center -space-x-3">
             {salesContributors.slice(0, 5).map((c, i) => (
-              <Avatar key={c.id} className="w-8 h-8 shrink-0 ring-2 ring-[#FAFAFA] shadow-sm hover:scale-110 transition-transform cursor-pointer">
-                <AvatarImage src={`https://i.pravatar.cc/150?img=${11 + i * 4}`} alt={c.user?.name} />
-                <AvatarFallback className="text-[10px] font-bold text-white bg-gray-900">
+              <Avatar
+                key={c.id}
+                className="w-10 h-10 ring-4 ring-[#F7F7F5] shrink-0 hover:scale-110 transition-transform cursor-pointer shadow-sm"
+              >
+                <AvatarImage
+                  src={`https://i.pravatar.cc/150?img=${11 + i * 4}`}
+                  alt={c.user?.name}
+                />
+                <AvatarFallback className="text-[10px] font-bold text-[#37352F] bg-white border border-[#E9E9E7]">
                   {(c.user?.name || 'U')[0]}
                 </AvatarFallback>
               </Avatar>
             ))}
           </div>
-          <button 
+          <button
             onClick={() => setIsAddModalOpen(true)}
-            className="w-8 h-8 rounded-full bg-white flex items-center justify-center hover:bg-gray-50 transition-colors shadow-sm text-gray-400 hover:text-gray-900 border border-transparent hover:border-gray-200"
+            className="w-10 h-10 rounded-full bg-white border border-[#E9E9E7] flex items-center justify-center
+              hover:bg-[#F7F7F5] hover:border-[#D4D4D4] transition-all text-[#787774] hover:text-[#37352F] shadow-sm"
+            aria-label="Add team member"
           >
             <Plus className="w-4 h-4" />
           </button>
         </div>
 
-        <div className="flex items-center gap-2 bg-white/50 backdrop-blur-md p-1.5 rounded-2xl shadow-sm border border-black/5">
-          <button 
-            onClick={() => toast({ title: "Settings", description: "Opening dashboard widgets panel..." })}
-            className="p-2.5 rounded-xl hover:bg-white hover:shadow-sm text-gray-500 hover:text-gray-900 transition-all"
+        {/* Action buttons */}
+        <div className="flex items-center gap-1 p-1.5 rounded-2xl bg-white border border-[#E9E9E7] shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+          <button
+            onClick={() => toast({ title: 'Settings', description: 'Opening widget panel…' })}
+            className="p-2.5 rounded-xl text-[#787774] hover:text-[#37352F] hover:bg-[#F7F7F5] transition-all"
+            aria-label="Settings"
           >
             <SlidersHorizontal className="w-4 h-4" />
           </button>
-          <div className="w-px h-4 bg-gray-200 mx-1" />
+
+          <div className="w-px h-5 bg-[#E9E9E7]" />
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="p-2.5 rounded-xl hover:bg-white hover:shadow-sm text-gray-500 hover:text-gray-900 transition-all">
+              <button
+                className="p-2.5 rounded-xl text-[#787774] hover:text-[#37352F] hover:bg-[#F7F7F5] transition-all"
+                aria-label="Download"
+              >
                 <Download className="w-4 h-4" />
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="rounded-xl shadow-lg border-gray-100">
-              <DropdownMenuItem className="cursor-pointer" onClick={() => handleDownload('CSV')}>Export as CSV</DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer" onClick={() => handleDownload('PDF')}>Export as PDF</DropdownMenuItem>
+            <DropdownMenuContent
+              align="end"
+              className="rounded-xl bg-white border-[#E9E9E7] text-[#37352F] shadow-xl p-1"
+            >
+              <DropdownMenuItem
+                className="cursor-pointer hover:bg-[#F7F7F5] focus:bg-[#F7F7F5] rounded-lg font-medium"
+                onClick={() => handleDownload('CSV')}
+              >
+                Export as CSV
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="cursor-pointer hover:bg-[#F7F7F5] focus:bg-[#F7F7F5] rounded-lg font-medium"
+                onClick={() => handleDownload('PDF')}
+              >
+                Export as PDF
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <div className="w-px h-4 bg-gray-200 mx-1" />
-          <button 
-            onClick={() => toast({ title: "Share", description: "Social media sharing coming soon!" })}
-            className="p-2.5 rounded-xl hover:bg-white hover:shadow-sm text-gray-500 hover:text-gray-900 transition-all"
+
+          <div className="w-px h-5 bg-[#E9E9E7]" />
+
+          <button
+            onClick={() => toast({ title: 'Share', description: 'Social sharing coming soon!' })}
+            className="p-2.5 rounded-xl text-[#787774] hover:text-[#37352F] hover:bg-[#F7F7F5] transition-all"
+            aria-label="Share"
           >
             <Share2 className="w-4 h-4" />
           </button>
         </div>
       </div>
 
-      {/* ─── ROW 1: Hero Greeting & Timeframe ─────────────────────────────────────────── */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mt-8 mb-4">
-        <div className="flex flex-col gap-2">
-          <h1 className="text-4xl md:text-5xl lg:text-[3.5rem] font-black text-gray-900 tracking-tight leading-none">
-            Good Morning, <br className="hidden md:block"/> {currentUser?.name?.split(' ')[0] || 'User'}.
+      {/* ── ROW 1: Greeting + Timeframe ────────────────────────────────────── */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div>
+          <p className="text-base font-semibold text-[#787774] mb-2 tracking-wide uppercase">
+            {getGreeting()}
+          </p>
+          <h1 className="text-[3rem] md:text-[4rem] lg:text-[4.5rem] font-black text-[#111111]
+            tracking-tight leading-none font-outfit">
+            {firstName}<span className="text-[#FF4B72]">.</span>
           </h1>
-          <p className="text-gray-500 font-medium text-lg mt-2">Here is what's happening with your projects today.</p>
-        </div>
-        <div className="flex items-center gap-3 shrink-0 bg-white p-1.5 rounded-full shadow-sm border border-black/5">
-          <div className="flex items-center gap-2 bg-gray-50 rounded-full px-4 py-2 cursor-pointer hover:bg-gray-100 transition-colors">
-            <div className="w-8 h-4 bg-gray-900 rounded-full relative flex items-center shrink-0">
-              <div className="absolute right-0.5 w-3 h-3 bg-white rounded-full shadow-sm" />
-            </div>
-            <span className="text-xs font-bold text-gray-600">Timeframe</span>
-          </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <div className="flex items-center gap-2 px-4 py-2 cursor-pointer hover:bg-gray-50 rounded-full transition-colors">
-                <span className="text-sm font-bold text-gray-800">{timeframe}</span>
-                <ChevronDown className="w-4 h-4 text-gray-400" />
-              </div>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="rounded-xl shadow-xl border-gray-100">
-              <DropdownMenuItem className="font-medium cursor-pointer" onClick={() => setTimeframe('Last 7 Days')}>Last 7 Days</DropdownMenuItem>
-              <DropdownMenuItem className="font-medium cursor-pointer" onClick={() => setTimeframe('Last 30 Days')}>Last 30 Days</DropdownMenuItem>
-              <DropdownMenuItem className="font-medium cursor-pointer" onClick={() => setTimeframe('Year to Date')}>Year to Date</DropdownMenuItem>
-              <DropdownMenuItem className="font-medium cursor-pointer" onClick={() => setTimeframe('Sep 1 — Nov 30, 2023')}>Sep 1 — Nov 30, 2023</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </div>
-
-      {/* ─── ROW 2: Mega KPI & Grid Metrics ───────────────────── */}
-      <div className="flex flex-col xl:flex-row items-stretch gap-6 w-full mt-4">
-
-        {/* LEFT: Hero metric block (More spacious, elevated) */}
-        <div className="flex flex-col justify-center xl:w-[400px] bg-white rounded-[2rem] p-8 md:p-10 shadow-[0_8px_30px_rgba(0,0,0,0.04)] border border-gray-50 shrink-0 relative overflow-hidden group">
-          <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-bl from-[#FF4B72]/10 to-transparent rounded-bl-full pointer-events-none opacity-50 group-hover:opacity-100 transition-opacity duration-700" />
-          
-          <span className="text-sm text-gray-500 font-bold tracking-wider uppercase mb-2">Total Points Burned</span>
-          
-          <span className="text-[4rem] lg:text-[5rem] font-black tracking-tighter text-gray-900 leading-[1.1] tabular-nums mb-6">
-            {hero.totalPointsBurned}
-          </span>
-          
-          <div className="flex items-center gap-3 mt-auto">
-            <span className="inline-flex items-center gap-1 text-sm font-bold bg-[#FF4B72] text-white px-3 py-1.5 rounded-full shadow-[0_4px_14px_rgba(255,75,114,0.4)]">
-              <ArrowUp className="w-3.5 h-3.5" strokeWidth={3} /> {hero.growthPercent}
-            </span>
-            <span className="inline-flex items-center text-sm font-bold border border-[#FF4B72]/30 text-[#FF4B72] px-3 py-1.5 rounded-full bg-[#FF4B72]/5">
-              ${hero.diffValue}
-            </span>
-          </div>
+          <p className="text-lg text-[#787774] mt-3 font-medium max-w-lg leading-relaxed">
+            Here&apos;s what&apos;s happening with your projects today. You&apos;re on track to hit your targets for this month.
+          </p>
         </div>
 
-        {/* RIGHT: 5-card grid (CSS Grid instead of crowded flex row) */}
-        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4 flex-1">
-
-          {/* Card 1: Top Contributor */}
-          <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-gray-50 flex flex-col hover:shadow-md transition-shadow duration-300">
-            <span className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-4">{topCards.contributor.title}</span>
-            <span className="text-2xl lg:text-3xl font-black text-gray-900 leading-none mb-6">{topCards.contributor.value}</span>
-            <div className="flex items-center gap-2 mt-auto bg-gray-50/50 p-2 rounded-xl">
-              <Avatar className="w-6 h-6 shrink-0 ring-2 ring-white">
-                <AvatarImage src={topCards.contributor.avatar} />
-                <AvatarFallback className="text-[8px] font-bold bg-[#FF4B72] text-white">{topCards.contributor.name[0]}</AvatarFallback>
-              </Avatar>
-              <span className="text-xs font-bold text-gray-700 truncate">{topCards.contributor.name}</span>
-            </div>
-          </div>
-
-          {/* Card 2: Top Epic — Dark & Premium */}
-          <div className="bg-gray-950 rounded-[2rem] p-6 flex flex-col relative overflow-hidden shadow-[0_12px_40px_rgba(0,0,0,0.15)] group hover:-translate-y-1 transition-transform duration-300">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-[#FF4B72]/20 blur-[40px] rounded-full pointer-events-none group-hover:bg-[#FF4B72]/30 transition-colors" />
-            <div className="flex items-center justify-between relative z-10 mb-4">
-              <span className="text-xs text-gray-400 font-bold uppercase tracking-wider">{topCards.epic.title}</span>
-              <Star className="w-4 h-4 text-gray-400" />
-            </div>
-            <span className="text-2xl lg:text-3xl font-black text-white leading-none relative z-10 mb-6">{topCards.epic.points}</span>
-            <div className="flex items-center justify-between mt-auto relative z-10 bg-white/5 p-2 rounded-xl backdrop-blur-sm">
-              <span className="text-xs font-bold text-gray-300 truncate">{topCards.epic.epicName}</span>
-              <div className="w-6 h-6 bg-white/10 rounded-full flex items-center justify-center shrink-0 hover:bg-white/20 transition-colors cursor-pointer">
-                <ArrowUp className="w-3.5 h-3.5 text-white rotate-45" />
-              </div>
-            </div>
-          </div>
-
-          {/* Card 3: Tasks */}
-          <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-gray-50 flex flex-col hover:shadow-md transition-shadow duration-300">
-            <span className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-4">{topCards.kpis.tasks.label}</span>
-            <span className="text-2xl lg:text-3xl font-black text-gray-900 leading-none mb-6">{topCards.kpis.tasks.val}</span>
-            <div className="flex items-center gap-1.5 mt-auto">
-              <ArrowDown className="w-4 h-4 text-gray-400" strokeWidth={3} />
-              <span className="text-sm font-bold text-gray-500">{topCards.kpis.tasks.diff}</span>
-              <span className="text-xs text-gray-400 font-medium ml-1">• 7.9%</span>
-            </div>
-          </div>
-
-          {/* Card 4: Points */}
-          <div className="bg-[#FF4B72]/5 border border-[#FF4B72]/20 rounded-[2rem] p-6 shadow-sm flex flex-col hover:bg-[#FF4B72]/10 transition-colors duration-300">
-            <span className="text-xs text-[#FF4B72]/70 font-bold uppercase tracking-wider mb-4">{topCards.kpis.points.label}</span>
-            <span className="text-2xl lg:text-3xl font-black text-[#FF4B72] leading-none mb-6">{topCards.kpis.points.val}</span>
-            <div className="flex items-center gap-1.5 mt-auto">
-              <ArrowUp className="w-4 h-4 text-[#FF4B72]" strokeWidth={3} />
-              <span className="text-sm font-bold text-[#FF4B72]">{topCards.kpis.points.diff}</span>
-            </div>
-          </div>
-
-          {/* Card 5: On-time Rate */}
-          <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-gray-50 flex flex-col hover:shadow-md transition-shadow duration-300">
-            <span className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-4">{topCards.kpis.onTimeRate.label}</span>
-            <span className="text-2xl lg:text-3xl font-black text-gray-900 leading-none mb-6">{topCards.kpis.onTimeRate.val}</span>
-            <div className="flex items-center gap-1.5 mt-auto bg-emerald-50 text-emerald-600 px-3 py-1.5 rounded-full w-max">
-              <ArrowUp className="w-3.5 h-3.5" strokeWidth={3} />
-              <span className="text-xs font-bold">{topCards.kpis.onTimeRate.diff}</span>
-            </div>
-          </div>
-
-        </div>
-      </div>
-
-      {/* ─── ROW 3: Proportional Contributor Bar ─────────────────────────────── */}
-      <div className="bg-white rounded-3xl p-6 shadow-[0_8px_30px_rgba(0,0,0,0.04)] mt-6 border border-gray-50 flex flex-col gap-6">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-black text-gray-900 tracking-tight">Contributor Distribution</h2>
-          <button className="text-sm font-bold text-gray-500 hover:text-gray-900 transition-colors">View Report →</button>
-        </div>
-
-        <div className="flex flex-col gap-4 w-full">
-          {/* Rounded segmented bar */}
-          <div className="flex w-full h-3 rounded-full overflow-hidden bg-gray-100">
-            {heroContributions.map((c, i) => (
-              <div key={i} className="hover:opacity-80 transition-opacity cursor-pointer" style={{ width: `${c.percentage}%`, backgroundColor: c.color }} />
-            ))}
-          </div>
-
-          {/* Legends row */}
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 w-full">
-            {heroContributions.map((c, i) => (
-              <div
-                key={i}
-                className="flex items-center gap-3 p-3 rounded-2xl hover:bg-gray-50 transition-colors cursor-pointer border border-transparent hover:border-gray-100"
+        {/* Timeframe selector */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="flex items-center gap-3 px-5 py-3.5 rounded-2xl
+              bg-white border border-[#E9E9E7] text-[#37352F] hover:border-[#D4D4D4] hover:shadow-md
+              transition-all text-sm font-bold shrink-0 shadow-[0_4px_12px_rgba(0,0,0,0.02)]">
+              <div className="w-2.5 h-2.5 rounded-full bg-[#FF4B72]" />
+              {timeframe}
+              <ChevronDown className="w-4 h-4 text-[#787774]" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            align="end"
+            className="rounded-2xl bg-white border-[#E9E9E7] text-[#37352F] min-w-[220px] shadow-xl p-2"
+          >
+            {['Last 7 Days', 'Last 30 Days', 'Year to Date', 'Sep 1 — Nov 30, 2023'].map(t => (
+              <DropdownMenuItem
+                key={t}
+                className={`cursor-pointer hover:bg-[#F7F7F5] focus:bg-[#F7F7F5] rounded-xl font-semibold py-2.5 px-3
+                  ${timeframe === t ? 'text-[#FF4B72] bg-red-50/50' : 'text-[#37352F]'}`}
+                onClick={() => setTimeframe(t)}
               >
-                <div className="relative">
-                  <Avatar className="w-10 h-10 ring-2 ring-white shadow-sm">
-                    <AvatarImage src={c.avatarUrl} alt={c.name} />
-                    <AvatarFallback className="text-xs font-bold text-white" style={{ backgroundColor: c.color }}>
-                      {c.name[0]}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-white" style={{ backgroundColor: c.color }} />
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-sm font-bold text-gray-900">{c.name}</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-gray-500">${c.value.toLocaleString('en-US')}</span>
-                    <span className="text-[10px] font-black" style={{ color: c.color }}>{c.percentage}%</span>
+                {t}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      {/* ── ROW 2: KPI Bento Grid ───────────────────────────────────────────── */}
+      <div 
+        ref={kpiRef}
+        className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 transition-all duration-1000 ease-[cubic-bezier(0.16,1,0.3,1)]"
+        style={{
+          transform: kpiAnimated ? 'translateY(0)' : 'translateY(24px)',
+          opacity: kpiAnimated ? 1 : 0
+        }}
+      >
+        <KpiCard
+          icon={<Zap className="w-5 h-5" />}
+          label="Points Burned"
+          value={kpiAnimated ? <AnimatedNumber value={totalPointsBurned} /> : '0'}
+          delta={`${Math.round(totalPointsBurned * 0.125).toLocaleString('en-US')} this period`}
+          deltaPositive={true}
+          accent={true}
+        />
+        <KpiCard
+          icon={<TrendingUp className="w-5 h-5" />}
+          label="Total Revenue"
+          value={kpiAnimated ? <AnimatedNumber value={totalRevenue} prefix="$" /> : '$0'}
+          delta="12.5% vs last period"
+          deltaPositive={true}
+        />
+        <KpiCard
+          icon={<CheckSquare className="w-5 h-5" />}
+          label="Tasks Completed"
+          value={kpiAnimated ? <AnimatedNumber value={totalTasks} /> : '0'}
+          delta="24 overdue (-7.9%)"
+          deltaPositive={false}
+        />
+        <KpiCard
+          icon={<Clock className="w-5 h-5" />}
+          label="On-time Rate"
+          value={kpiAnimated ? <AnimatedNumber value={onTimeRate} suffix="%" /> : '0%'}
+          delta="1.2% improvement"
+          deltaPositive={true}
+        />
+      </div>
+
+      {/* ── ROW 3: Contributor Distribution ───────────────────────────────── */}
+      {salesContributors.length > 0 && (
+        <div 
+          ref={distributionRef}
+          className="bg-white rounded-3xl border border-[#E9E9E7] p-8 shadow-[0_4px_24px_rgba(0,0,0,0.02)] transition-all hover:shadow-[0_8px_30px_rgba(0,0,0,0.04)] duration-1000 ease-[cubic-bezier(0.16,1,0.3,1)]"
+          style={{
+            transform: distributionAnimated ? 'translateY(0)' : 'translateY(24px)',
+            opacity: distributionAnimated ? 1 : 0
+          }}
+        >
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 bg-[#F7F7F5] rounded-xl text-[#787774]">
+                <Users className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-[#111111]">Contributor Distribution</h2>
+                <p className="text-sm font-medium text-[#787774]">Revenue split among team members</p>
+              </div>
+            </div>
+            <button className="text-sm font-bold text-[#FF4B72] hover:text-[#D41E45]
+              transition-colors flex items-center gap-1 bg-[#FF4B72]/10 px-4 py-2 rounded-xl">
+              View Full Report
+            </button>
+          </div>
+
+          {/* Thick segmented bar for better visibility + hover tooltip */}
+          <div className="flex w-full h-4 rounded-full overflow-hidden bg-[#F7F7F5] mb-6">
+            {salesContributors.slice(0, 3).map((c, i) => {
+              const rev = Math.round((c.revenue || 0) * scalar);
+              const pct = Math.round((rev / (totalRevenue || 1)) * 100);
+              const colors = ['#FF4B72', '#111111', '#2383E2'];
+              return (
+                <div
+                  key={c.id}
+                  className="relative group transition-all duration-[1200ms] ease-[cubic-bezier(0.16,1,0.3,1)] hover:opacity-90 cursor-help"
+                  style={{ width: distributionAnimated ? `${pct}%` : '0%', backgroundColor: colors[i] }}
+                >
+                  {/* Tooltip */}
+                  <div className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 pointer-events-none opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-1 group-hover:-translate-y-1 bg-[#111111] text-white text-[11px] font-bold px-3 py-2 rounded-xl shadow-xl z-20 flex flex-col items-center gap-0.5">
+                    <span className="text-white/60 uppercase tracking-widest text-[9px] whitespace-nowrap">{c.user?.name || 'Unknown'}</span>
+                    <span className="font-outfit font-black text-sm whitespace-nowrap">{pct}% (${rev.toLocaleString()})</span>
+                    <div className="w-2 h-2 bg-[#111111] rotate-45 absolute -bottom-1 left-1/2 -translate-x-1/2" />
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
+          </div>
+
+          {/* Contributor pills with staggered animations */}
+          <div className="flex flex-wrap gap-4">
+            {salesContributors.slice(0, 3).map((c, i) => {
+              const rev = Math.round((c.revenue || 0) * scalar);
+              const pct = Math.round((rev / (totalRevenue || 1)) * 100);
+              const colors = ['#FF4B72', '#111111', '#2383E2'];
+              return (
+                <div
+                  key={c.id}
+                  className="flex items-center gap-3 px-4 py-2.5 rounded-2xl bg-white border border-[#E9E9E7] hover:border-[#D4D4D4] hover:shadow-md transition-all cursor-default duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]"
+                  style={{
+                    transform: distributionAnimated ? 'translateY(0)' : 'translateY(16px)',
+                    opacity: distributionAnimated ? 1 : 0,
+                    transitionDelay: `${i * 100}ms`
+                  }}
+                >
+                  <div
+                    className="w-3 h-3 rounded-full shrink-0 shadow-sm"
+                    style={{ backgroundColor: colors[i] }}
+                  />
+                  <Avatar className="w-7 h-7">
+                    <AvatarImage src={`https://i.pravatar.cc/150?img=${11 + i * 4}`} />
+                    <AvatarFallback className="text-[10px] font-bold text-[#37352F] bg-[#F7F7F5]">
+                      {(c.user?.name || 'U')[0]}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="text-sm font-bold text-[#37352F]">
+                    {c.user?.name?.split(' ')[0] || 'User'}
+                  </span>
+                  <div className="w-px h-4 bg-[#E9E9E7] mx-1" />
+                  <span className="text-sm font-black text-[#111111] font-outfit">
+                    {distributionAnimated ? <AnimatedNumber value={pct} suffix="%" /> : '0%'}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </div>
-      </div>
+      )}
 
-      {/* ─── EXACT TARGET VISUAL PARITY ──────────────────────────────────── */}
-      <DashboardVisualBottom salesContributors={salesContributors} timeframe={timeframe} />
+      {/* ── ROW 4: Bottom Analytics Grid ──────────────────────────────────── */}
+      <DashboardVisualBottom
+        salesContributors={salesContributors}
+        timeframe={timeframe}
+      />
 
-      {/* Add Member Modal */}
+      {/* ── Add Member Modal ───────────────────────────────────────────────── */}
       <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[400px] bg-white border-[#E9E9E7] text-[#37352F] rounded-3xl p-6">
           <DialogHeader>
-            <DialogTitle>Add Team Member</DialogTitle>
-            <DialogDescription>
-              Associate an existing user or add a new Contributor/Sales Member to the dashboard.
+            <DialogTitle className="text-xl font-black text-[#111111] font-outfit">Add Team Member</DialogTitle>
+            <DialogDescription className="text-[#787774] font-medium">
+              Associate an existing user to the dashboard.
             </DialogDescription>
           </DialogHeader>
-          <div className="flex flex-col gap-4 py-4">
+          <div className="flex flex-col gap-5 py-4">
             <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium">Filter by Role</label>
-              <select className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
+              <label className="text-sm font-bold text-[#37352F]">Filter by Role</label>
+              <select className="h-12 w-full rounded-2xl border border-[#E9E9E7] bg-white
+                text-[#37352F] px-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF4B72]/50 font-medium transition-shadow">
                 <option value="all">All Roles</option>
                 <option value="owner">Owner</option>
                 <option value="member">Member</option>
               </select>
             </div>
             <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium">Select User</label>
-              <select className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
-                <option value="">Select a user...</option>
-                {/* Mocked list for UI representation */}
+              <label className="text-sm font-bold text-[#37352F]">Select User</label>
+              <select className="h-12 w-full rounded-2xl border border-[#E9E9E7] bg-white
+                text-[#37352F] px-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF4B72]/50 font-medium transition-shadow">
+                <option value="">Select a user…</option>
                 <option value="user1">John Doe (Owner)</option>
                 <option value="user2">Jane Smith (Member)</option>
-                <option value="user3">Mike Johnson (Member)</option>
               </select>
             </div>
           </div>
-          <div className="flex justify-end gap-2">
-            <button 
+          <div className="flex justify-end gap-3 mt-2">
+            <button
               onClick={() => setIsAddModalOpen(false)}
-              className="px-4 py-2 bg-gray-100 text-gray-900 rounded-md hover:bg-gray-200 text-sm font-medium"
+              className="px-5 py-2.5 rounded-2xl bg-[#F7F7F5] text-[#787774] hover:bg-[#E9E9E7] hover:text-[#37352F]
+                text-sm font-bold transition-colors"
             >
               Cancel
             </button>
-            <button 
+            <button
               onClick={() => {
-                toast({ title: "Success", description: "Member added successfully!" });
+                toast({ title: 'Success', description: 'Member added!' });
                 setIsAddModalOpen(false);
               }}
-              className="px-4 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800 text-sm font-medium"
+              className="px-5 py-2.5 rounded-2xl bg-[#FF4B72] text-white hover:bg-[#D41E45]
+                text-sm font-bold transition-all shadow-[0_4px_14px_rgba(255,75,114,0.35)] hover:shadow-lg hover:-translate-y-0.5"
             >
               Add Member
             </button>

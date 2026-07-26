@@ -4,6 +4,68 @@ import { requireUser, isProjectMember } from "@/lib/auth-helpers";
 import { createTaskSchema } from "@/lib/validations";
 import { z } from "zod";
 
+export async function GET(req: Request) {
+  try {
+    const authUser = await requireUser();
+    const { searchParams } = new URL(req.url);
+    const projectId = searchParams.get('projectId');
+    const workspaceId = searchParams.get('workspaceId');
+    const status = searchParams.get('status');
+    const assigneeId = searchParams.get('assigneeId');
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const whereClause: any = {};
+
+    if (projectId) {
+      const hasPermission = await isProjectMember(projectId, authUser.id);
+      if (!hasPermission) {
+        return NextResponse.json({ success: false, error: "Unauthorized: You are not a member of this project" }, { status: 403 });
+      }
+      whereClause.projectId = projectId;
+    } else if (workspaceId) {
+      whereClause.workspaceId = workspaceId;
+    } else {
+      whereClause.OR = [
+        { assigneeId: authUser.id },
+        { project: { ownerId: authUser.id } },
+        { project: { members: { some: { userId: authUser.id } } } },
+      ];
+    }
+
+    if (status) {
+      whereClause.status = status;
+    }
+    if (assigneeId) {
+      whereClause.assigneeId = assigneeId;
+    }
+
+    const tasks = await prisma.task.findMany({
+      where: whereClause,
+      include: {
+        assignee: { select: { id: true, name: true, avatarUrl: true, email: true } },
+        subtasks: {
+          include: { assignee: { select: { id: true, name: true, avatarUrl: true } } },
+          orderBy: { order: 'asc' }
+        },
+        _count: { select: { comments: true } }
+      },
+      orderBy: [
+        { order: 'asc' },
+        { createdAt: 'desc' }
+      ]
+    });
+
+    return NextResponse.json({ success: true, data: tasks });
+  } catch (error: unknown) {
+    console.error("GET tasks API error:", error);
+    if (error instanceof Error && error.message.includes('NEXT_REDIRECT')) throw error;
+    if (error instanceof Error) {
+      return NextResponse.json({ success: false, error: error.message }, { status: 400 });
+    }
+    return NextResponse.json({ success: false, error: 'Failed to fetch tasks' }, { status: 500 });
+  }
+}
+
 export async function POST(req: Request) {
   try {
     const authUser = await requireUser();

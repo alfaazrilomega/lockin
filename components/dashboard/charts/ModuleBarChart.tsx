@@ -1,7 +1,20 @@
 "use client";
 
 import React from 'react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let Recharts: any = {};
+if (typeof window !== 'undefined') {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  Recharts = require('recharts');
+}
+const BarChart = Recharts.BarChart || (() => null);
+const Bar = Recharts.Bar || (() => null);
+const XAxis = Recharts.XAxis || (() => null);
+const YAxis = Recharts.YAxis || (() => null);
+const Tooltip = Recharts.Tooltip || (() => null);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const ResponsiveContainer = Recharts.ResponsiveContainer || (({ children }: any) => children);
+const Cell = Recharts.Cell || (() => null);
 
 // Reference: Deals amount grouped bar chart with platform colors per column
 const COLORS = {
@@ -48,7 +61,7 @@ export function ModuleBarChart({ data }: ModuleBarChartProps) {
           axisLine={false}
           tickLine={false}
           tick={{ fontSize: 9, fill: '#9CA3AF' }}
-          tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`}
+          tickFormatter={(v: any) => `$${(v / 1000).toFixed(0)}k`}
         />
         <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(0,0,0,0.04)', radius: 6 }} />
 

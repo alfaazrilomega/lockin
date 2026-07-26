@@ -1,10 +1,20 @@
 "use client";
 
 import React from 'react';
-import {
-  AreaChart, Area, XAxis, YAxis, Tooltip,
-  ResponsiveContainer, ReferenceDot
-} from 'recharts';
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let Recharts: any = {};
+if (typeof window !== 'undefined') {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  Recharts = require('recharts');
+}
+const AreaChart = Recharts.AreaChart || (() => null);
+const Area = Recharts.Area || (() => null);
+const XAxis = Recharts.XAxis || (() => null);
+const YAxis = Recharts.YAxis || (() => null);
+const Tooltip = Recharts.Tooltip || (() => null);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const ResponsiveContainer = Recharts.ResponsiveContainer || (({ children }: any) => children);
+const ReferenceDot = Recharts.ReferenceDot || (() => null);
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

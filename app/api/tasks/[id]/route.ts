@@ -2,6 +2,51 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth-helpers";
 
+// GET — fetch single task with assignee, subtasks, comments
+export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const { id: taskId } = await params;
+    const user = await requireUser();
+
+    const task = await prisma.task.findUnique({
+      where: { id: taskId },
+      include: {
+        assignee: { select: { id: true, name: true, avatarUrl: true, email: true } },
+        subtasks: {
+          include: { assignee: { select: { id: true, name: true, avatarUrl: true } } },
+          orderBy: { order: 'asc' }
+        },
+        comments: {
+          include: { author: { select: { id: true, name: true, avatarUrl: true } } },
+          orderBy: { createdAt: 'asc' }
+        },
+        workspace: { include: { members: true } }
+      }
+    });
+
+    if (!task) {
+      return NextResponse.json({ success: false, error: "Task not found" }, { status: 404 });
+    }
+
+    const isOwner = task.workspace?.ownerId === user.id;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const isMember = task.workspace?.members.some((m: any) => m.userId === user.id);
+
+    if (!isOwner && !isMember) {
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 403 });
+    }
+
+    return NextResponse.json({ success: true, data: task });
+  } catch (error: unknown) {
+    console.error("GET task error:", error);
+    if (error instanceof Error && error.message.includes('NEXT_REDIRECT')) throw error;
+    if (error instanceof Error) {
+      return NextResponse.json({ success: false, error: error.message }, { status: 400 });
+    }
+    return NextResponse.json({ success: false, error: 'Unknown error occurred' }, { status: 500 });
+  }
+}
+
 // PUT — update status & order (used by DnD)
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -147,4 +192,45 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     return NextResponse.json({ success: false, error: 'Unknown error occurred' }, { status: 500 });
   }
 }
+
+// DELETE — delete a task
+export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const { id: taskId } = await params;
+    const user = await requireUser();
+
+    const task = await prisma.task.findUnique({
+      where: { id: taskId },
+      include: { workspace: { include: { members: true } } }
+    });
+
+    if (!task) {
+      return NextResponse.json({ success: false, error: "Task not found" }, { status: 404 });
+    }
+
+    const isOwner = task.workspace?.ownerId === user.id;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const isMember = task.workspace?.members.some((m: any) =>
+      m.userId === user.id && ['EDITOR', 'LEADER'].includes(m.permission)
+    );
+
+    if (!isOwner && !isMember) {
+      return NextResponse.json({ success: false, error: "Unauthorized: Insufficient permissions to delete this task." }, { status: 403 });
+    }
+
+    await prisma.task.delete({
+      where: { id: taskId },
+    });
+
+    return NextResponse.json({ success: true, data: { deletedId: taskId } });
+  } catch (error: unknown) {
+    console.error("DELETE task error:", error);
+    if (error instanceof Error && error.message.includes('NEXT_REDIRECT')) throw error;
+    if (error instanceof Error) {
+      return NextResponse.json({ success: false, error: error.message }, { status: 400 });
+    }
+    return NextResponse.json({ success: false, error: 'Unknown error occurred' }, { status: 500 });
+  }
+}
+
 

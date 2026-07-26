@@ -1,7 +1,5 @@
 import { PrismaClient } from '@prisma/client'
 import { PrismaPg } from '@prisma/adapter-pg'
-// Force Next.js to reload this file
-
 import { Pool } from 'pg'
 
 /**
@@ -10,9 +8,11 @@ import { Pool } from 'pg'
  * Connection config lives here (runtime) and in prisma.config.ts (CLI).
  */
 
-const connectionString = process.env.DATABASE_URL!
+const connectionString = process.env.DATABASE_URL || process.env.DIRECT_URL || ''
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const pool = new Pool({ connectionString })
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const adapter = new PrismaPg(pool as any)
 
 const globalForPrisma = globalThis as unknown as {

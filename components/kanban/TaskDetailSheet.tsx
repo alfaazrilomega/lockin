@@ -11,11 +11,12 @@ import { Task, TaskStatus, TaskPriority } from '@/lib/types';
 import { User2, Calendar, Link2, MoreHorizontal, LayoutList, GitBranch, MessageSquare, AlertCircle, Send, Activity, Loader2, Upload, AlertTriangle } from 'lucide-react';
 import axios from 'axios';
 
-import { useEditor, EditorContent } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
-import TaskList from '@tiptap/extension-task-list';
-import TaskItem from '@tiptap/extension-task-item';
-import Placeholder from '@tiptap/extension-placeholder';
+import dynamic from 'next/dynamic';
+
+const TiptapEditor = dynamic(
+  () => import('./TiptapEditor').then((mod) => mod.TiptapEditor),
+  { ssr: false }
+);
 
 // ─── Types ──────────────────────────────────────────────────────────
 interface ActivityActor {
@@ -76,21 +77,7 @@ function Avatar({ user }: { user: ActivityActor }) {
   );
 }
 
-// ─── Editor Toolbar ───────────────────────────────────────────────────
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const EditorToolbar = ({ editor }: { editor: any }) => {
-  if (!editor) return null;
-  return (
-    <div className="flex flex-wrap items-center gap-1 border-b border-border bg-muted/20 p-1.5 rounded-t-md">
-      <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs font-medium" onClick={() => editor.chain().focus().toggleBold().run()} data-active={editor.isActive('bold')}>Bold</Button>
-      <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs font-medium" onClick={() => editor.chain().focus().toggleItalic().run()} data-active={editor.isActive('italic')}>Italic</Button>
-      <Separator orientation="vertical" className="h-4 mx-1" />
-      <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs font-medium" onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}>H2</Button>
-      <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs font-medium" onClick={() => editor.chain().focus().toggleBulletList().run()}>List</Button>
-      <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs font-medium" onClick={() => editor.chain().focus().toggleTaskList().run()}>Todo</Button>
-    </div>
-  );
-};
+
 
 // ─── Main Component ───────────────────────────────────────────────────
 export function TaskDetailSheet({ task, isOpen, onOpenChange, onUpdate }: TaskDetailSheetProps) {
@@ -135,30 +122,7 @@ export function TaskDetailSheet({ task, isOpen, onOpenChange, onUpdate }: TaskDe
     feedBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [feed.length]);
 
-  const editor = useEditor({
-    extensions: [
-      StarterKit,
-      TaskList,
-      TaskItem.configure({ nested: true }),
-      Placeholder.configure({ placeholder: 'Add a detailed description...' })
-    ],
-    content: task?.description || '',
-    immediatelyRender: false,
-    editorProps: {
-      attributes: { class: 'prose prose-sm dark:prose-invert max-w-none focus:outline-none min-h-[150px] p-4 text-sm font-satoshi' },
-    },
-    onBlur: ({ editor }) => {
-      if (localTask && editor.getHTML() !== localTask.description) {
-        handleSave('description', editor.getHTML());
-      }
-    }
-  });
 
-  useEffect(() => {
-    if (editor && task && task.description !== editor.getHTML()) {
-      editor.commands.setContent(task.description || '');
-    }
-  }, [task, editor]);
 
   if (!localTask) return null;
 
@@ -259,10 +223,10 @@ export function TaskDetailSheet({ task, isOpen, onOpenChange, onUpdate }: TaskDe
                 <LayoutList className="h-4 w-4 text-muted-foreground" />
                 Description
               </h3>
-              <div className="border border-border rounded-md bg-card overflow-hidden shadow-sm focus-within:border-primary/50 focus-within:ring-1 focus-within:ring-primary/20 transition-all">
-                <EditorToolbar editor={editor} />
-                <EditorContent editor={editor} />
-              </div>
+              <TiptapEditor
+                content={localTask.description || ''}
+                onBlur={(html) => handleSave('description', html)}
+              />
             </div>
 
             {/* ── Gate System Displays ────────────────────────────── */}

@@ -1,7 +1,18 @@
 "use client";
 
 import React from 'react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let Recharts: any = {};
+if (typeof window !== 'undefined') {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  Recharts = require('recharts');
+}
+const PieChart = Recharts.PieChart || (() => null);
+const Pie = Recharts.Pie || (() => null);
+const Cell = Recharts.Cell || (() => null);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const ResponsiveContainer = Recharts.ResponsiveContainer || (({ children }: any) => children);
+const Tooltip = Recharts.Tooltip || (() => null);
 
 interface Platform {
   name: string;
