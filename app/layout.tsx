@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { cn } from "@/lib/utils";
 import Preloader from "@/components/layout/Preloader";
 import { ToastProvider } from "@/components/ui/use-toast";
+import { HashAuthListener } from "@/components/auth/hash-auth-listener";
 
 const inter = Inter({
   subsets: ['latin'],
@@ -50,6 +51,7 @@ export default function RootLayout({
               enableSystem
               disableTransitionOnChange
             >
+              <HashAuthListener />
               {children}
             </ThemeProvider>
           </ToastProvider>

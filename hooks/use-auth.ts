@@ -174,11 +174,34 @@ export function useAuth() {
     }
   }
 
+  const updatePassword = async (newPassword: string) => {
+    setState(prev => ({ ...prev, loading: true, error: null }))
+    
+    try {
+      const { data, error } = await supabase.auth.updateUser({
+        password: newPassword,
+      })
+
+      if (error) {
+        setState(prev => ({ ...prev, loading: false, error: error.message }))
+        return { success: false, error: error.message }
+      }
+
+      setState(prev => ({ ...prev, loading: false }))
+      return { success: true, data }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to update password'
+      setState(prev => ({ ...prev, loading: false, error: message }))
+      return { success: false, error: message }
+    }
+  }
+
   return {
     ...state,
     signIn,
     signUp,
     signOut,
     resetPassword,
+    updatePassword,
   }
 }
