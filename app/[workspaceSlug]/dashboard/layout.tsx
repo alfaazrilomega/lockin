@@ -14,7 +14,8 @@ import {
   RiLogoutBoxRLine,
   RiCheckDoubleLine,
   RiUser3Line,
-  RiChat3Line
+  RiChat3Line,
+  RiBookOpenLine
 } from '@remixicon/react'
 
 export const dynamic = 'force-dynamic'
@@ -67,6 +68,15 @@ async function SidebarContent({ workspaceSlug }: { workspaceSlug: string }) {
               >
                 <RiChat3Line className="size-4 shrink-0 text-indigo-600" />
                 <span>AI Meeting Notes</span>
+              </Link>
+            </li>
+            <li>
+              <Link
+                href={`/${workspace.slug}/dashboard/recipes`}
+                className="flex items-center gap-x-2.5 rounded-md px-2.5 py-2 text-xs font-semibold text-gray-700 hover:text-indigo-600 hover:bg-indigo-50/60 transition"
+              >
+                <RiBookOpenLine className="size-4 shrink-0 text-amber-500" />
+                <span>Granola AI Recipes</span>
               </Link>
             </li>
             <li>
