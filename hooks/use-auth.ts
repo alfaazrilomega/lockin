@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { createClientComponentClient } from "@/lib/supabase/client"
+import { getAppUrl } from "@/lib/utils"
 
 import { type Session } from "@supabase/supabase-js"
 import { type User } from "@/lib/types"
@@ -114,7 +115,7 @@ export function useAuth() {
           data: {
             full_name: name,
           },
-          emailRedirectTo: `${window.location.origin}/api/auth/callback`,
+          emailRedirectTo: `${getAppUrl()}/auth/callback`,
         },
       })
 
@@ -157,7 +158,7 @@ export function useAuth() {
     
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/reset-password`,
+        redirectTo: `${getAppUrl()}/auth/reset-password`,
       })
 
       if (error) {
