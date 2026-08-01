@@ -208,15 +208,8 @@ async function logHRTaskActivity(taskId: string, userId: string, action: string,
       INSERT INTO public.hr_activity_logs (id, task_id, user_id, action, state_snapshot, created_at)
       VALUES (gen_random_uuid(), ${taskId}::uuid, ${userId}::uuid, ${upperAction}::"LogAction", ${JSON.stringify(snapshot)}::jsonb, NOW())
     `
-  } catch {
-    try {
-      await prisma.$executeRaw`
-        INSERT INTO public.hr_activity_logs (id, task_id, user_id, action, state_snapshot, created_at)
-        VALUES (gen_random_uuid(), ${taskId}::uuid, ${userId}::uuid, ${upperAction}, ${JSON.stringify(snapshot)}::jsonb, NOW())
-      `
-    } catch (err) {
-      console.error('Failed to log HR task activity:', err)
-    }
+  } catch (err) {
+    console.error('Failed to log HR task activity:', err)
   }
 }
 
