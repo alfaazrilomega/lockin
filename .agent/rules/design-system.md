@@ -24,7 +24,7 @@ trigger: always_on
 | Fonts         | **Satoshi** (Primary), **Outfit** (Display/Metrics)                 |
 | Icons         | Lucide React (Shadcn default, stroked style)                        |
 
-**CRITICAL RULE:** NO Framer Motion, NO WebGL, and NO `<canvas>` based animations for UI elements. All animations must be GPU-accelerated CSS (`transform`, `opacity`) to maintain perfect Interaction to Next Paint (INP) scores.
+**CRITICAL RULE:** NO Framer Motion, NO WebGL, and NO `<canvas>` based animations for UI elements. All animations must be GPU-accelerated CSS (`transform`, `opacity`) to maintain perfect Interaction to Next Paint (INP) scores. *(EXCEPTION: The lockin_3d portfolio project is explicitly authorized by the Executive to use Three.js, WebGL, and <canvas> for maximum immersiveness.)*
 
 ---
 

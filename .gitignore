@@ -40,29 +40,26 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# everything-claude-code/
+# Non-LockIn Projects (Excluded from Git & Vercel Deployments)
+/Apps React DOT
+/AI-Automation-Video-Youtube
+/AI-BrainSystem-Fullstuck-Workflow
+/alfaazrilomega_github_profile
+/github_pages
+/glints_profile_automation
+/portofolio-page
+/wordpress
+/mino-clone
+/Exercise
+/vendor
+/composer.json
+/composer.lock
+
+# Agent logs & temp artifacts
+/.agents/
+/lockin_3d/.next/
 
 # InsForge & AI agent metadata
-# .insforge
-# .agent
-# .agents
-# .antigravity
-# .augment
-# .claude
-# .cline
-# .clinerules
-# .clinerules_repo
-# .github/copilot*
-# .kilocode
-# .kiro
-# .qoder
-# .qwen
-# .roo
-# .serena
-# .trae
-# .windsurf
-
-# local dev scripts & logs
 scripts/
 tsc-output.txt
 tsc.log
@@ -71,4 +68,4 @@ tsc.log
 api_test.py
 api-test.*
 test-*.js
-test-*.ts
+test-*.ts

@@ -123,7 +123,7 @@ If a conflict exists between a skill and CORE-04, CORE-04 wins.
 | Use Riz Ratio (2:3:5) spacing | No skill may use arbitrary pixel gaps | Suspended WHERE reference specifies different gaps in Pixel-Perfect mode |
 | Typography follows mathematical scale | No skill may guess font sizes | **SUSPENDED in Pixel-Perfect mode** — use extracted font-size instead |
 | Colors use CSS token variables | No skill may hardcode hex values | NEVER suspended — always use token variables even in Pixel-Perfect mode |
-| Animate only transform + opacity | No skill may animate width/height/top/left | Never suspended — convert extracted non-GPU animations to GPU-safe equivalents |
+| Animate only transform + opacity | No skill may animate width/height/top/left | **SUSPENDED in Awwwards initial creative phase** (make design perfect first without caring about 60FPS, then ask user satisfaction before optimizing/refactoring to GPU-safe equivalents or redesigning) |
 
 ---
 

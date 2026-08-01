@@ -468,7 +468,9 @@ Once all items are checked:
 - [ ] Mode determined (A or B) and parameters set if Mode B
 - [ ] Atomic Breakdown produced in required format (Section 6)
 - [ ] Both Dual Validators passed (Section 7)
-- [ ] User has explicitly confirmed the Atomic Breakdown
+- [ ] Gate Condition Check:
+  - **Design Track (Track A):** [ ] User has explicitly confirmed the Atomic Breakdown (wait for "GO" before starting code execution).
+  - **Fullstack Track (Track D):** Bypassed. (The separate "GO" gate is erased and merged with the overall Fullstack planning and approval step).
 
 → Proceed to **CORE 05** (`./.antigravity-agents.md`) for code execution.
 

@@ -14,12 +14,20 @@
 
 ## 🔴 MANDATORY PIPELINE — Run These in Order for Any Design Task
 
+> ### ⚡ NEW: Design Brain Pre-Build Protocol (runs BEFORE the pipeline below)
+> **Whenever the user says "Rebuild", "Change", "Make", "Build", "Design", "Animate" or any design keyword:**
+> → **FIRST** read `.agent/skills/design-brain/SKILL.md`
+> → **THEN** run `/design-research` workflow: `.agent/workflows/design-research.md`
+> → ONLY after user says "GO" in Phase 5 should the pipeline below begin.
+>
+> This is the #1 rule to prevent bad design. No exceptions.
+
 ```
-CORE-00 → SKILL-visual-extraction-protocol (if TYPE 4) → CORE-01 → CORE-02 → CORE-03
-                                                                              ↓
-                                           INSTINCT-010 ← SKILL-uiux-autonomous ← SKILL-design-arch-color ← CORE-04 ← SKILL-design-intelligence-cognition
-                                                            ↓
-                                                         CORE-05
+[design-brain SKILL] → [user approval] → CORE-00 → SKILL-visual-extraction-protocol (if TYPE 4) → CORE-01 → CORE-02 → CORE-03
+                                                                                                                              ↓
+                                                                          INSTINCT-010 ← SKILL-uiux-autonomous ← SKILL-design-arch-color ← CORE-04 ← SKILL-design-intelligence-cognition
+                                                                                           ↓
+                                                                                        CORE-05
 ```
 
 ---
@@ -148,6 +156,11 @@ Located in: `.agent/skills/` (individual .md files)
 
 | Task | File(s) to Read |
 |------|----------------|
+| **Build/Rebuild/Make/Change any UI** | **`skills/design-brain/SKILL.md` → `workflows/design-research.md` FIRST** |
+| Research components before building | `skills/design-brain/SKILL.md` Phase 2 (visits 21st.dev, superdesign, UIverse) |
+| Ask user about theme/colors | `skills/design-brain/SKILL.md` Phase 1 (template question included) |
+| Dump research to NotebookLM | `skills/design-brain/SKILL.md` Phase 3 → URL in workflow cheat sheet |
+| Get user approval before building | `skills/design-brain/SKILL.md` Phase 5 (hard gate — wait for "GO") |
 | Start a new design task | `CORE-00` → check for TYPE 4 → `SKILL-visual-extraction-protocol` |
 | Copy a website section exactly | `SKILL-visual-extraction-protocol` (all 6 stages) |
 | Decide Mode A vs Mode B | `SKILL-uiux-autonomous-fullstack-design` → Mode Conflict Resolution |

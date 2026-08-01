@@ -185,7 +185,7 @@ border-bottom: 1px solid var(--border);
 ## 6. High-Performance Animation Conventions
 
 - **Scroll Effects:** Let the browser handle it. No `useScroll` from Framer Motion.
-- **Entrance Animations:** Use `tailwindcss-animate` for 60fps GPU-accelerated reveals (`animate-in fade-in zoom-in-95`).
+- **Entrance Animations:** Use `tailwindcss-animate` for 60fps GPU-accelerated reveals (`animate-in fade-in zoom-in-95`). *(Note: For Awwwards-standard designs, the initial creative phase bypasses the 60FPS lock to build the design to absolute layout/visual perfection first. After user satisfaction is verified, animations are optimized/upgraded so that the FPS is not too heavy, or redesigned if needed).*
 - **Page Navigation:** Use **View Transitions API** and **Speculation Rules API** (pre-fetching on hover) for zero-latency page swaps.
 
 ---
@@ -225,7 +225,7 @@ All AI Agents MUST refer to the `skills/` directory based on their current task:
 | **Git Commits & PRs**             | `internal-comms.md`                                 |
 | **New AI Skill Generation**       | `skill-creator.md`                                  |
 
-**CRITICAL RULE:** The `canvas-design` skill or any WebGL/3D physics animations are STRICTLY PROHIBITED in this repository.
+**CRITICAL RULE:** The `canvas-design` skill or any WebGL/3D physics animations are STRICTLY PROHIBITED in this repository. *(EXCEPTION: The lockin_3d portfolio project is explicitly authorized to use Three.js and WebGL canvas for immersive showcasing.)*
 
 ```
 

@@ -79,7 +79,7 @@ To maintain Awwwards-tier visual quality, the AI must adhere to the project's es
 
 2. **Token Mapping:** All spacing, typography, and color must use the Notion-like CSS variables defined in `globals.css` (`--background`, `--foreground`, `--primary`, `--border`, etc.).
 
-3. **Zero-Latency Animation:** Scroll effects and parallax must utilize Framer Motion `useSpring`, `IntersectionObserver` for off-screen culling, and `transform-gpu` to ensure 60FPS without blocking the main thread.
+3. **Zero-Latency Animation:** Scroll effects and parallax must utilize Framer Motion `useSpring`, `IntersectionObserver` for off-screen culling, and `transform-gpu` to ensure 60FPS without blocking the main thread. *(Note: For Awwwards-standard designs, the initial creative phase bypasses the 60FPS lock to build the design to absolute layout/visual perfection first. After user satisfaction is verified, animations are optimized/upgraded so that the FPS is not too heavy, or redesigned if needed).*
 
 ---
 
