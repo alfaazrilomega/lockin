@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth-helpers";
+import { LogAction } from "@prisma/client";
 
 // GET — fetch single task with assignee, subtasks, comments
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -84,7 +85,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     if (newStatus && newStatus !== task.status) {
       await prisma.workspaceActivity.create({
         data: {
-          action: 'status_changed',
+          action: LogAction.STATUS_CHANGED,
           entityType: 'TASK',
           entityId: taskId,
           metadata: { from: task.status, to: newStatus, taskTitle: task.title },
@@ -153,11 +154,11 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     });
 
     // Log auditable field changes
-    const auditableFields: Record<string, string> = {
-      priority: 'priority_changed',
-      status: 'status_changed',
-      assigneeId: 'assignee_changed',
-      deadline: 'deadline_changed',
+    const auditableFields: Record<string, LogAction> = {
+      priority: LogAction.PRIORITY_CHANGED,
+      status: LogAction.STATUS_CHANGED,
+      assigneeId: LogAction.ASSIGNEE_CHANGED,
+      deadline: LogAction.DEADLINE_CHANGED,
     };
 
     const activityPromises = Object.entries(auditableFields)

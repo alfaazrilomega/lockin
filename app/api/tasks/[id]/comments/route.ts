@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireUser } from '@/lib/auth-helpers';
+import { LogAction } from '@prisma/client';
 
 // GET all comments for a task
 export async function GET(
@@ -68,7 +69,7 @@ export async function POST(
     // Log activity
     await prisma.workspaceActivity.create({
       data: {
-        action: 'commented',
+        action: LogAction.COMMENTED,
         entityType: 'TASK',
         entityId: taskId,
         metadata: { taskTitle: task.title, preview: content.slice(0, 80) },

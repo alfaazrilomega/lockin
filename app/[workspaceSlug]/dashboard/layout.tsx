@@ -6,19 +6,15 @@ import { getUserSessionData } from '@/actions/overview'
 import { WorkspaceSwitcher } from '@/components/shared/workspace-switcher'
 import { PendingInvitationBanner } from '@/components/shared/pending-invitation-banner'
 import {
-  RiHome2Line,
-  RiPieChartLine,
-  RiListCheck,
-  RiSettings5Line,
   RiShieldCheckLine,
   RiLogoutBoxRLine,
   RiCheckDoubleLine,
-  RiUser3Line,
-  RiChat3Line,
-  RiBookOpenLine
+  RiUser3Line
 } from '@remixicon/react'
 
 export const dynamic = 'force-dynamic'
+
+import { WorkspaceSidebarNav } from '@/components/shared/workspace-sidebar-nav'
 
 interface DashboardLayoutProps {
   children: ReactNode
@@ -45,69 +41,9 @@ async function SidebarContent({ workspaceSlug }: { workspaceSlug: string }) {
         userWorkspaces={userWorkspaces}
       />
 
-      {/* Main Navigation Links */}
+      {/* Main Navigation Links with Active State */}
       <nav aria-label="core navigation" className="flex flex-1 flex-col space-y-6">
-        <div>
-          <span className="px-2 text-xs font-semibold text-gray-400 uppercase tracking-wider font-outfit">
-            Menu Utama
-          </span>
-          <ul role="list" className="mt-2 space-y-1">
-            <li>
-              <Link
-                href={`/${workspace.slug}/dashboard`}
-                className="flex items-center gap-x-2.5 rounded-md px-2.5 py-2 text-xs font-semibold text-gray-700 hover:text-indigo-600 hover:bg-indigo-50/60 transition"
-              >
-                <RiHome2Line className="size-4 shrink-0 text-indigo-600" />
-                <span>Task Workspace</span>
-              </Link>
-            </li>
-            <li>
-              <Link
-                href={`/${workspace.slug}/dashboard/meetings`}
-                className="flex items-center gap-x-2.5 rounded-md px-2.5 py-2 text-xs font-semibold text-gray-700 hover:text-indigo-600 hover:bg-indigo-50/60 transition"
-              >
-                <RiChat3Line className="size-4 shrink-0 text-indigo-600" />
-                <span>AI Meeting Notes</span>
-              </Link>
-            </li>
-            <li>
-              <Link
-                href={`/${workspace.slug}/dashboard/recipes`}
-                className="flex items-center gap-x-2.5 rounded-md px-2.5 py-2 text-xs font-semibold text-gray-700 hover:text-indigo-600 hover:bg-indigo-50/60 transition"
-              >
-                <RiBookOpenLine className="size-4 shrink-0 text-amber-500" />
-                <span>Granola AI Recipes</span>
-              </Link>
-            </li>
-            <li>
-              <Link
-                href={`/${workspace.slug}/dashboard/overview`}
-                className="flex items-center gap-x-2.5 rounded-md px-2.5 py-2 text-xs font-semibold text-gray-700 hover:text-indigo-600 hover:bg-indigo-50/60 transition"
-              >
-                <RiPieChartLine className="size-4 shrink-0 text-gray-500" />
-                <span>Overview & Chart</span>
-              </Link>
-            </li>
-            <li>
-              <Link
-                href={`/${workspace.slug}/dashboard/details`}
-                className="flex items-center gap-x-2.5 rounded-md px-2.5 py-2 text-xs font-semibold text-gray-700 hover:text-indigo-600 hover:bg-indigo-50/60 transition"
-              >
-                <RiListCheck className="size-4 shrink-0 text-gray-500" />
-                <span>Audit Details</span>
-              </Link>
-            </li>
-            <li>
-              <Link
-                href={`/${workspace.slug}/dashboard/settings`}
-                className="flex items-center gap-x-2.5 rounded-md px-2.5 py-2 text-xs font-semibold text-gray-700 hover:text-indigo-600 hover:bg-indigo-50/60 transition"
-              >
-                <RiSettings5Line className="size-4 shrink-0 text-gray-500" />
-                <span>Settings & Team</span>
-              </Link>
-            </li>
-          </ul>
-        </div>
+        <WorkspaceSidebarNav workspaceSlug={workspace.slug} />
 
         {/* Security & System Features */}
         <div>

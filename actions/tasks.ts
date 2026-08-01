@@ -201,6 +201,25 @@ export async function getTasks(workspaceSlug?: string) {
   }))
 }
 
+async function logHRTaskActivity(taskId: string, userId: string, action: string, snapshot: Record<string, unknown>) {
+  const upperAction = action.toUpperCase()
+  try {
+    await prisma.$executeRaw`
+      INSERT INTO public.hr_activity_logs (id, task_id, user_id, action, state_snapshot, created_at)
+      VALUES (gen_random_uuid(), ${taskId}::uuid, ${userId}::uuid, ${upperAction}::"LogAction", ${JSON.stringify(snapshot)}::jsonb, NOW())
+    `
+  } catch {
+    try {
+      await prisma.$executeRaw`
+        INSERT INTO public.hr_activity_logs (id, task_id, user_id, action, state_snapshot, created_at)
+        VALUES (gen_random_uuid(), ${taskId}::uuid, ${userId}::uuid, ${upperAction}, ${JSON.stringify(snapshot)}::jsonb, NOW())
+      `
+    } catch (err) {
+      console.error('Failed to log HR task activity:', err)
+    }
+  }
+}
+
 export async function createTask(formData: FormData) {
   const user = await getUser()
   const title = formData.get('title') as string
@@ -227,6 +246,9 @@ export async function createTask(formData: FormData) {
   if (priority) {
     await prisma.$executeRaw`UPDATE public.hr_tasks SET priority = ${priority} WHERE id = ${newTask.id}::uuid`
   }
+
+  // 1c. Log creation activity with safe LogAction enum casting
+  await logHRTaskActivity(newTask.id, user.id, 'CREATE', { id: newTask.id, title, priority })
 
   // 2. Associate Multiple Tags if selected
   if (tagIds && tagIds.length > 0) {

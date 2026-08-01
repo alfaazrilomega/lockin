@@ -129,7 +129,7 @@ const AmritHero = () => {
             {/* ─── LAYER 0: Bright Sky Background ──────────────────────────── */}
             <div className="absolute inset-0 z-0">
                 <Image
-                    src="/images/white-them-BG_hero.png"
+                    src="/images/white-theme-BG_hero.png"
                     alt="Bright Atmospheric Sky"
                     fill
                     className="object-cover object-center"
@@ -191,7 +191,7 @@ const AmritHero = () => {
                     <div className="absolute bottom-0 left-[37%] w-full z-[-1]">
                         {/* TWEAK `-translate-x-[Xpx]` to close any remaining gap */}
                         <Image
-                            src="/images/Half-Rigth-Hero-section.png"
+                            src="/images/Half-Right-Hero-section.png"
                             alt="Building Right"
                             width={1200}
                             height={1200}

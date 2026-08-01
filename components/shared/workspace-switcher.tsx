@@ -45,9 +45,9 @@ export function WorkspaceSwitcher({ currentWorkspace, userWorkspaces }: Workspac
         >
           <div className="flex items-center gap-2.5 min-w-0">
             <img
-              src="/img/logo.png"
-              alt="Workspace Logo"
-              className="h-10 w-auto object-contain flex-shrink-0"
+              src="/images/Logo-LockIn.svg"
+              alt="LockIn Logo"
+              className="h-7 w-auto object-contain flex-shrink-0"
             />
           </div>
 

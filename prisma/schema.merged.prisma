@@ -216,6 +216,17 @@ model User {
   @@map("users")
 }
 
+enum LogAction {
+  CREATE
+  UPDATE
+  DELETE
+  STATUS_CHANGED
+  PRIORITY_CHANGED
+  ASSIGNEE_CHANGED
+  DEADLINE_CHANGED
+  COMMENTED
+}
+
 enum ProjectStatus {
   PLANNING
   ACTIVE
