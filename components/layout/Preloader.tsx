@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
-import lottie, { AnimationItem } from 'lottie-web';
 import animationData from '../animation-lockin/json/Scene-1.json';
+import type { AnimationItem } from 'lottie-web';
 
 // ─── Types & Constants ──────────────────────────────────────────────────────
 
@@ -66,20 +66,23 @@ export default function Preloader({ children }: PreloaderProps) {
   useEffect(() => {
     // Lock scroll while preloading
     document.body.style.overflow = 'hidden';
+    let isCancelled = false;
 
-    // Initialize Lottie
-    if (lottieContainerRef.current) {
-        lottieInstRef.current = lottie.loadAnimation({
-            container: lottieContainerRef.current,
-            renderer: 'svg',
-            loop: true,
-            autoplay: true,
-            animationData: animationData,
-            rendererSettings: {
-                preserveAspectRatio: 'xMidYMid slice' // Ensures the background covers the full screen
-            }
-        });
-    }
+    // Dynamically initialize Lottie web to reduce initial bundle blocking
+    import('lottie-web').then((lottieModule) => {
+      if (isCancelled || !lottieContainerRef.current) return;
+      const lottie = lottieModule.default;
+      lottieInstRef.current = lottie.loadAnimation({
+        container: lottieContainerRef.current,
+        renderer: 'svg',
+        loop: true,
+        autoplay: true,
+        animationData: animationData,
+        rendererSettings: {
+          preserveAspectRatio: 'xMidYMid slice',
+        },
+      });
+    });
 
     const addTimer = (fn: () => void, delay: number) => {
       const id = setTimeout(fn, delay);
@@ -104,6 +107,7 @@ export default function Preloader({ children }: PreloaderProps) {
     }, MIN_PRELOAD_DURATION + STABILIZATION_DELAY + EXIT_DURATION);
 
     return () => {
+      isCancelled = true;
       if (lottieInstRef.current) {
           lottieInstRef.current.destroy();
       }

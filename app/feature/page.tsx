@@ -4,6 +4,7 @@ import FeatureHero from "@/components/feature/feature-hero"
 import FeatureAccordion from "@/components/feature/interactive-accordion"
 import ScrollRevealText from "@/components/feature/scroll-reveal-text"
 import CoreValuesGallery from "@/components/feature/core-values-gallery"
+import LottieFeatureShowcase from "@/components/feature/lottie-feature-showcase"
 import { Metadata } from 'next'
 
 export const metadata: Metadata = {
@@ -23,6 +24,7 @@ export default function FeaturePage() {
           <FeatureHero />
           <ScrollRevealText text="We don't believe in walled gardens. LockIn is deeply integrated with the industry's most powerful native platforms to provide a seamless, uncompromised workflow across your entire ecosystem." />
           <FeatureAccordion />
+          <LottieFeatureShowcase />
           <CoreValuesGallery />
         </div>
 
