@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from "react"
 import axios from "axios"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -13,9 +12,7 @@ import {
   Users, 
   FileText, 
   CheckCircle2, 
-  Clock, 
   Plus, 
-  MoreHorizontal,
   ArrowLeft,
   XCircle
 } from "lucide-react"

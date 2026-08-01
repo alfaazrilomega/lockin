@@ -41,27 +41,49 @@ export function NewTaskDialog({ projectId, children, onSuccess }: NewTaskDialogP
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!formData.title) return
+    const trimmedTitle = formData.title.trim()
+    if (!trimmedTitle) {
+      toast({
+        title: "Judul Wajib Diisi",
+        description: "Silakan masukkan judul tugas terlebih dahulu.",
+        variant: "destructive",
+      })
+      return
+    }
 
     setIsLoading(true)
-    try {
-      const response = await axios.post('/api/tasks', {
-        title: formData.title,
-        description: formData.description,
-        status: formData.status,
-        deadline: formData.deadline ? new Date(formData.deadline).toISOString() : undefined,
-        projectId,
-      }, {
-        withCredentials: true
-      })
 
-      if (response.data.success) {
+    // Safe deadline ISO conversion
+    let formattedDeadline: string | undefined = undefined
+    if (formData.deadline && formData.deadline.trim()) {
+      const parsedDate = new Date(formData.deadline)
+      if (!isNaN(parsedDate.getTime())) {
+        formattedDeadline = parsedDate.toISOString()
+      }
+    }
+
+    try {
+      const response = await axios.post(
+        '/api/tasks',
+        {
+          title: trimmedTitle,
+          description: formData.description.trim() || undefined,
+          status: formData.status,
+          deadline: formattedDeadline,
+          projectId: projectId || undefined,
+        },
+        {
+          withCredentials: true,
+        }
+      )
+
+      if (response.data?.success) {
         setIsOpen(false)
         setFormData({ title: "", description: "", deadline: "", status: "TODO" })
-        
+
         toast({
-          title: "Success",
-          description: "Task created successfully",
+          title: "Tugas Berhasil Disimpan",
+          description: `Tugas "${trimmedTitle}" telah berhasil ditambahkan ke database.`,
         })
 
         if (onSuccess) {
@@ -70,27 +92,29 @@ export function NewTaskDialog({ projectId, children, onSuccess }: NewTaskDialogP
           window.location.reload()
         }
       } else {
+        const errorMsg = response.data?.error || "Gagal menyimpan tugas ke database."
+        console.error('[NewTaskDialog Submit Error]:', response.data)
         toast({
-          title: "Error",
-          description: response.data.error || "Failed to create task",
+          title: "Gagal Menyimpan Tugas",
+          description: errorMsg,
           variant: "destructive",
         })
       }
-    } catch (error) {
-      console.error(error)
+    } catch (error: unknown) {
+      console.error('[NewTaskDialog Catch Error]:', error)
+      let errorMessage = "Terjadi kesalahan yang tidak terduga saat menyimpan data."
+
       if (axios.isAxiosError(error)) {
-        toast({
-          title: "Error",
-          description: error.response?.data?.error || "An unexpected error occurred",
-          variant: "destructive",
-        })
-      } else {
-        toast({
-          title: "Error",
-          description: "An unexpected error occurred",
-          variant: "destructive",
-        })
+        errorMessage = error.response?.data?.error || error.message || errorMessage
+      } else if (error instanceof Error) {
+        errorMessage = error.message
       }
+
+      toast({
+        title: "Gagal Menyimpan Tugas",
+        description: errorMessage,
+        variant: "destructive",
+      })
     } finally {
       setIsLoading(false)
     }
@@ -107,7 +131,7 @@ export function NewTaskDialog({ projectId, children, onSuccess }: NewTaskDialogP
         )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
-        <form onSubmit={handleSubmit}>
+        <form id="new-task-form" onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold font-satoshi">Add New Task</DialogTitle>
           </DialogHeader>
@@ -167,7 +191,7 @@ export function NewTaskDialog({ projectId, children, onSuccess }: NewTaskDialogP
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isLoading || !formData.title}>
+            <Button type="submit" form="new-task-form" disabled={isLoading || !formData.title.trim()}>
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Create Task
             </Button>

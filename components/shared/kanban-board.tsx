@@ -37,6 +37,8 @@ import {
 } from '@remixicon/react'
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd'
 import { TaskDetailsSheet, TaskDetail } from './task-details-sheet'
+import { useToast } from '@/components/ui/use-toast'
+import { useRouter } from 'next/navigation'
 
 interface TagOption {
   id: string
@@ -189,6 +191,9 @@ export function KanbanBoard({ initialTasks, availableTags = [], workspaceMembers
     { id: 'done', title: 'Done', badgeVariant: 'success' as const }
   ]
 
+  const { toast } = useToast()
+  const router = useRouter()
+
   const handleCreateTaskSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     try {
@@ -197,8 +202,19 @@ export function KanbanBoard({ initialTasks, availableTags = [], workspaceMembers
       await createTask(formData)
       setIsDialogOpen(false)
       setSelectedTagIds([])
-    } catch (err) {
-      console.error('Error creating task:', err)
+      toast({
+        title: "Tugas Berhasil Ditambahkan",
+        description: "Tugas baru telah tersimpan ke database.",
+      })
+      router.refresh()
+    } catch (err: unknown) {
+      console.error('[KanbanBoard Create Task Error]:', err)
+      const errorMessage = err instanceof Error ? err.message : 'Gagal menyimpan tugas ke database.'
+      toast({
+        title: "Gagal Menyimpan Tugas",
+        description: errorMessage,
+        variant: "destructive",
+      })
     } finally {
       setIsSubmitting(false)
     }

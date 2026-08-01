@@ -42,18 +42,24 @@ export function TopNav({ onMobileToggle, currentUser }: TopNavProps) {
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [notifOpen, setNotifOpen] = useState(false)
 
-  const fetchNotifications = useCallback(async () => {
-    try {
-      const res = await axios.get("/api/notifications", { withCredentials: true })
-      if (res.data.success) setNotifications(res.data.data)
-    } catch { /* silently ignore */ }
-  }, [])
-
   useEffect(() => {
+    let isMounted = true;
+    const fetchNotifications = async () => {
+      try {
+        const res = await axios.get("/api/notifications", { withCredentials: true })
+        if (isMounted && res.data.success) {
+          setNotifications(res.data.data)
+        }
+      } catch { /* silently ignore */ }
+    }
+
     fetchNotifications()
     const interval = setInterval(fetchNotifications, 60_000)
-    return () => clearInterval(interval)
-  }, [fetchNotifications])
+    return () => {
+      isMounted = false;
+      clearInterval(interval)
+    }
+  }, [])
 
   const unreadCount = notifications.filter(n => !n.isRead).length
   const previewList = notifications.slice(0, 5)

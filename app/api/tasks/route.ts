@@ -73,49 +73,89 @@ export async function POST(req: Request) {
     
     // Check validation
     const validation = createTaskSchema.parse(body);
+    let targetProjectId = validation.projectId;
+    let workspaceId: string | null = null;
 
-    // Verify user is a member of the project
-    const hasPermission = await isProjectMember(validation.projectId, authUser.id);
-    if (!hasPermission) {
-      return NextResponse.json({ success: false, error: "Unauthorized: You are not a member of this project" }, { status: 403 });
-    }
-
-    // Get the project to find the workspaceId
-    const project = await prisma.project.findUnique({
-      where: { id: validation.projectId },
-      select: { workspaceId: true, ownerId: true }
-    });
-
-    if (!project) {
-      return NextResponse.json({ success: false, error: "Project not found" }, { status: 404 });
-    }
-
-    let workspaceId = project.workspaceId;
-
-    if (!workspaceId) {
-      // Lazy auto-create or find Personal Workspace for the project owner
+    if (!targetProjectId) {
+      // Auto-resolve or create default personal workspace & project
       let personalWorkspace = await prisma.workspace.findFirst({
-        where: { ownerId: project.ownerId, name: 'Personal Workspace' }
+        where: { ownerId: authUser.id, name: 'Personal Workspace' }
       });
 
       if (!personalWorkspace) {
         personalWorkspace = await prisma.workspace.create({
           data: {
             name: 'Personal Workspace',
-            slug: `personal-${project.ownerId.substring(0, 8)}`,
+            slug: `personal-${authUser.id.substring(0, 8)}`,
             description: 'Your default personal workspace.',
-            ownerId: project.ownerId,
+            ownerId: authUser.id,
           }
         });
       }
-      
-      workspaceId = personalWorkspace.id;
 
-      // Permanently back-assign the project to the workspace
-      await prisma.project.update({
-        where: { id: validation.projectId },
-        data: { workspaceId }
+      let defaultProject = await prisma.project.findFirst({
+        where: { ownerId: authUser.id, name: 'General Tasks' },
+        select: { id: true, workspaceId: true }
       });
+
+      if (!defaultProject) {
+        defaultProject = await prisma.project.create({
+          data: {
+            name: 'General Tasks',
+            description: 'Default workspace project for quick tasks.',
+            ownerId: authUser.id,
+            workspaceId: personalWorkspace.id,
+            status: 'ACTIVE',
+            priority: 'MEDIUM'
+          },
+          select: { id: true, workspaceId: true }
+        });
+      }
+
+      targetProjectId = defaultProject.id;
+      workspaceId = personalWorkspace.id;
+    } else {
+      // Verify user is a member of the project
+      const hasPermission = await isProjectMember(targetProjectId, authUser.id);
+      if (!hasPermission) {
+        return NextResponse.json({ success: false, error: "Unauthorized: You are not a member of this project" }, { status: 403 });
+      }
+
+      // Get the project to find the workspaceId
+      const project = await prisma.project.findUnique({
+        where: { id: targetProjectId },
+        select: { workspaceId: true, ownerId: true }
+      });
+
+      if (!project) {
+        return NextResponse.json({ success: false, error: "Project not found" }, { status: 404 });
+      }
+
+      workspaceId = project.workspaceId;
+
+      if (!workspaceId) {
+        let personalWorkspace = await prisma.workspace.findFirst({
+          where: { ownerId: project.ownerId, name: 'Personal Workspace' }
+        });
+
+        if (!personalWorkspace) {
+          personalWorkspace = await prisma.workspace.create({
+            data: {
+              name: 'Personal Workspace',
+              slug: `personal-${project.ownerId.substring(0, 8)}`,
+              description: 'Your default personal workspace.',
+              ownerId: project.ownerId,
+            }
+          });
+        }
+        
+        workspaceId = personalWorkspace.id;
+
+        await prisma.project.update({
+          where: { id: targetProjectId },
+          data: { workspaceId }
+        });
+      }
     }
 
     // Determine the next order index for the Kanban board
@@ -134,8 +174,8 @@ export async function POST(req: Request) {
         description: validation.description,
         status: validation.status,
         deadline: validation.deadline,
-        projectId: validation.projectId,
-        workspaceId: workspaceId, // Use the resolved workspaceId
+        projectId: targetProjectId!,
+        workspaceId: workspaceId!, // Use the resolved workspaceId
         assigneeId: validation.assigneeId,
         order: newOrder,
         // Phase 0.5 Refinements

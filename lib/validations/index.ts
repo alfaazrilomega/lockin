@@ -11,10 +11,14 @@ export const createProjectSchema = z.object({
     .optional()
     .nullable()
     .transform(val => val || null),
-  deadline: z.union([z.string().datetime(), z.date()])
+  deadline: z.union([z.string(), z.date()])
     .optional()
     .nullable()
-    .transform(val => val ? new Date(val) : null),
+    .transform(val => {
+      if (!val) return null;
+      const d = new Date(val);
+      return isNaN(d.getTime()) ? null : d;
+    }),
 });
 
 export const updateProjectSchema = z.object({
@@ -27,10 +31,14 @@ export const updateProjectSchema = z.object({
     .max(500, 'Description must be less than 500 characters')
     .optional()
     .nullable(),
-  deadline: z.union([z.string().datetime(), z.date()])
+  deadline: z.union([z.string(), z.date()])
     .optional()
     .nullable()
-    .transform(val => val ? new Date(val) : null),
+    .transform(val => {
+      if (!val) return null;
+      const d = new Date(val);
+      return isNaN(d.getTime()) ? null : d;
+    }),
   progress: z.number()
     .min(0, 'Progress must be between 0 and 100')
     .max(100, 'Progress must be between 0 and 100')
@@ -48,12 +56,17 @@ export const createTaskSchema = z.object({
     .optional()
     .nullable(),
   status: z.enum(['TODO', 'IN_PROGRESS', 'REVIEW', 'REVISION', 'DONE']),
-  deadline: z.union([z.string().datetime(), z.date()])
+  deadline: z.union([z.string(), z.date()])
     .optional()
     .nullable()
-    .transform(val => val ? new Date(val) : null),
+    .transform(val => {
+      if (!val) return null;
+      const d = new Date(val);
+      return isNaN(d.getTime()) ? null : d;
+    }),
   projectId: z.string()
-    .min(1, 'Project ID is required'),
+    .optional()
+    .nullable(),
   assigneeId: z.string()
     .uuid()
     .optional()

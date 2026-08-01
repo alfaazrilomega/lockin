@@ -1,28 +1,23 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
+import type { ComponentProps } from 'react';
+import { MetricsArea as MetricsAreaOriginal } from './metrics-area';
 
 const MetricsAreaClient = dynamic(
   () => import('./metrics-area').then((mod) => mod.MetricsArea),
-  { ssr: false }
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-64 flex items-center justify-center p-6 border border-border bg-card rounded-xl">
+        <span className="text-xs text-muted-foreground font-outfit uppercase tracking-wider">
+          Loading System Metrics...
+        </span>
+      </div>
+    ),
+  }
 );
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function MetricsArea(props: any) {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) {
-    return (
-      <div className="h-64 flex items-center justify-center p-6 border border-gray-100 bg-white rounded-xl">
-        <span className="text-xs text-gray-400 font-outfit">Loading System Metrics...</span>
-      </div>
-    );
-  }
-
+export function MetricsArea(props: ComponentProps<typeof MetricsAreaOriginal>) {
   return <MetricsAreaClient {...props} />;
 }

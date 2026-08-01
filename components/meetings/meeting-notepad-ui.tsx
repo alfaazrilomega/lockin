@@ -1,9 +1,9 @@
 'use client'
 
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useRef } from 'react'
 import { 
   Mic, MicOff, Sparkles, FileText, CheckSquare, Receipt, 
-  Share2, Save, RefreshCw, Volume2, ArrowRight, Download, Send, Calendar, CheckCircle2 
+  Share2, RefreshCw, Volume2, Download, Send, Calendar, CheckCircle2 
 } from 'lucide-react'
 
 interface CalendarEvent {

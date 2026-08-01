@@ -51,6 +51,8 @@ export interface TaskDetail {
     id: string
     content: string
     created_at: Date
+    authorName?: string
+    authorEmail?: string
     author?: {
       full_name: string | null
       avatar_url: string | null
@@ -306,11 +308,11 @@ export function TaskDetailsSheet({ task, isOpen, onClose }: TaskDetailsSheetProp
                     <div className="flex items-center justify-between text-xs">
                       <div className="flex items-center gap-1.5 min-w-0">
                         <span className="font-bold text-gray-900 font-satoshi truncate">
-                          {(comment as any).authorName || comment.author?.full_name || (comment as any).authorEmail || 'Unknown User'}
+                          {comment.authorName || comment.author?.full_name || comment.authorEmail || 'Unknown User'}
                         </span>
-                        {(comment as any).authorEmail && (
+                        {comment.authorEmail && (
                           <span className="text-[10px] text-indigo-600 font-mono font-normal truncate">
-                            ({(comment as any).authorEmail})
+                            ({comment.authorEmail})
                           </span>
                         )}
                       </div>

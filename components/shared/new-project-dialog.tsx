@@ -31,48 +31,74 @@ export function NewProjectDialog({ children }: { children?: React.ReactNode }) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!formData.name) return
+    const trimmedName = formData.name.trim()
+    if (!trimmedName) {
+      toast({
+        title: "Nama Proyek Wajib Diisi",
+        description: "Silakan masukkan nama proyek terlebih dahulu.",
+        variant: "destructive",
+      })
+      return
+    }
 
     setIsLoading(true)
+
+    // Safe deadline ISO conversion
+    let formattedDeadline: string | undefined = undefined
+    if (formData.deadline && formData.deadline.trim()) {
+      const parsedDate = new Date(formData.deadline)
+      if (!isNaN(parsedDate.getTime())) {
+        formattedDeadline = parsedDate.toISOString()
+      }
+    }
+
     try {
-      const response = await axios.post("/api/projects", {
-        name: formData.name,
-        description: formData.description,
-        deadline: formData.deadline ? new Date(formData.deadline).toISOString() : undefined,
-      }, {
-        withCredentials: true
-      })
+      const response = await axios.post(
+        "/api/projects",
+        {
+          name: trimmedName,
+          description: formData.description.trim() || undefined,
+          deadline: formattedDeadline,
+        },
+        {
+          withCredentials: true,
+        }
+      )
       const result = response.data
 
-      if (result.success && result.data) {
+      if (result?.success && result?.data) {
         setIsOpen(false)
+        setFormData({ name: "", description: "", deadline: "" })
+        toast({
+          title: "Proyek Berhasil Dibuat",
+          description: `Proyek "${trimmedName}" telah berhasil disimpan ke database.`,
+        })
         router.push(`/dashboard/projects/${result.data.id}`)
-        toast({
-          title: "Success",
-          description: "Project created successfully",
-        })
+        router.refresh()
       } else {
+        const errorMsg = result?.error || "Gagal menyimpan proyek ke database."
+        console.error('[NewProjectDialog Submit Error]:', result)
         toast({
-          title: "Error",
-          description: result.error || "Failed to create project",
+          title: "Gagal Membuat Proyek",
+          description: errorMsg,
           variant: "destructive",
         })
       }
-    } catch (error) {
-      console.error(error)
+    } catch (error: unknown) {
+      console.error('[NewProjectDialog Catch Error]:', error)
+      let errorMessage = "Terjadi kesalahan yang tidak terduga saat membuat proyek."
+
       if (axios.isAxiosError(error)) {
-        toast({
-          title: "Error",
-          description: error.response?.data?.error || "An unexpected error occurred",
-          variant: "destructive",
-        })
-      } else {
-        toast({
-          title: "Error",
-          description: "An unexpected error occurred",
-          variant: "destructive",
-        })
+        errorMessage = error.response?.data?.error || error.message || errorMessage
+      } else if (error instanceof Error) {
+        errorMessage = error.message
       }
+
+      toast({
+        title: "Gagal Membuat Proyek",
+        description: errorMessage,
+        variant: "destructive",
+      })
     } finally {
       setIsLoading(false)
     }
@@ -89,7 +115,7 @@ export function NewProjectDialog({ children }: { children?: React.ReactNode }) {
         )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
-        <form onSubmit={handleSubmit}>
+        <form id="new-project-form" onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold font-satoshi">Create New Project</DialogTitle>
           </DialogHeader>
@@ -132,7 +158,7 @@ export function NewProjectDialog({ children }: { children?: React.ReactNode }) {
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isLoading || !formData.name}>
+            <Button type="submit" form="new-project-form" disabled={isLoading || !formData.name.trim()}>
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Create Project
             </Button>
