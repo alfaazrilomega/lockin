@@ -129,7 +129,6 @@ export async function getTasks(workspaceSlug?: string) {
     ...workspace.members.map(m => m.user_id)
   ]))
 
-  // Dynamic seeding for advisor account if they have 0 tasks in this workspace
   if (user.email === 'AdvisorCapstone_1@gmail.com') {
     const taskCount = await prisma.hRTask.count({
       where: { user_id: { in: workspaceUserIds } }
@@ -142,31 +141,16 @@ export async function getTasks(workspaceSlug?: string) {
   const tasks = await prisma.hRTask.findMany({
     where: { user_id: { in: workspaceUserIds } },
     include: {
-      tags: {
-        include: {
-          tag: true
-        }
-      },
-      comments: {
-        include: {
-          author: true
-        },
-        orderBy: {
-          created_at: 'asc'
-        }
-      },
+      tags: { include: { tag: true } },
+      comments: { include: { author: true }, orderBy: { created_at: 'asc' } },
       attachments: true
     },
-    orderBy: [
-      { position: 'asc' },
-      { created_at: 'desc' }
-    ]
+    orderBy: [{ position: 'asc' }, { created_at: 'desc' }]
   })
 
   const rawPriorities: Array<{ id: string; priority: string }> = await prisma.$queryRaw`SELECT id::text, priority::text FROM public.hr_tasks WHERE user_id = ANY(${workspaceUserIds}::uuid[])`
   const priorityMap = new Map(rawPriorities.map(p => [p.id, p.priority]))
 
-  // Query auth.users emails for all comment authors
   const commentUserIds = Array.from(new Set(tasks.flatMap(t => t.comments.map(c => c.user_id))))
   let commentEmailMap = new Map<string, string>()
 
@@ -181,18 +165,13 @@ export async function getTasks(workspaceSlug?: string) {
     }
   }
 
-  // Safe JSON serialization: Map BigInt in attachments to standard numbers
   return tasks.map(task => ({
     ...task,
     priority: (priorityMap.get(task.id) || 'medium') as 'low' | 'medium' | 'high',
     comments: task.comments.map(comment => {
       const email = commentEmailMap.get(comment.user_id) || ''
       const name = comment.author?.full_name || (email ? email.split('@')[0] : '') || email || 'Unknown User'
-      return {
-        ...comment,
-        authorEmail: email,
-        authorName: name
-      }
+      return { ...comment, authorEmail: email, authorName: name }
     }),
     attachments: task.attachments.map(att => ({
       ...att,
@@ -201,12 +180,13 @@ export async function getTasks(workspaceSlug?: string) {
   }))
 }
 
+// PERBAIKAN UTAMA: Menggunakan string casting aman ::text::"LogAction" agar PostgreSQL tidak error tipe data
 async function logHRTaskActivity(taskId: string, userId: string, action: string, snapshot: Record<string, unknown>) {
   const upperAction = action.toUpperCase()
   try {
     await prisma.$executeRaw`
       INSERT INTO public.hr_activity_logs (id, task_id, user_id, action, state_snapshot, created_at)
-      VALUES (gen_random_uuid(), ${taskId}::uuid, ${userId}::uuid, ${upperAction}::"LogAction", ${JSON.stringify(snapshot)}::jsonb, NOW())
+      VALUES (gen_random_uuid(), ${taskId}::uuid, ${userId}::uuid, ${upperAction}::text::"LogAction", ${JSON.stringify(snapshot)}::jsonb, NOW())
     `
   } catch (err) {
     console.error('Failed to log HR task activity:', err)
@@ -240,19 +220,16 @@ export async function createTask(formData: FormData) {
     await prisma.$executeRaw`UPDATE public.hr_tasks SET priority = ${priority}::text WHERE id = ${newTask.id}::uuid`
   }
 
-  // 1c. Log creation activity with safe LogAction enum casting
+  // 1c. Log creation activity with safe type conversion
   await logHRTaskActivity(newTask.id, user.id, 'CREATE', { id: newTask.id, title, priority })
 
-  // 2. Associate Multiple Tags if selected
+  // 2. Associate Multiple Tags
   if (tagIds && tagIds.length > 0) {
     for (const tagId of tagIds) {
       if (tagId && tagId.trim() !== '') {
         try {
           await prisma.hRTaskTag.create({
-            data: {
-              task_id: newTask.id,
-              tag_id: tagId,
-            }
+            data: { task_id: newTask.id, tag_id: tagId }
           })
         } catch (err) {
           console.error('TaskTag create error:', err)
@@ -261,7 +238,7 @@ export async function createTask(formData: FormData) {
     }
   }
 
-  // 3. Upload Multiple File Attachments if provided
+  // 3. Upload Attachments
   if (files && files.length > 0) {
     try {
       const supabase = await createClient()
@@ -277,10 +254,7 @@ export async function createTask(formData: FormData) {
 
           const { error } = await supabase.storage
             .from('attachments')
-            .upload(filePath, buffer, {
-              contentType: fileType,
-              duplex: 'half'
-            })
+            .upload(filePath, buffer, { contentType: fileType, duplex: 'half' })
 
           if (!error) {
             await prisma.hRTaskAttachment.create({
@@ -292,8 +266,6 @@ export async function createTask(formData: FormData) {
                 content_type: fileType,
               }
             })
-          } else {
-            console.error('File upload error:', error)
           }
         }
       }
@@ -307,132 +279,81 @@ export async function createTask(formData: FormData) {
 
 export async function updateTaskStatus(taskId: string, status: 'todo' | 'in_progress' | 'done') {
   const user = await getUser()
-
   const updated = await prisma.hRTask.update({
-    where: {
-      id: taskId,
-      user_id: user.id,
-    },
-    data: {
-      status,
-    },
+    where: { id: taskId, user_id: user.id },
+    data: { status },
   })
-
   await logHRTaskActivity(taskId, user.id, 'STATUS_CHANGED', { status, title: updated.title })
-
   revalidatePath('/dashboard')
 }
 
 export async function updateTaskPriority(taskId: string, priority: string) {
   const user = await getUser()
-
   await prisma.$executeRaw`UPDATE public.hr_tasks SET priority = ${priority}::text WHERE id = ${taskId}::uuid AND user_id = ${user.id}::uuid`
-
   await logHRTaskActivity(taskId, user.id, 'PRIORITY_CHANGED', { priority })
-
   revalidatePath('/dashboard')
 }
 
 export async function updateTaskPositionBatch(orderedTaskIds: string[]) {
   const user = await getUser()
-
   if (!orderedTaskIds || orderedTaskIds.length === 0) return
 
   for (let index = 0; index < orderedTaskIds.length; index++) {
     const taskId = orderedTaskIds[index]
     await prisma.$executeRaw`UPDATE public.hr_tasks SET position = ${index}::integer WHERE id = ${taskId}::uuid AND user_id = ${user.id}::uuid`
   }
-
   revalidatePath('/dashboard')
 }
 
 export async function updateTaskDescription(taskId: string, description: string) {
   const user = await getUser()
-
   await prisma.hRTask.update({
-    where: {
-      id: taskId,
-      user_id: user.id,
-    },
-    data: {
-      description,
-    },
+    where: { id: taskId, user_id: user.id },
+    data: { description },
   })
-
   revalidatePath('/dashboard')
 }
 
 export async function updateTaskTitle(taskId: string, title: string) {
   const user = await getUser()
-
   await prisma.hRTask.update({
-    where: {
-      id: taskId,
-      user_id: user.id,
-    },
-    data: {
-      title,
-    },
+    where: { id: taskId, user_id: user.id },
+    data: { title },
   })
-
   revalidatePath('/dashboard')
 }
 
 export async function deleteTask(taskId: string) {
   const user = await getUser()
-
   await logHRTaskActivity(taskId, user.id, 'DELETE', { taskId })
 
-  // 1. Clean up attached files from Supabase Storage before deleting task
   try {
-    const attachments = await prisma.hRTaskAttachment.findMany({
-      where: { task_id: taskId }
-    })
-
+    const attachments = await prisma.hRTaskAttachment.findMany({ where: { task_id: taskId } })
     if (attachments.length > 0) {
       const supabase = await createClient()
       const filePaths = attachments.map(a => a.file_path)
-      const { error } = await supabase.storage.from('attachments').remove(filePaths)
-      if (error) {
-        console.error('Storage task attachments cleanup error:', error)
-      }
+      await supabase.storage.from('attachments').remove(filePaths)
     }
   } catch (err) {
-    console.error('Error fetching attachments for storage cleanup:', err)
+    console.error('Error cleaning up attachments:', err)
   }
 
-  // 2. Delete task from DB
-  await prisma.hRTask.delete({
-    where: {
-      id: taskId,
-      user_id: user.id,
-    },
-  })
-
+  await prisma.hRTask.delete({ where: { id: taskId, user_id: user.id } })
   revalidatePath('/dashboard')
 }
 
-// Task Comments
 export async function createComment(taskId: string, content: string) {
   const user = await getUser()
-  if (!content || content.trim() === '') {
-    throw new Error('Comment content cannot be empty')
-  }
+  if (!content || content.trim() === '') throw new Error('Comment cannot be empty')
 
   const comment = await prisma.hRTaskComment.create({
-    data: {
-      task_id: taskId,
-      user_id: user.id,
-      content,
-    },
-    include: {
-      author: true
-    }
+    data: { task_id: taskId, user_id: user.id, content },
+    include: { author: true }
   })
 
   await logHRTaskActivity(taskId, user.id, 'COMMENTED', { contentPreview: content.slice(0, 80) })
-
   revalidatePath('/dashboard')
+  
   return {
     ...comment,
     authorEmail: user.email || '',
@@ -440,60 +361,35 @@ export async function createComment(taskId: string, content: string) {
   }
 }
 
-// Task Tags
 export async function getTags() {
-  await getUser() // Ensure authenticated
+  await getUser()
   return await prisma.hRTag.findMany()
 }
 
 export async function addTagToTask(taskId: string, tagId: string) {
   const user = await getUser()
-
-  // Verify task ownership
-  const task = await prisma.hRTask.findUnique({
-    where: { id: taskId, user_id: user.id }
-  })
+  const task = await prisma.hRTask.findUnique({ where: { id: taskId, user_id: user.id } })
   if (!task) throw new Error('Task not found')
 
   await prisma.hRTaskTag.upsert({
-    where: {
-      task_id_tag_id: {
-        task_id: taskId,
-        tag_id: tagId
-      }
-    },
-    create: {
-      task_id: taskId,
-      tag_id: tagId
-    },
+    where: { task_id_tag_id: { task_id: taskId, tag_id: tagId } },
+    create: { task_id: taskId, tag_id: tagId },
     update: {}
   })
-
   revalidatePath('/dashboard')
 }
 
 export async function removeTagFromTask(taskId: string, tagId: string) {
   const user = await getUser()
-
-  // Verify task ownership
-  const task = await prisma.hRTask.findUnique({
-    where: { id: taskId, user_id: user.id }
-  })
+  const task = await prisma.hRTask.findUnique({ where: { id: taskId, user_id: user.id } })
   if (!task) throw new Error('Task not found')
 
   await prisma.hRTaskTag.delete({
-    where: {
-      task_id_tag_id: {
-        task_id: taskId,
-        tag_id: tagId
-      }
-    }
+    where: { task_id_tag_id: { task_id: taskId, tag_id: tagId } }
   })
-
   revalidatePath('/dashboard')
 }
 
-// Task Attachments
 export async function createAttachment(taskId: string, formData: FormData) {
   const user = await getUser()
   const files = formData.getAll('files') as File[]
@@ -501,7 +397,6 @@ export async function createAttachment(taskId: string, formData: FormData) {
   const fileList = files.length > 0 ? files : (singleFile ? [singleFile] : [])
 
   if (fileList.length === 0) throw new Error('No file provided')
-
   const supabase = await createClient()
 
   for (const file of fileList) {
@@ -513,69 +408,43 @@ export async function createAttachment(taskId: string, formData: FormData) {
       const buffer = Buffer.from(arrayBuffer)
       const filePath = `${user.id}/${taskId}_${Date.now()}_${fileName}`
 
-      const { error } = await supabase.storage
-        .from('attachments')
-        .upload(filePath, buffer, {
-          contentType: fileType,
-          duplex: 'half'
+      const { error } = await supabase.storage.from('attachments').upload(filePath, buffer, { contentType: fileType, duplex: 'half' })
+      if (!error) {
+        await prisma.hRTaskAttachment.create({
+          data: {
+            task_id: taskId,
+            file_name: fileName,
+            file_path: filePath,
+            file_size: BigInt(fileSize),
+            content_type: fileType,
+          }
         })
-
-      if (error) {
-        console.error('Storage upload error:', error)
-        continue
       }
-
-      await prisma.hRTaskAttachment.create({
-        data: {
-          task_id: taskId,
-          file_name: fileName,
-          file_path: filePath,
-          file_size: BigInt(fileSize),
-          content_type: fileType,
-        }
-      })
     }
   }
-
   revalidatePath('/dashboard')
 }
 
 export async function deleteAttachment(attachmentId: string) {
   const user = await getUser()
-
-  // Find attachment
-  const attachment = await prisma.hRTaskAttachment.findUnique({
-    where: { id: attachmentId },
-    include: { task: true }
-  })
-
-  // If already deleted or doesn't exist, return gracefully
+  const attachment = await prisma.hRTaskAttachment.findUnique({ where: { id: attachmentId }, include: { task: true } })
+  
   if (!attachment) {
     revalidatePath('/dashboard')
     return
   }
 
-  // Delete from Supabase Storage
   try {
     const supabase = await createClient()
-    const { error } = await supabase.storage
-      .from('attachments')
-      .remove([attachment.file_path])
-
-    if (error) {
-      console.error('Storage delete error:', error)
-    }
+    await supabase.storage.from('attachments').remove([attachment.file_path])
   } catch (err) {
-    console.error('Error removing file from storage:', err)
+    console.error('Storage delete error:', err)
   }
 
-  // Delete record from DB
   try {
-    await prisma.hRTaskAttachment.delete({
-      where: { id: attachmentId }
-    })
+    await prisma.hRTaskAttachment.delete({ where: { id: attachmentId } })
   } catch (err) {
-    console.error('Error deleting attachment record:', err)
+    console.error('DB delete error:', err)
   }
 
   revalidatePath('/dashboard')
