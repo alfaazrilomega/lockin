@@ -321,7 +321,7 @@ export async function inviteWorkspaceMember(email: string, role: string = 'membe
   }
 
   // 2. Search if user exists in auth.users by email
-  const authUsers: Array<{ id: string }> = await prisma.$queryRaw`SELECT id::text FROM auth.users WHERE LOWER(email) = ${cleanEmail} LIMIT 1`
+  const authUsers: Array<{ id: string }> = await prisma.$queryRaw`SELECT id::text FROM auth.users WHERE LOWER(email) = ${cleanEmail}::text LIMIT 1`
 
   let targetUserId: string
 

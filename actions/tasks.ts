@@ -237,7 +237,7 @@ export async function createTask(formData: FormData) {
 
   // 1b. Update priority directly in DB
   if (priority) {
-    await prisma.$executeRaw`UPDATE public.hr_tasks SET priority = ${priority} WHERE id = ${newTask.id}::uuid`
+    await prisma.$executeRaw`UPDATE public.hr_tasks SET priority = ${priority}::text WHERE id = ${newTask.id}::uuid`
   }
 
   // 1c. Log creation activity with safe LogAction enum casting
@@ -308,7 +308,7 @@ export async function createTask(formData: FormData) {
 export async function updateTaskStatus(taskId: string, status: 'todo' | 'in_progress' | 'done') {
   const user = await getUser()
 
-  await prisma.hRTask.update({
+  const updated = await prisma.hRTask.update({
     where: {
       id: taskId,
       user_id: user.id,
@@ -318,13 +318,17 @@ export async function updateTaskStatus(taskId: string, status: 'todo' | 'in_prog
     },
   })
 
+  await logHRTaskActivity(taskId, user.id, 'STATUS_CHANGED', { status, title: updated.title })
+
   revalidatePath('/dashboard')
 }
 
 export async function updateTaskPriority(taskId: string, priority: string) {
   const user = await getUser()
 
-  await prisma.$executeRaw`UPDATE public.hr_tasks SET priority = ${priority} WHERE id = ${taskId}::uuid AND user_id = ${user.id}::uuid`
+  await prisma.$executeRaw`UPDATE public.hr_tasks SET priority = ${priority}::text WHERE id = ${taskId}::uuid AND user_id = ${user.id}::uuid`
+
+  await logHRTaskActivity(taskId, user.id, 'PRIORITY_CHANGED', { priority })
 
   revalidatePath('/dashboard')
 }
@@ -336,7 +340,7 @@ export async function updateTaskPositionBatch(orderedTaskIds: string[]) {
 
   for (let index = 0; index < orderedTaskIds.length; index++) {
     const taskId = orderedTaskIds[index]
-    await prisma.$executeRaw`UPDATE public.hr_tasks SET position = ${index} WHERE id = ${taskId}::uuid AND user_id = ${user.id}::uuid`
+    await prisma.$executeRaw`UPDATE public.hr_tasks SET position = ${index}::integer WHERE id = ${taskId}::uuid AND user_id = ${user.id}::uuid`
   }
 
   revalidatePath('/dashboard')
@@ -376,6 +380,8 @@ export async function updateTaskTitle(taskId: string, title: string) {
 
 export async function deleteTask(taskId: string) {
   const user = await getUser()
+
+  await logHRTaskActivity(taskId, user.id, 'DELETE', { taskId })
 
   // 1. Clean up attached files from Supabase Storage before deleting task
   try {
@@ -423,6 +429,8 @@ export async function createComment(taskId: string, content: string) {
       author: true
     }
   })
+
+  await logHRTaskActivity(taskId, user.id, 'COMMENTED', { contentPreview: content.slice(0, 80) })
 
   revalidatePath('/dashboard')
   return {
