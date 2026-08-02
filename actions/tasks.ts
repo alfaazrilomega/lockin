@@ -228,7 +228,7 @@ export async function createTask(formData: FormData) {
   }
 
   // 1c. Log creation activity safely
-  await logHRTaskActivity(newTask.id, user.id, 'CREATE', { id: newTask.id, title, priority })
+  //await logHRTaskActivity(newTask.id, user.id, 'CREATE', { id: newTask.id, title, priority })
 
   // 2. Associate Multiple Tags
   if (tagIds && tagIds.length > 0) {
