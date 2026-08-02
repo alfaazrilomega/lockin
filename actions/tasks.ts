@@ -180,13 +180,20 @@ export async function getTasks(workspaceSlug?: string) {
   }))
 }
 
-// PERBAIKAN UTAMA: Menggunakan string casting aman ::text::"LogAction" agar PostgreSQL tidak error tipe data
+// FINAL FIX: Menggunakan format raw query aman untuk Enum LogAction
 async function logHRTaskActivity(taskId: string, userId: string, action: string, snapshot: Record<string, unknown>) {
   const upperAction = action.toUpperCase()
   try {
     await prisma.$executeRaw`
       INSERT INTO public.hr_activity_logs (id, task_id, user_id, action, state_snapshot, created_at)
-      VALUES (gen_random_uuid(), ${taskId}::uuid, ${userId}::uuid, ${upperAction}::text::"LogAction", ${JSON.stringify(snapshot)}::jsonb, NOW())
+      VALUES (
+        gen_random_uuid(), 
+        ${taskId}::uuid, 
+        ${userId}::uuid, 
+        ${upperAction}::text::"LogAction", 
+        ${JSON.stringify(snapshot)}::jsonb, 
+        NOW()
+      )
     `
   } catch (err) {
     console.error('Failed to log HR task activity:', err)
@@ -220,7 +227,7 @@ export async function createTask(formData: FormData) {
     await prisma.$executeRaw`UPDATE public.hr_tasks SET priority = ${priority}::text WHERE id = ${newTask.id}::uuid`
   }
 
-  // 1c. Log creation activity with safe type conversion
+  // 1c. Log creation activity safely
   await logHRTaskActivity(newTask.id, user.id, 'CREATE', { id: newTask.id, title, priority })
 
   // 2. Associate Multiple Tags
