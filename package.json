@@ -8,7 +8,7 @@
     "pages:build": "npx prisma generate && npx @cloudflare/next-on-pages",
     "build:cf": "npx prisma generate && npx @cloudflare/next-on-pages",
     "start": "next start",
-    "lint": "eslint .",
+    "lint": "next lint .",
     "test:e2e": "node scripts/run-e2e-tests.js"
   },
   "dependencies": {
