@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireUser, isProjectMember } from "@/lib/auth-helpers";
 import { createTaskSchema } from "@/lib/validations";
 import { z } from "zod";
+import { Quadrant } from "@prisma/client"; // (BARU) Import enum Quadrant
 
 export async function GET(req: Request) {
   try {
@@ -12,6 +13,7 @@ export async function GET(req: Request) {
     const workspaceId = searchParams.get('workspaceId');
     const status = searchParams.get('status');
     const assigneeId = searchParams.get('assigneeId');
+    const quadrant = searchParams.get('quadrant'); // (BARU) Ambil query quadrant
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const whereClause: any = {};
@@ -37,6 +39,9 @@ export async function GET(req: Request) {
     }
     if (assigneeId) {
       whereClause.assigneeId = assigneeId;
+    }
+    if (quadrant) { // (BARU) Filter berdasarkan Kuadran
+      whereClause.quadrant = quadrant as Quadrant;
     }
 
     const tasks = await prisma.task.findMany({
@@ -175,16 +180,21 @@ export async function POST(req: Request) {
         status: validation.status,
         deadline: validation.deadline,
         projectId: targetProjectId!,
-        workspaceId: workspaceId!, // Use the resolved workspaceId
+        workspaceId: workspaceId!,
         assigneeId: validation.assigneeId,
         order: newOrder,
-        // Phase 0.5 Refinements
         priority: validation.priority || 'MEDIUM',
         storyPoints: validation.storyPoints || null,
         timeSpent: validation.timeSpent || null,
-        parentId: validation.parentId || null,
+        
+        // --- FITUR ENTERPRISE (DIAMBIL DARI ZOD ATAU LANGSUNG DARI BODY) ---
+        // Fallback ke `body` jika Zod schema belum di-update dan membuang payload ini
+        parentId: validation.parentId || body.parentId || null,
         epicId: validation.epicId || null,
         milestoneId: validation.milestoneId || null,
+        quadrant: validation.quadrant || body.quadrant || null,
+        startDate: (validation as any).startDate ? new Date((validation as any).startDate) 
+                   : (body.startDate ? new Date(body.startDate) : null),
       },
     });
 
@@ -195,7 +205,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, error: error.issues[0]?.message || "Invalid input" }, { status: 400 });
     }
     if (error instanceof Error && error.message.includes("NEXT_REDIRECT")) {
-      throw error; // Let Next.js handle redirects internally
+      throw error;
     }
     return NextResponse.json({ success: false, error: "Failed to create task" }, { status: 500 });
   }
