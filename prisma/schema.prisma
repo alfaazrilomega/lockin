@@ -9,9 +9,6 @@
  * The HR models use the prefix "hr_" in their table names to avoid conflicts
  * with LockIn's own "tasks" and "workspaces" tables.
  * 
- * IMPORTANT: The Profile model (hr_profiles) connects to Supabase auth.users
- * via the same UUID, while LockIn's User model connects via its own users table.
- * 
  * Usage after changes:
  *   npx prisma generate     <- regenerate client (always safe)
  *   npx prisma db pull      <- verify against live DB (read-only)
@@ -22,20 +19,14 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// ⚠️ PRISMA 7 NOTICE:
-// The `url` and `directUrl` fields are NO LONGER set here in Prisma 7.
-// They are managed by `prisma.config.ts` in the project root.
-// See: https://pris.ly/d/config-datasource
 datasource db {
   provider = "postgresql"
 }
 
 // ═══════════════════════════════════════════════════════════
 // SECTION 1: HR TASK MANAGER MODELS
-// These map to hr_* tables that already exist in LockIn DB
 // ═══════════════════════════════════════════════════════════
 
-/// Mirrors auth.users — auto-created by a Supabase trigger
 model HRProfile {
   id         String   @id @db.Uuid
   full_name  String?
@@ -182,7 +173,6 @@ model HRActivityLog {
 
 // ═══════════════════════════════════════════════════════════
 // SECTION 2: LOCKIN CORE MODELS
-// These are the original LockIn models (users, projects, etc.)
 // ═══════════════════════════════════════════════════════════
 
 model User {
@@ -205,7 +195,7 @@ model User {
   profile              UserProfile?
   notifications        Notification[]
   personalTasks        PersonalTask[]
-  noteTags             NoteTag[]
+  tags                 Tag[]             // Universal Tags
   attachments          Attachment[]
   chatMessages         ChatMessage[]
   presence             UserPresence?
@@ -242,22 +232,34 @@ model Project {
   progress    Int           @default(0)
   status      ProjectStatus @default(PLANNING)
   priority    TaskPriority  @default(MEDIUM)
+  
+  // Fitur Kalender & Finansial (RIVIO Style)
+  startDate   DateTime?     @map("start_date")
   deadline    DateTime?
+  budget      Float?        @default(0)
+  currentSpend Float?       @default(0) @map("current_spend")
+  
+  // Nested Projects
+  parentId    String?       @map("parent_id")
+  parent      Project?      @relation("SubProjects", fields: [parentId], references: [id], onDelete: Cascade)
+  subProjects Project[]     @relation("SubProjects")
+
   createdAt   DateTime      @default(now()) @map("created_at")
   updatedAt   DateTime      @updatedAt @map("updated_at")
 
-  ownerId String @map("owner_id")
-  owner   User   @relation("ProjectOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  ownerId     String        @map("owner_id")
+  owner       User          @relation("ProjectOwner", fields: [ownerId], references: [id], onDelete: Cascade)
 
-  workspaceId String?    @map("workspace_id")
-  workspace   Workspace? @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspaceId String?       @map("workspace_id")
+  workspace   Workspace?    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
-  members    ProjectMember[]
-  epics      Epic[]
-  milestones Milestone[]
-  tasks      Task[]
-  notes      Note[]
-  shares     SharedResource[] @relation("SharedProjects")
+  members     ProjectMember[]
+  epics       Epic[]
+  milestones  Milestone[]
+  tasks       Task[]
+  notes       Note[]
+  shares      SharedResource[] @relation("SharedProjects")
+  tags        ProjectTagAssignment[] // Universal Tags
 
   @@map("projects")
 }
@@ -331,24 +333,40 @@ enum TaskPriority {
   LOW
 }
 
+// Eisenhower Quadrant
+enum Quadrant {
+  Q1 // Urgent & Important
+  Q2 // Not Urgent but Important
+  Q3 // Urgent but Not Important
+  Q4 // Not Urgent & Not Important
+}
+
 model Task {
   id          String       @id @default(uuid())
   title       String
   description String?      @db.Text
   status      TaskStatus   @default(TODO)
   priority    TaskPriority @default(MEDIUM)
+  quadrant    Quadrant?    // Sistem Kuadran RIVIO
   order       Float        @default(0)
+  
+  // Fitur Kalender
+  startDate   DateTime?    @map("start_date")
   deadline    DateTime?
+  
   storyPoints Int?         @map("story_points")
   timeSpent   Int?         @map("time_spent")
   proofUrl    String?      @map("proof_url")
   proofNotes  String?      @map("proof_notes") @db.Text
   feedback    String?      @db.Text
+  
+  // Hierarchy
   parentId    String?      @map("parent_id")
   parent      Task?        @relation("Subtasks", fields: [parentId], references: [id], onDelete: Cascade)
   subtasks    Task[]       @relation("Subtasks")
   blocking    TaskDependency[] @relation("BlockingTasks")
   blockedBy   TaskDependency[] @relation("BlockedByTasks")
+  
   epicId      String?      @map("epic_id")
   epic        Epic?        @relation(fields: [epicId], references: [id], onDelete: SetNull)
   milestoneId String?      @map("milestone_id")
@@ -356,10 +374,13 @@ model Task {
   projectId   String?      @map("project_id")
   workspaceId String       @map("workspace_id")
   assigneeId  String?      @map("assignee_id")
+  
   project     Project?     @relation(fields: [projectId], references: [id], onDelete: Cascade)
   workspace   Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   assignee    User?        @relation("AssignedTasks", fields: [assigneeId], references: [id], onDelete: SetNull)
   comments    TaskComment[]
+  tags        TaskTagAssignment[] // Universal Tags
+  
   createdAt   DateTime     @default(now()) @map("created_at")
   updatedAt   DateTime     @updatedAt @map("updated_at")
 
@@ -401,7 +422,7 @@ model Note {
   project     Project?  @relation(fields: [projectId], references: [id], onDelete: Cascade)
   flashcardDecks FlashcardDeck[]
   shares      SharedResource[]    @relation("SharedNotes")
-  tags        NoteTagAssignment[]
+  tags        NoteTagAssignment[] // Universal Tags
   attachments Attachment[]
   createdAt   DateTime  @default(now()) @map("created_at")
   updatedAt   DateTime  @updatedAt @map("updated_at")
@@ -611,27 +632,58 @@ model PersonalTask {
   @@map("personal_tasks")
 }
 
-model NoteTag {
+// ═══════════════════════════════════════════════════════════
+// UNIVERSAL TAG SYSTEM (Replaces NoteTag)
+// ═══════════════════════════════════════════════════════════
+
+model Tag {
   id     String              @id @default(uuid())
   name   String
   color  String              @default("#2383E2")
   userId String              @map("user_id")
   user   User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  notes  NoteTagAssignment[]
+  
+  notes    NoteTagAssignment[]
+  tasks    TaskTagAssignment[]
+  projects ProjectTagAssignment[]
 
   @@unique([userId, name])
-  @@map("note_tags")
+  @@map("tags") // Dulu "note_tags"
 }
 
 model NoteTagAssignment {
-  noteId String  @map("note_id")
-  tagId  String  @map("tag_id")
-  note   Note    @relation(fields: [noteId], references: [id], onDelete: Cascade)
-  tag    NoteTag @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  noteId String @map("note_id")
+  tagId  String @map("tag_id")
+  note   Note   @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  tag    Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
 
   @@id([noteId, tagId])
   @@map("note_tag_assignments")
 }
+
+model TaskTagAssignment {
+  taskId String @map("task_id")
+  tagId  String @map("tag_id")
+  task   Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  tag    Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([taskId, tagId])
+  @@map("task_tag_assignments")
+}
+
+model ProjectTagAssignment {
+  projectId String  @map("project_id")
+  tagId     String  @map("tag_id")
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tag       Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([projectId, tagId])
+  @@map("project_tag_assignments")
+}
+
+// ═══════════════════════════════════════════════════════════
+// OTHER MODELS
+// ═══════════════════════════════════════════════════════════
 
 enum ProcessingStatus {
   PENDING
